@@ -258,6 +258,14 @@
 
   .dup-item { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px; }
 
+  .dn-fisier-categorie { border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+  .dn-fisier-categorie .dn-fc-label { font-size: 12.5px; font-weight: 700; margin-bottom: 8px; }
+  .dn-fisier-item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 5px 0; }
+  .dn-fisier-item + .dn-fisier-item { border-top: 1px solid var(--border); }
+  .dn-fisier-empty { font-size: 11.5px; color: var(--muted); font-style: italic; padding: 2px 0 8px; }
+  input[type=file].dn-file-input { font-size: 12px; max-width: 100%; }
+  input[type=file].dn-file-input::file-selector-button { padding: 6px 12px; border-radius: 7px; border: 1.5px solid var(--border); background: #f5f5f7; cursor: pointer; font-family: inherit; font-size: 12px; margin-right: 8px; }
+
   .moto-card { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px; position: relative; }
   .moto-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-right: 26px; }
   .moto-grid input { padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 13px; font-family: inherit; }
@@ -272,7 +280,8 @@
   .linie-row .dp-cod { flex: 0 0 16%; }
   .linie-row .dp-denumire, .linie-row .dm-denumire { flex: 1; }
   .linie-row .dp-cant, .linie-row .dm-ore { flex: 0 0 10%; }
-  .linie-row .dp-pret, .linie-row .dm-tarif { flex: 0 0 18%; }
+  .linie-row .dp-pret, .linie-row .dm-tarif { flex: 0 0 15%; }
+  .linie-row .dp-pret-fara, .linie-row .dm-tarif-fara { flex: 0 0 15%; background: #f5f5f7; color: var(--muted); }
 
   /* ---------- RECEPTIE & INVENTAR ---------- */
   .rz-submodes { display: inline-flex; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
@@ -326,10 +335,10 @@
   .rz-toast-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 500; display: flex; flex-direction: column; gap: 8px; }
 
   /* ---------- MESAGERIE (widget flotant) ---------- */
-  #msg-bubble { position: fixed; bottom: 20px; left: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.25); z-index: 600; user-select: none; }
+  #msg-bubble { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.25); z-index: 600; user-select: none; }
   #msg-bubble:hover { filter: brightness(1.1); }
   .msg-badge { position: absolute; top: -4px; right: -4px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 800; border-radius: 10px; padding: 1px 5px; display: none; min-width: 16px; text-align: center; }
-  #msg-panel { position: fixed; bottom: 88px; left: 20px; width: 330px; height: 460px; max-height: calc(100vh - 110px); background: var(--card); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.28); display: none; flex-direction: column; overflow: hidden; z-index: 599; border: 1px solid var(--border); }
+  #msg-panel { position: fixed; bottom: 88px; right: 20px; width: 330px; height: 460px; max-height: calc(100vh - 110px); background: var(--card); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.28); display: none; flex-direction: column; overflow: hidden; z-index: 599; border: 1px solid var(--border); }
   #msg-panel.open { display: flex; animation: fadeIn .15s ease; }
   .msg-panel-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--accent); color: #fff; font-weight: 700; font-size: 14px; flex-shrink: 0; }
   .msg-panel-header span#msg-panel-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -402,8 +411,8 @@
     .modal.xwide, .modal.wide { max-width: 100%; }
     .piesa-row input, .piesa-row select { flex: 1 1 45%; }
     .piesa-row input.piesa-cod, .piesa-row input.piesa-denumire { flex: 1 1 100%; }
-    #msg-panel { width: calc(100vw - 24px); left: 12px; height: 70vh; bottom: 78px; }
-    #msg-bubble { bottom: 14px; left: 14px; width: 50px; height: 50px; font-size: 20px; }
+    #msg-panel { width: calc(100vw - 24px); right: 12px; height: 70vh; bottom: 78px; }
+    #msg-bubble { bottom: 14px; right: 14px; width: 50px; height: 50px; font-size: 20px; }
     .rz-scanbox { flex-wrap: wrap; }
     .rz-stats { grid-template-columns: repeat(2, 1fr); }
     .programator-day-grid { grid-template-columns: 1fr; }
@@ -870,6 +879,7 @@
 
           <div class="piese-section">
             <label>Piese</label>
+            <div id="deviz-piese-catalog-uzuale" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px"></div>
             <div id="deviz-piese-uzuale" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
             <div id="deviz-piese-list"></div>
             <button type="button" class="btn-secondary" onclick="addDevizPiesaRow()">+ Adaugă piesă</button>
@@ -877,6 +887,7 @@
 
           <div class="piese-section">
             <label>Manoperă</label>
+            <div id="deviz-manopera-catalog-uzuale" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px"></div>
             <div id="deviz-manopera-list"></div>
             <button type="button" class="btn-secondary" onclick="addDevizManoperaRow()">+ Adaugă operație</button>
           </div>
@@ -1599,6 +1610,7 @@ const GARANTII_STATUS_STYLE = {
 let currentDaune = [];
 let selectedDaunaTip = "fizica";
 let pendingDaunaDevizLink = null; // id-ul devizului de legat la urmatorul dosar nou creat, via "Trimite la Daune"
+let daunaDraftUnconfirmed = false; // true intre deschiderea unui dosar nou (schita auto-creata) si primul Salveaza explicit
 const DAUNE_STARE_STYLE = {
   "Etapa 1": { bg: "#e0f2fe", color: "#075985" },
   "Predat": { bg: "#ffedd5", color: "#9a3412" },
@@ -1917,7 +1929,7 @@ async function afterLogin() {
   populateStareComandaOptions();
   await loadMyPermissions();
   currentUserEmail = user.email || null;
-  await Promise.all([loadOrders(), loadMecanici(), loadTarife(), rzLoadSetari(), rzLoadAdaosuri(), rzLoadPriceListFull(), loadAllProfiles(), loadProgramari(), loadPuncteLucru(), loadBranduriMoto(), loadFurnizori(), loadSarcini()]);
+  await Promise.all([loadOrders(), loadMecanici(), loadTarife(), rzLoadSetari(), rzLoadAdaosuri(), rzLoadPriceListFull(), loadAllProfiles(), loadProgramari(), loadPuncteLucru(), loadBranduriMoto(), loadFurnizori(), loadSarcini(), loadPreturiUzuale()]);
   applyPermissionsToUI();
   restoreLocationPrefsFromStorage();
   updatePunctLucruHeaderBtn();
@@ -3303,10 +3315,19 @@ function onTarifChange() {
   const sel = document.getElementById("d-tarif-id");
   const opt = sel.options[sel.selectedIndex];
   const rate = opt ? parseFloat(opt.getAttribute("data-rate")) : 0;
-  document.querySelectorAll("#deviz-manopera-list .dm-tarif").forEach(inp => { if (!inp.value) inp.value = rate; });
+  document.querySelectorAll("#deviz-manopera-list .dm-tarif").forEach(inp => { if (!inp.value) { inp.value = roFmtNum(rate); syncDevizPretFaraTva(inp); } });
 }
 
 // ---------- LINII DEVIZ: PIESE ----------
+function syncDevizPretFaraTva(inputEl) {
+  const row = inputEl.closest(".linie-row");
+  if (!row) return;
+  const faraEl = row.querySelector(".dp-pret-fara, .dm-tarif-fara");
+  if (!faraEl) return;
+  const cu = roParseNum(inputEl.value);
+  faraEl.value = cu === null ? "" : roFmtNum(roPretFaraTva(cu));
+}
+
 function addDevizPiesaRowEl(l) {
   l = l || {};
   const container = document.getElementById("deviz-piese-list");
@@ -3316,10 +3337,12 @@ function addDevizPiesaRowEl(l) {
     <input class="dp-cod" list="pricelist-datalist" placeholder="Cod piesă" value="${escapeHtml(l.cod_piesa || "")}" />
     <input class="dp-denumire" placeholder="Denumire" value="${escapeHtml(l.denumire || "")}" />
     <input class="dp-cant" type="number" step="1" min="0" value="${l.cantitate || 1}" />
-    <input class="dp-pret" type="number" step="0.01" min="0" value="${l.pret_unitar || ""}" placeholder="Preț unitar (RON)" />
+    <input class="dp-pret" type="text" value="${l.pret_unitar ? roFmtNum(l.pret_unitar) : ""}" placeholder="Preț cu TVA" />
+    <input class="dp-pret-fara" type="text" readonly value="${l.pret_unitar ? roFmtNum(roPretFaraTva(l.pret_unitar)) : ""}" placeholder="Preț fără TVA" />
     <button type="button" class="icon-btn danger">${ICON_CLOSE}</button>
   `;
   row.querySelector(".dp-cod").addEventListener("input", function () { onDevizPiesaCodInput(this); });
+  row.querySelector(".dp-pret").addEventListener("input", function () { syncDevizPretFaraTva(this); });
   row.querySelector(".icon-btn.danger").onclick = () => row.remove();
   container.appendChild(row);
 }
@@ -3332,10 +3355,15 @@ function onDevizPiesaCodInput(input) {
   const curs = parseFloat(document.getElementById("d-curs-bnr").value) || 0;
   row.querySelector(".dp-denumire").value = match.denumire || "";
   const adaos = (typeof rzAdaosuri !== "undefined" && rzAdaosuri[match.marca]) || 0;
+  let pret = null;
   if (match.pret_eur && curs) {
-    row.querySelector(".dp-pret").value = (Number(match.pret_eur) * curs * 1.01 * (1 + adaos / 100)).toFixed(2);
+    pret = Number(match.pret_eur) * curs * 1.01 * (1 + adaos / 100);
   } else if (match.pret_ron) {
-    row.querySelector(".dp-pret").value = (Number(match.pret_ron) * (1 + adaos / 100)).toFixed(2);
+    pret = Number(match.pret_ron) * (1 + adaos / 100);
+  }
+  if (pret !== null) {
+    row.querySelector(".dp-pret").value = roFmtNum(pret);
+    syncDevizPretFaraTva(row.querySelector(".dp-pret"));
   }
 }
 
@@ -3377,8 +3405,106 @@ function collectDevizPiese() {
     cod_piesa: row.querySelector(".dp-cod").value.trim(),
     denumire: row.querySelector(".dp-denumire").value.trim(),
     cantitate: parseFloat(row.querySelector(".dp-cant").value) || 0,
-    pret_unitar: parseFloat(row.querySelector(".dp-pret").value) || 0,
+    pret_unitar: roParseNum(row.querySelector(".dp-pret").value) || 0,
   })).filter(l => l.denumire || l.cod_piesa);
+}
+
+// ---------- PIESE / MANOPERE UZUALE (catalog gestionabil, ca la vechiul deviz) ----------
+let currentPreturiUzuale = [];
+let presetUzualeTab = "piesa";
+async function loadPreturiUzuale() {
+  const { data, error } = await client.from("preturi_uzuale").select("*").order("nume");
+  if (!error) currentPreturiUzuale = data || [];
+}
+function renderPieseCatalogUzuale() {
+  const wrap = document.getElementById("deviz-piese-catalog-uzuale");
+  if (!wrap) return;
+  const items = currentPreturiUzuale.filter(p => p.tip === "piesa");
+  wrap.innerHTML = `<span class="muted" style="font-size:11px;display:inline-flex;align-items:center;gap:6px">🔩 Piese uzuale<button type="button" class="btn-secondary" style="padding:1px 7px;font-size:10.5px" onclick="openPreturiUzualeModal('piesa')">⚙️ Gestionează</button></span>` +
+    items.map(p => `<button type="button" class="btn-secondary" style="padding:3px 9px;font-size:11.5px" onclick="adaugaPiesaDinCatalogUzual(${JSON.stringify(p.id)})">${escapeHtml(p.nume)}${p.cod ? " — " + escapeHtml(p.cod) : ""} · ${roFmtNum(p.pret_cu_tva)} lei</button>`).join("");
+}
+function adaugaPiesaDinCatalogUzual(id) {
+  const p = currentPreturiUzuale.find(x => x.id === id);
+  if (!p) return;
+  addDevizPiesaRowEl({ cod_piesa: p.cod || "", denumire: p.nume, pret_unitar: p.pret_cu_tva });
+}
+function renderManoperaCatalogUzuale() {
+  const wrap = document.getElementById("deviz-manopera-catalog-uzuale");
+  if (!wrap) return;
+  const items = currentPreturiUzuale.filter(p => p.tip === "manopera");
+  wrap.innerHTML = `<span class="muted" style="font-size:11px;display:inline-flex;align-items:center;gap:6px">🔧 Manopere uzuale<button type="button" class="btn-secondary" style="padding:1px 7px;font-size:10.5px" onclick="openPreturiUzualeModal('manopera')">⚙️ Gestionează</button></span>` +
+    items.map(p => `<button type="button" class="btn-secondary" style="padding:3px 9px;font-size:11.5px" onclick="adaugaManoperaDinCatalogUzual(${JSON.stringify(p.id)})">${escapeHtml(p.nume)} · ${roFmtNum(p.pret_cu_tva)} lei</button>`).join("");
+}
+function adaugaManoperaDinCatalogUzual(id) {
+  const p = currentPreturiUzuale.find(x => x.id === id);
+  if (!p) return;
+  addDevizManoperaRowEl({ denumire: p.nume, pret_unitar: p.pret_cu_tva });
+}
+function openPreturiUzualeModal(tip) { presetUzualeTab = tip || "piesa"; renderPreturiUzualeModal(); }
+function switchPresetUzualeTab(tip) { presetUzualeTab = tip; renderPreturiUzualeModal(); }
+function renderPreturiUzualeModal() {
+  const canEdit = amAdmin();
+  const items = currentPreturiUzuale.filter(p => p.tip === presetUzualeTab).sort((a, b) => (a.nume || "").localeCompare(b.nume || ""));
+  const html = `<h3>⭐ Piese &amp; manopere uzuale</h3>
+    <div class="muted" style="font-size:12.5px">Apar ca butoane rapide în formularul de Deviz. Prețul e cu TVA — fără TVA se calculează automat.${canEdit ? "" : " Doar administratorul poate edita lista."}</div>
+    <div class="brand-toggle" style="margin:10px 0">
+      <button type="button" class="brand-opt" style="${presetUzualeTab === "piesa" ? "background:var(--accent);color:#fff" : ""}" onclick="switchPresetUzualeTab('piesa')">🔩 Piese</button>
+      <button type="button" class="brand-opt" style="${presetUzualeTab === "manopera" ? "background:var(--accent);color:#fff" : ""}" onclick="switchPresetUzualeTab('manopera')">🔧 Manoperă</button>
+    </div>
+    <div style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+      ${items.length ? items.map(p => canEdit ? `
+        <div class="rz-inline-row">
+          <input type="text" value="${escapeHtml(p.cod || "")}" placeholder="Cod" style="max-width:110px" onchange="savePreturiUzualeRow('${p.id}','cod',this.value)" />
+          <input type="text" value="${escapeHtml(p.nume)}" placeholder="Denumire" style="flex:1;min-width:140px" onchange="savePreturiUzualeRow('${p.id}','nume',this.value)" />
+          <input type="text" value="${roFmtNum(p.pret_cu_tva)}" placeholder="Preț cu TVA" style="max-width:100px" onchange="savePreturiUzualeRow('${p.id}','pret_cu_tva',this.value)" />
+          <span class="muted" style="font-size:11px;min-width:80px;white-space:nowrap">${roFmtNum(roPretFaraTva(p.pret_cu_tva))} fără TVA</span>
+          <button class="btn-secondary" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="stergePreturiUzualeRow('${p.id}')">🗑</button>
+        </div>` : `
+        <div class="rz-inline-row">
+          <span style="min-width:80px">${escapeHtml(p.cod || "—")}</span>
+          <span style="flex:1">${escapeHtml(p.nume)}</span>
+          <span>${roFmtNum(p.pret_cu_tva)} lei cu TVA · ${roFmtNum(roPretFaraTva(p.pret_cu_tva))} fără TVA</span>
+        </div>`).join("") : '<div class="muted" style="font-size:12.5px">Nimic adăugat încă.</div>'}
+    </div>
+    ${canEdit ? `<div class="rz-inline-row">
+      <input id="pu-nou-cod" placeholder="Cod (opțional)" style="max-width:110px" />
+      <input id="pu-nou-nume" placeholder="Denumire" style="flex:1;min-width:140px" />
+      <input id="pu-nou-pret" placeholder="Preț cu TVA" style="max-width:100px" />
+      <button class="btn-primary" onclick="adaugaPreturiUzualeRow()">+ Adaugă</button>
+    </div>` : ""}
+    <div class="modal-actions"><button class="btn-secondary" onclick="rzCloseModal()">Închide</button></div>`;
+  rzOpenModal(html);
+}
+async function adaugaPreturiUzualeRow() {
+  const cod = document.getElementById("pu-nou-cod").value.trim() || null;
+  const nume = document.getElementById("pu-nou-nume").value.trim();
+  const pret = roParseNum(document.getElementById("pu-nou-pret").value);
+  if (!nume || pret === null) { alert("Completează denumirea și prețul cu TVA."); return; }
+  const { error } = await client.from("preturi_uzuale").insert({ tip: presetUzualeTab, cod, nume, pret_cu_tva: pret });
+  if (error) { alert("Eroare: " + error.message); return; }
+  await loadPreturiUzuale();
+  renderPreturiUzualeModal();
+  renderPieseCatalogUzuale();
+  renderManoperaCatalogUzuale();
+}
+async function savePreturiUzualeRow(id, field, value) {
+  const payload = {};
+  payload[field] = field === "pret_cu_tva" ? roParseNum(value) : (value.trim() || null);
+  const { error } = await client.from("preturi_uzuale").update(payload).eq("id", id);
+  if (error) { alert("Eroare: " + error.message); return; }
+  await loadPreturiUzuale();
+  renderPreturiUzualeModal();
+  renderPieseCatalogUzuale();
+  renderManoperaCatalogUzuale();
+}
+async function stergePreturiUzualeRow(id) {
+  if (!confirm("Ștergi acest produs din lista uzuale?")) return;
+  const { error } = await client.from("preturi_uzuale").delete().eq("id", id);
+  if (error) { alert("Eroare: " + error.message); return; }
+  await loadPreturiUzuale();
+  renderPreturiUzualeModal();
+  renderPieseCatalogUzuale();
+  renderManoperaCatalogUzuale();
 }
 
 // ---------- LINII DEVIZ: MANOPERA ----------
@@ -3390,9 +3516,11 @@ function addDevizManoperaRowEl(l) {
   row.innerHTML = `
     <input class="dm-denumire" placeholder="Descriere operație" value="${escapeHtml(l.denumire || "")}" />
     <input class="dm-ore" type="number" step="0.5" min="0" value="${l.cantitate || 1}" />
-    <input class="dm-tarif" type="number" step="0.01" min="0" value="${l.pret_unitar || ""}" placeholder="Tarif/oră (RON)" />
+    <input class="dm-tarif" type="text" value="${l.pret_unitar ? roFmtNum(l.pret_unitar) : ""}" placeholder="Tarif/oră cu TVA" />
+    <input class="dm-tarif-fara" type="text" readonly value="${l.pret_unitar ? roFmtNum(roPretFaraTva(l.pret_unitar)) : ""}" placeholder="Tarif/oră fără TVA" />
     <button type="button" class="icon-btn danger">${ICON_CLOSE}</button>
   `;
+  row.querySelector(".dm-tarif").addEventListener("input", function () { syncDevizPretFaraTva(this); });
   row.querySelector(".icon-btn.danger").onclick = () => row.remove();
   container.appendChild(row);
 }
@@ -3409,7 +3537,7 @@ function collectDevizManopera() {
     tip: "manopera",
     denumire: row.querySelector(".dm-denumire").value.trim(),
     cantitate: parseFloat(row.querySelector(".dm-ore").value) || 0,
-    pret_unitar: parseFloat(row.querySelector(".dm-tarif").value) || 0,
+    pret_unitar: roParseNum(row.querySelector(".dm-tarif").value) || 0,
   })).filter(l => l.denumire);
 }
 
@@ -3559,7 +3687,9 @@ async function renderDevizFormFromTab(tab) {
   document.getElementById("d-notite").value = tab.notite || "";
   renderDevizPieseInputs(tab.piese || []);
   renderPieseUzualeChips();
+  renderPieseCatalogUzuale();
   renderDevizManoperaInputs(tab.manopera || []);
+  renderManoperaCatalogUzuale();
   const bannerEl = document.getElementById("deviz-booking-banner");
   if (tab.bookingInfo) { bannerEl.style.display = "block"; bannerEl.textContent = tab.bookingInfo; }
   else { bannerEl.style.display = "none"; bannerEl.textContent = ""; }
@@ -4194,6 +4324,8 @@ function renderSarcinaCard(t, opts) {
     actions += `<button type="button" class="btn-secondary" onclick="openCereAjutorModal('${t.id}')">🤝 Cere ajutor</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="openSarcinaModal('${t.id}')">✎ Editează</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="anuleazaSarcina('${t.id}')">✕ Anulează</button>`;
+  } else if (t.stare === "Rezolvat") {
+    actions += `<button type="button" class="btn-secondary" onclick="redeschideSarcina('${t.id}')">↩️ Redeschide</button>`;
   }
   actions += `<button type="button" class="btn-secondary" onclick="openObservatiiModal('${t.id}')">💬 Observații${nObs ? " (" + nObs + ")" : ""}</button>`;
   if (amAdmin()) actions += `<button type="button" class="btn-secondary" style="color:#b91c1c" onclick="stergeSarcina('${t.id}')">🗑 Șterge definitiv</button>`;
@@ -4438,6 +4570,15 @@ async function rezolvaSarcina(id) {
   await loadSarcini();
   if (typeof rzToast === "function") rzToast("Sarcină marcată ca rezolvată", "ok");
 }
+async function redeschideSarcina(id) {
+  if (!confirm("Redeschizi această sarcină? Revine la starea „De făcut”, în ziua de azi.")) return;
+  const { error } = await client.from("sarcini").update({
+    stare: "De făcut", data: todayISODate(), rezolvat_la: null, rezolvat_de: null, rezolvat_de_nume: null,
+  }).eq("id", id);
+  if (error) { alert("Eroare: " + error.message); return; }
+  await loadSarcini();
+  if (typeof rzToast === "function") rzToast("Sarcină redeschisă", "ok");
+}
 async function anuleazaSarcina(id) {
   if (!confirm("Anulezi această sarcină?")) return;
   const { error } = await client.from("sarcini").update({ stare: "Anulat" }).eq("id", id);
@@ -4512,12 +4653,12 @@ function openObservatiiModal(id) {
 function renderObservatiiModalContent(t) {
   const obs = (t.observatii || []).slice().sort((a, b) => (a.creat_la || "").localeCompare(b.creat_la || ""));
   const html = `<h3>💬 Observații — ${escapeHtml(t.nume)}</h3>
-    <div style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin:10px 0">
+    <div style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin:14px 0 10px">
       ${obs.length ? obs.map(o => `
         <div class="rz-hist-item" style="flex-direction:column;align-items:flex-start;gap:2px">
           <div style="font-size:13px">${escapeHtml(o.text)}</div>
           <div class="hist-meta">${escapeHtml(o.autor_nume || "—")} · ${formatDate(o.creat_la)}</div>
-        </div>`).join("") : '<div class="muted" style="font-size:12.5px">Nicio observație încă.</div>'}
+        </div>`).join("") : '<div class="muted" style="font-size:12.5px;margin-top:6px;padding:6px 0 2px">Nicio observație încă.</div>'}
     </div>
     <div class="field">
       <label>Adaugă observație</label>
@@ -4831,29 +4972,28 @@ function renderDaunaFisiereSections(d) {
   const potSterge = amAdmin() || canDo("perm_daune");
   wrap.innerHTML = DAUNE_FISIER_CATEGORII.filter(cat => cat.doarDaca(d)).map(cat => {
     const fisiere = (d.fisiere || []).filter(f => f.categorie === cat.key);
-    return `<div style="margin-bottom:12px">
-      <div style="font-size:12.5px;font-weight:700;margin-bottom:4px">${cat.label}</div>
-      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px">
+    return `<div class="dn-fisier-categorie">
+      <div class="dn-fc-label">${cat.label}</div>
+      <div style="display:flex;flex-direction:column">
         ${fisiere.length ? fisiere.map(f => `
-          <div style="display:flex;align-items:center;gap:8px;font-size:12.5px">
-            <span style="cursor:pointer;color:var(--accent);text-decoration:underline" onclick="deschideFisierDauna('${f.id}')">${escapeHtml(f.nume_fisier)}</span>
-            <span class="muted" style="font-size:11px">${escapeHtml(f.creat_de_nume || "")} · ${formatDate(f.creat_la)}</span>
+          <div class="dn-fisier-item">
+            <span style="cursor:pointer;color:var(--accent);text-decoration:underline;flex:1" onclick="deschideFisierDauna('${f.id}')">📎 ${escapeHtml(f.nume_fisier)}</span>
+            <span class="muted" style="font-size:11px;white-space:nowrap">${escapeHtml(f.creat_de_nume || "")} · ${formatDate(f.creat_la)}</span>
             ${potSterge ? `<button class="icon-btn danger" title="Șterge" onclick="stergeFisierDauna('${f.id}')">${ICON_CLOSE}</button>` : ""}
-          </div>`).join("") : '<div class="muted" style="font-size:11.5px">Niciun fișier încă.</div>'}
+          </div>`).join("") : '<div class="dn-fisier-empty">Niciun fișier încă.</div>'}
       </div>
-      <input type="file" multiple accept="image/*,application/pdf" onchange="uploadFisiereDauna('${d.id}','${cat.key}', this)" />
+      <input type="file" class="dn-file-input" multiple accept="image/*,application/pdf" onchange="uploadFisiereDauna('${d.id}','${cat.key}', this)" />
     </div>`;
   }).join("");
 }
 
-function openDauneModal(id) {
-  document.getElementById("dn-id").value = id || "";
-  document.getElementById("dn-fisiere-wrap").style.display = "none";
-  document.getElementById("dn-fisiere-hint").style.display = "block";
+async function openDauneModal(id) {
   document.getElementById("dn-actions-stanga").innerHTML = "";
   document.getElementById("dn-stare-bar").style.display = "none";
   document.getElementById("dn-stare-bar").innerHTML = "";
+  daunaDraftUnconfirmed = false;
   if (id) {
+    document.getElementById("dn-id").value = id;
     const d = currentDaune.find(x => x.id === id);
     if (!d) return;
     document.getElementById("dauna-modal-title").textContent = "Editează dosar daună";
@@ -4876,17 +5016,59 @@ function openDauneModal(id) {
     renderDaunaFisiereSections(d);
     document.getElementById("dn-fisiere-wrap").style.display = "block";
     document.getElementById("dn-fisiere-hint").style.display = "none";
+    document.getElementById("dauna-modal-overlay").classList.add("open");
   } else {
     document.getElementById("dauna-modal-title").textContent = "Dosar daună nou";
+    document.getElementById("dn-id").value = "";
     ["dn-nume", "dn-prenume", "dn-telefon", "dn-email", "dn-numar-dosar", "dn-vin", "dn-marca", "dn-model", "dn-numar-inmatriculare", "dn-km", "dn-data-incident"].forEach(fid => document.getElementById(fid).value = "");
     document.getElementById("dn-data-dosar").value = todayISODate();
     document.getElementById("dn-constatare").checked = false;
     document.getElementById("dn-reconstatare").checked = false;
     selectDaunaTip("fizica");
+    document.getElementById("dn-fisiere-wrap").style.display = "none";
+    document.getElementById("dn-fisiere-hint").textContent = "Se pregătește dosarul...";
+    document.getElementById("dn-fisiere-hint").style.display = "block";
+    document.getElementById("dauna-modal-overlay").classList.add("open");
+
+    // Creăm imediat un dosar-schiță (fără să cerem încă numele clientului), ca secțiunea
+    // de fișiere (poze/notă/deviz) să fie disponibilă de la început, nu doar după Salvează.
+    // Dacă închizi modalul fără să completezi nimic și fără să încarci fișiere, schița
+    // se șterge automat — nu rămân dosare goale în listă.
+    const payload = {
+      tip_client: "fizica", client_nume: "", stare: "Etapa 1",
+      data_dosar: todayISODate(),
+      creat_de: currentProfile.id, creat_de_nume: currentProfile.nume,
+      punct_lucru_id: getMyCreateLocationId(),
+    };
+    if (pendingDaunaDevizLink) payload.deviz_id = pendingDaunaDevizLink;
+    const { data, error } = await client.from("daune").insert(payload).select().single();
+    if (error) {
+      document.getElementById("dn-fisiere-hint").textContent = "Nu s-au putut pregăti fișierele: " + error.message + " — le poți încărca după ce salvezi dosarul.";
+      return;
+    }
+    daunaDraftUnconfirmed = true;
+    document.getElementById("dn-id").value = data.id;
+    await loadDaune();
+    const d = currentDaune.find(x => x.id === data.id);
+    if (d) renderDaunaFisiereSections(d);
+    document.getElementById("dn-fisiere-wrap").style.display = "block";
+    document.getElementById("dn-fisiere-hint").style.display = "none";
   }
-  document.getElementById("dauna-modal-overlay").classList.add("open");
 }
-function closeDaunaModal() { document.getElementById("dauna-modal-overlay").classList.remove("open"); pendingDaunaDevizLink = null; }
+async function closeDaunaModal() {
+  document.getElementById("dauna-modal-overlay").classList.remove("open");
+  const id = document.getElementById("dn-id").value;
+  pendingDaunaDevizLink = null;
+  if (daunaDraftUnconfirmed && id) {
+    const d = currentDaune.find(x => x.id === id);
+    const areFisiere = d && (d.fisiere || []).length > 0;
+    if (!areFisiere) {
+      await client.from("daune").delete().eq("id", id);
+      await loadDaune();
+    }
+  }
+  daunaDraftUnconfirmed = false;
+}
 
 function onDaunaBifeChanged() {
   const id = document.getElementById("dn-id").value;
@@ -4918,28 +5100,32 @@ async function saveDauna() {
     reconstatare: document.getElementById("dn-reconstatare").checked,
   };
 
-  let error, newId = null;
+  let error;
   if (id) {
     ({ error } = await client.from("daune").update(payload).eq("id", id));
   } else {
+    // caz de rezerva — in mod normal dosarul-schita e deja creat la deschiderea modalului
     payload.creat_de = currentProfile.id;
     payload.creat_de_nume = currentProfile.nume;
     payload.punct_lucru_id = getMyCreateLocationId();
     if (pendingDaunaDevizLink) payload.deviz_id = pendingDaunaDevizLink;
     const res = await client.from("daune").insert(payload).select().single();
     error = res.error;
-    if (!error) newId = res.data.id;
+    if (!error) document.getElementById("dn-id").value = res.data.id;
   }
   if (error) { alert("Eroare la salvare: " + error.message); return; }
   pendingDaunaDevizLink = null;
+  daunaDraftUnconfirmed = false;
   await loadDaune();
   if (typeof rzToast === "function") rzToast("Dosar salvat", "ok");
-  if (newId) {
-    // dosar tocmai creat: ramanem in modul editare, ca sa se poata incarca imediat fisiere
-    openDauneModal(newId);
-  } else if (id) {
-    const d = currentDaune.find(x => x.id === id);
-    if (d) { renderDaunaStareBar(d); renderDaunaFisiereSections(d); }
+  const savedId = document.getElementById("dn-id").value;
+  const d = currentDaune.find(x => x.id === savedId);
+  if (d) {
+    document.getElementById("dauna-modal-title").textContent = "Editează dosar daună";
+    renderDaunaStareBar(d);
+    renderDaunaFisiereSections(d);
+    document.getElementById("dn-fisiere-wrap").style.display = "block";
+    document.getElementById("dn-fisiere-hint").style.display = "none";
   }
 }
 
@@ -5076,12 +5262,12 @@ function openObservatiiDauna(id) {
 function renderObservatiiDaunaModalContent(d) {
   const obs = (d.observatii || []).slice().sort((a, b) => (a.creat_la || "").localeCompare(b.creat_la || ""));
   const html = `<h3>💬 Observații — ${escapeHtml(dauneClientLabel(d))}</h3>
-    <div style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin:10px 0">
+    <div style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin:14px 0 10px">
       ${obs.length ? obs.map(o => `
         <div class="rz-hist-item" style="flex-direction:column;align-items:flex-start;gap:2px">
           <div style="font-size:13px">${escapeHtml(o.text)}</div>
           <div class="hist-meta">${escapeHtml(o.autor_nume || "—")} · ${formatDate(o.creat_la)}</div>
-        </div>`).join("") : '<div class="muted" style="font-size:12.5px">Nicio observație încă.</div>'}
+        </div>`).join("") : '<div class="muted" style="font-size:12.5px;margin-top:6px;padding:6px 0 2px">Nicio observație încă.</div>'}
     </div>
     <div class="field">
       <label>Adaugă observație</label>
@@ -7008,7 +7194,7 @@ function renderUseriRoluriModal() {
     <div class="muted" style="font-size:12.5px;margin-bottom:8px">Contul de administrator (acces total) este mereu doar <b>covoran.andrei@gmail.com</b> — nu se mai poate acorda altui cont. Pentru oricine altcineva, cel mai mult acces posibil e un rol de permisiuni cu toate bifele puse (poți crea unul numit „Manager" mai sus, la „Roluri").</div>
     <div style="overflow-x:auto">
       <table class="roluri-table">
-        <thead><tr><th>Nume</th><th>Punct de lucru</th><th>Cont</th><th>Rol permisiuni</th><th>Activ</th></tr></thead>
+        <thead><tr><th>Nume</th><th>Punct de lucru</th><th>Cont</th><th>Rol permisiuni</th><th>Activ</th><th></th></tr></thead>
         <tbody>
           ${allProfiles.map(p => `
             <tr>
@@ -7031,11 +7217,15 @@ function renderUseriRoluriModal() {
                 ${p.rol === "admin" ? '<span class="muted" style="font-size:11.5px">—</span>' : `
                   <input type="checkbox" ${p.activ !== false ? "checked" : ""} onchange="toggleUserActiv('${p.id}', this.checked)" style="width:16px;height:16px" />`}
               </td>
+              <td>
+                ${p.rol === "admin" ? "" : `<button class="btn-secondary" style="padding:4px 9px;font-size:11.5px;color:#b91c1c" onclick="stergeUserDefinitiv('${p.id}', ${JSON.stringify(p.nume)})">🗑 Șterge</button>`}
+              </td>
             </tr>
           `).join("")}
         </tbody>
       </table>
     </div>
+    <div class="muted" style="font-size:11.5px;margin-top:6px">„🗑 Șterge” elimină definitiv contul (autentificare + profil) — nu poate fi anulat. Pentru o pauză temporară, folosește caseta „Activ”.</div>
 
     <div class="export-section-label" style="margin-top:16px">➕ Adaugă angajat nou</div>
     <div class="muted" style="font-size:12.5px;margin-bottom:8px">Creează direct de aici contul de autentificare și profilul angajatului — nu mai trebuie să faci nimic manual în Supabase.</div>
@@ -7061,6 +7251,16 @@ function renderUseriRoluriModal() {
   rzOpenModal(html);
 }
 
+// Trimite explicit tokenul de sesiune curent la Edge Function — nu ne bazăm doar
+// pe atașarea automată din supabase-js, ca să evităm eroarea "Lipsește
+// autentificarea" dacă din vreun motiv sesiunea nu e încă atașată automat.
+async function invokeAdminUsers(body) {
+  const { data: sessionData } = await client.auth.getSession();
+  const accessToken = sessionData && sessionData.session && sessionData.session.access_token;
+  if (!accessToken) return { data: null, error: { message: "Nu ești autentificat — reîncarcă pagina și loghează-te din nou." } };
+  return client.functions.invoke("admin-users", { body, headers: { Authorization: `Bearer ${accessToken}` } });
+}
+
 async function creeazaAngajatNou() {
   const nume = document.getElementById("au-nume").value.trim();
   const email = document.getElementById("au-email").value.trim();
@@ -7068,9 +7268,7 @@ async function creeazaAngajatNou() {
   const punctLucruId = document.getElementById("au-punct-lucru").value || null;
   const rolId = document.getElementById("au-rol").value || null;
   if (!nume || !email || !parola) { alert("Completează nume, email și parolă."); return; }
-  const { data, error } = await client.functions.invoke("admin-users", {
-    body: { action: "create", nume, email, password: parola, punct_lucru_id: punctLucruId, rol_id: rolId },
-  });
+  const { data, error } = await invokeAdminUsers({ action: "create", nume, email, password: parola, punct_lucru_id: punctLucruId, rol_id: rolId });
   const rezultat = data || {};
   if (error || !rezultat.ok) { alert("Eroare la crearea contului: " + (rezultat.error || (error && error.message) || "eroare necunoscută")); return; }
   await loadAllProfiles();
@@ -7084,12 +7282,22 @@ async function toggleUserActiv(userId, activ) {
     renderUseriRoluriModal();
     return;
   }
-  const { data, error } = await client.functions.invoke("admin-users", { body: { action: "setActive", user_id: userId, activ } });
+  const { data, error } = await invokeAdminUsers({ action: "setActive", user_id: userId, activ });
   const rezultat = data || {};
   if (error || !rezultat.ok) { alert("Eroare: " + (rezultat.error || (error && error.message) || "eroare necunoscută")); await loadAllProfiles(); renderUseriRoluriModal(); return; }
   await loadAllProfiles();
   renderUseriRoluriModal();
   if (typeof rzToast === "function") rzToast(activ ? "Cont activat" : "Cont dezactivat", "ok");
+}
+
+async function stergeUserDefinitiv(userId, nume) {
+  if (!confirm(`Ștergi DEFINITIV contul lui „${nume}”? Autentificarea, profilul și toate asignările lui vor dispărea. Acțiunea nu poate fi anulată — dacă vrei doar să-i blochezi accesul temporar, folosește în schimb caseta „Activ”.`)) return;
+  const { data, error } = await invokeAdminUsers({ action: "delete", user_id: userId });
+  const rezultat = data || {};
+  if (error || !rezultat.ok) { alert("Eroare la ștergere: " + (rezultat.error || (error && error.message) || "eroare necunoscută")); return; }
+  await loadAllProfiles();
+  renderUseriRoluriModal();
+  if (typeof rzToast === "function") rzToast("Cont șters definitiv", "ok");
 }
 
 async function saveRolRow(rolId) {
