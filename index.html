@@ -4160,7 +4160,10 @@ async function rezolvaSarcina(id) {
   const t = currentSarcini.find(x => x.id === id);
   if (!t) return;
   if (!confirm("Marchezi această sarcină ca rezolvată?")) return;
-  const payload = { stare: "Rezolvat", rezolvat_la: new Date().toISOString(), rezolvat_de: currentProfile.id, rezolvat_de_nume: currentProfile.nume };
+  // data sarcinii devine ziua rezolvării (nu ziua originală la care fusese programată) —
+  // altfel o sarcină restantă, mutată automat pe ziua curentă și rezolvată azi, ar "sări"
+  // înapoi pe ziua ei veche în listă, de îndată ce nu mai e "De făcut"
+  const payload = { stare: "Rezolvat", data: todayISODate(), rezolvat_la: new Date().toISOString(), rezolvat_de: currentProfile.id, rezolvat_de_nume: currentProfile.nume };
   const { error } = await client.from("sarcini").update(payload).eq("id", id);
   if (error) { alert("Eroare: " + error.message); return; }
   if (t.notifica_la_rezolvare && t.notifica_la_rezolvare !== currentProfile.id) {
