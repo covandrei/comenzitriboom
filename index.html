@@ -525,6 +525,7 @@
       <button class="tab-btn" id="tab-receptie" onclick="switchTab('receptie')">Recepție &amp; Inventar</button>
       <button class="tab-btn" id="tab-sarcini" onclick="switchTab('sarcini')">🗒️ Sarcini</button>
       <button class="tab-btn" id="tab-garantii" onclick="switchTab('garantii')">🛡️ Garanții</button>
+      <button class="tab-btn" id="tab-daune" onclick="switchTab('daune')">🚗 Daune</button>
     </div>
 
     <div class="subtabs open" id="subtabs-comenzi">
@@ -757,6 +758,52 @@
       </div>
     </div>
 
+    <!-- ===== VIEW DAUNE (dosare de constatare/reconstatare) ===== -->
+    <div id="daune-view" style="display:none;">
+      <div class="toolbar">
+        <div class="filters">
+          <input type="text" id="dn-cautare" placeholder="Caută după nume, VIN, nr. înmatriculare sau nr. dosar..." oninput="renderDauneTable()" style="min-width:260px" />
+          <select id="dn-filtru-stare" onchange="renderDauneTable()">
+            <option value="">Toate stările</option>
+            <option value="Etapa 1">Etapa 1 — colectare date</option>
+            <option value="Predat">Predat spre finalizare</option>
+            <option value="Finalizat">Finalizat</option>
+            <option value="Anulat">Anulat</option>
+          </select>
+          <select id="dn-filtru-implicat" onchange="renderDauneTable()">
+            <option value="">Toate dosarele</option>
+            <option value="mine">Doar dosarele mele (create sau predate mie)</option>
+          </select>
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn-secondary" onclick="exportDauneExcel()">Exportă Excel</button>
+          <button class="btn-primary" onclick="openDauneModal()">+ Dosar nou</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Tip</th>
+              <th>VIN / Nr. înmatriculare</th>
+              <th>Nr. dosar</th>
+              <th>Data dosar</th>
+              <th>C / R</th>
+              <th>Stare</th>
+              <th>Creat de</th>
+              <th>Predat către</th>
+              <th>Acțiuni</th>
+            </tr>
+          </thead>
+          <tbody id="daune-table-body">
+            <tr class="empty-row"><td colspan="10">Se încarcă...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- ===== VIEW DEVIZE ===== -->
     <div id="devize-view" style="display:none;">
       <div class="toolbar">
@@ -785,7 +832,10 @@
 
           <div class="field span-2">
             <label>Client *</label>
-            <input list="clienti-datalist" id="d-client-search" placeholder="Caută după nume..." oninput="onClientSearchInput()" autocomplete="off" />
+            <div style="display:flex;gap:8px;align-items:center">
+              <input list="clienti-datalist" id="d-client-search" placeholder="Caută după nume..." oninput="onClientSearchInput()" autocomplete="off" style="flex:1" />
+              <button type="button" class="btn-secondary" onclick="deschideClientNouDinDeviz()">+ Client nou</button>
+            </div>
             <input type="hidden" id="d-client-id" />
           </div>
           <div class="client-history-box" id="deviz-client-history">
@@ -794,7 +844,8 @@
           </div>
           <div class="field span-2">
             <label>Motocicletă</label>
-            <select id="d-moto-id"><option value="">— fără motocicletă —</option></select>
+            <select id="d-moto-id" onchange="onDevizMotoChanged()"><option value="">— fără motocicletă —</option></select>
+            <div class="muted" id="deviz-moto-detalii" style="font-size:11.5px;margin-top:4px;display:none"></div>
           </div>
           <div class="field">
             <label>Mecanic</label>
@@ -819,6 +870,7 @@
 
           <div class="piese-section">
             <label>Piese</label>
+            <div id="deviz-piese-uzuale" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
             <div id="deviz-piese-list"></div>
             <button type="button" class="btn-secondary" onclick="addDevizPiesaRow()">+ Adaugă piesă</button>
           </div>
@@ -882,13 +934,15 @@
               <th>Marcă</th>
               <th>Cod piesă</th>
               <th>Denumire</th>
+              <th>Preț EUR cu TVA</th>
+              <th>Preț EUR fără TVA</th>
               <th>Preț cu TVA</th>
               <th>Preț fără TVA</th>
               <th>Actualizat</th>
             </tr>
           </thead>
           <tbody id="catalog-table-body">
-            <tr class="empty-row"><td colspan="6">Se încarcă...</td></tr>
+            <tr class="empty-row"><td colspan="8">Se încarcă...</td></tr>
           </tbody>
         </table>
       </div>
@@ -1284,7 +1338,7 @@
     <div class="modal-grid">
       <div class="field">
         <label>Cod garanție</label>
-        <input id="g-cod" placeholder="ex: GAR-2026-001" />
+        <input id="g-cod" placeholder="ex: 123 sau 1234 (doar cifrele, restul seriei se adaugă automat)" />
       </div>
       <div class="field">
         <label>VIN (serie șasiu)</label>
@@ -1338,6 +1392,58 @@
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeGarantieModal()">Anulează</button>
       <button class="btn-primary" onclick="saveGarantie()">Salvează</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL DAUNĂ (dosar constatare/reconstatare) ============ -->
+<div class="modal-overlay" id="dauna-modal-overlay">
+  <div class="modal wide">
+    <h2 id="dauna-modal-title">Dosar daună nou</h2>
+    <input type="hidden" id="dn-id" />
+    <div id="dn-stare-bar" style="display:none;margin-bottom:10px"></div>
+    <div class="field span-2">
+      <label>Tip client</label>
+      <div class="brand-toggle" id="dauna-tip-toggle">
+        <button type="button" class="brand-opt" data-tip="fizica" onclick="selectDaunaTip('fizica')">Persoană fizică</button>
+        <button type="button" class="brand-opt" data-tip="juridica" onclick="selectDaunaTip('juridica')">Persoană juridică</button>
+      </div>
+    </div>
+    <div class="modal-grid">
+      <div class="field"><label id="lbl-dn-nume">Nume *</label><input id="dn-nume" /></div>
+      <div class="field" id="wrap-dn-prenume"><label>Prenume</label><input id="dn-prenume" /></div>
+      <div class="field"><label>Telefon</label><input id="dn-telefon" /></div>
+      <div class="field"><label>Email</label><input type="email" id="dn-email" /></div>
+      <div class="field"><label>Data Dosar Daună</label><input type="date" id="dn-data-dosar" /></div>
+      <div class="field"><label>Data Incident</label><input type="date" id="dn-data-incident" /></div>
+      <div class="field"><label>Număr Dosar Daună</label><input id="dn-numar-dosar" /></div>
+      <div class="field"><label>Serie de șasiu (VIN)</label><input id="dn-vin" /></div>
+      <div class="field"><label>Marcă</label><input id="dn-marca" /></div>
+      <div class="field"><label>Model</label><input id="dn-model" /></div>
+      <div class="field"><label>Număr de înmatriculare</label><input id="dn-numar-inmatriculare" /></div>
+      <div class="field"><label>Număr de kilometri</label><input type="number" min="0" id="dn-km" /></div>
+      <div class="field span-2">
+        <label style="display:flex;gap:18px;align-items:center">
+          <span style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="dn-constatare" onchange="onDaunaBifeChanged()" style="width:16px;height:16px" /> Constatare</span>
+          <span style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="dn-reconstatare" onchange="onDaunaBifeChanged()" style="width:16px;height:16px" /> Reconstatare</span>
+        </label>
+      </div>
+    </div>
+
+    <div id="dn-fisiere-wrap" style="margin-top:14px;display:none">
+      <div class="piese-section">
+        <label>Fișiere dosar</label>
+        <div id="dn-fisiere-categorii"></div>
+      </div>
+    </div>
+    <div id="dn-fisiere-hint" class="muted" style="font-size:12px;margin-top:8px">Salvează mai întâi dosarul (buton „Salvează" mai jos) — după aceea poți încărca poze, Nota de Constatare și devizul.</div>
+
+    <div class="modal-actions" style="justify-content:space-between">
+      <div id="dn-actions-stanga" style="display:flex;gap:8px"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-secondary" onclick="closeDaunaModal()">Închide</button>
+        <button class="btn-primary" onclick="saveDauna()">Salvează</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1445,6 +1551,7 @@ let pendingDelete = null;
 let pendingClientPayload = null;
 let pendingClientId = null;
 let pendingClientMotos = null;
+let pendingClientSelectForDeviz = false; // clientul nou creat din "+ Client nou" (in Deviz) se selecteaza automat inapoi in deviz
 
 let currentDevize = [];
 let currentMecanici = [];
@@ -1489,6 +1596,21 @@ const GARANTII_STATUS_STYLE = {
   "Clientul nu răspunde": { bg: "#fee2e2", color: "#991b1b" },
   "Alt Status": { bg: "#f1f5f9", color: "#475569" },
 };
+let currentDaune = [];
+let selectedDaunaTip = "fizica";
+let pendingDaunaDevizLink = null; // id-ul devizului de legat la urmatorul dosar nou creat, via "Trimite la Daune"
+const DAUNE_STARE_STYLE = {
+  "Etapa 1": { bg: "#e0f2fe", color: "#075985" },
+  "Predat": { bg: "#ffedd5", color: "#9a3412" },
+  "Finalizat": { bg: "#dcfce7", color: "#166534" },
+  "Anulat": { bg: "#fee2e2", color: "#991b1b" },
+};
+const DAUNE_FISIER_CATEGORII = [
+  { key: "foto_constatare", label: "📷 Poze Constatare", doarDaca: d => !!d.constatare },
+  { key: "foto_reconstatare", label: "📷 Poze Reconstatare", doarDaca: d => !!d.reconstatare },
+  { key: "nota_constatare", label: "📄 Notă de Constatare (de la asigurator)", doarDaca: () => true },
+  { key: "deviz", label: "📄 Deviz", doarDaca: () => true },
+];
 let sarciniFiltruAtribuit = "";
 const PRIORITATE_RANK = { "Urgentă": 0, "Ridicată": 1, "Normală": 2, "Scăzută": 3 };
 const PRIORITATE_BADGE = {
@@ -1530,23 +1652,23 @@ function canDo(perm) {
 }
 async function loadMyPermissions() {
   if (currentProfile.rol === "admin") {
-    currentPermissions = { perm_comenzi: true, perm_devize: true, perm_receptie: true, perm_piese_comandat: true, perm_clienti: true, perm_programator: true, perm_sarcini: true, perm_garantii: true };
+    currentPermissions = { perm_comenzi: true, perm_devize: true, perm_receptie: true, perm_piese_comandat: true, perm_clienti: true, perm_programator: true, perm_sarcini: true, perm_garantii: true, perm_daune: true };
     return;
   }
   if (!currentProfile.rol_id) {
-    currentPermissions = { perm_comenzi: false, perm_devize: false, perm_receptie: false, perm_piese_comandat: false, perm_clienti: false, perm_programator: false, perm_sarcini: false, perm_garantii: false };
+    currentPermissions = { perm_comenzi: false, perm_devize: false, perm_receptie: false, perm_piese_comandat: false, perm_clienti: false, perm_programator: false, perm_sarcini: false, perm_garantii: false, perm_daune: false };
     return;
   }
   const { data, error } = await client.from("roluri").select("*").eq("id", currentProfile.rol_id).single();
   if (error || !data) {
-    currentPermissions = { perm_comenzi: false, perm_devize: false, perm_receptie: false, perm_piese_comandat: false, perm_clienti: false, perm_programator: false, perm_sarcini: false, perm_garantii: false };
+    currentPermissions = { perm_comenzi: false, perm_devize: false, perm_receptie: false, perm_piese_comandat: false, perm_clienti: false, perm_programator: false, perm_sarcini: false, perm_garantii: false, perm_daune: false };
     return;
   }
   currentPermissions = data;
 }
 function applyPermissionsToUI() {
   const isAdmin = currentProfile.rol === "admin";
-  document.getElementById("btn-useri-roluri").style.display = isAdmin ? "inline-flex" : "none";
+  document.getElementById("btn-useri-roluri").style.display = isSuperAdminEmail() ? "inline-flex" : "none";
   document.getElementById("prog-import-istoric-bar").style.display = isAdmin ? "block" : "none";
   document.getElementById("tab-group-comenzi").style.display = canDo("perm_comenzi") ? "" : "none";
   document.getElementById("tab-programator").style.display = canDo("perm_programator") ? "" : "none";
@@ -1555,6 +1677,7 @@ function applyPermissionsToUI() {
   document.getElementById("tab-piese-comandat").style.display = (canDo("perm_comenzi") || canDo("perm_piese_comandat")) ? "" : "none";
   document.getElementById("tab-sarcini").style.display = canDo("perm_sarcini") ? "" : "none";
   document.getElementById("tab-garantii").style.display = canDo("perm_garantii") ? "" : "none";
+  document.getElementById("tab-daune").style.display = canDo("perm_daune") ? "" : "none";
   // daca tabul activ nu mai e permis, mergem pe primul tab disponibil
   const tabDisponibil =
     canDo("perm_comenzi") ? "toate" :
@@ -1564,6 +1687,7 @@ function applyPermissionsToUI() {
     canDo("perm_receptie") ? "receptie" :
     canDo("perm_sarcini") ? "sarcini" :
     canDo("perm_garantii") ? "garantii" :
+    canDo("perm_daune") ? "daune" :
     (canDo("perm_comenzi") || canDo("perm_piese_comandat")) ? "piese-comandat" : "clienti";
   if ((activeTab === "toate" || activeTab === "termene") && !canDo("perm_comenzi")) switchTab(tabDisponibil);
   else if (activeTab === "programator" && !canDo("perm_programator")) switchTab(tabDisponibil);
@@ -1572,6 +1696,7 @@ function applyPermissionsToUI() {
   else if (activeTab === "piese-comandat" && !canDo("perm_comenzi") && !canDo("perm_piese_comandat")) switchTab(tabDisponibil);
   else if (activeTab === "sarcini" && !canDo("perm_sarcini")) switchTab(tabDisponibil);
   else if (activeTab === "garantii" && !canDo("perm_garantii")) switchTab(tabDisponibil);
+  else if (activeTab === "daune" && !canDo("perm_daune")) switchTab(tabDisponibil);
 }
 
 // ---------- PUNCTE DE LUCRU (locații firmă, mai multe orașe) ----------
@@ -1775,14 +1900,19 @@ async function afterLogin() {
   const { data: profile, error } = await client.from("profiles").select("*").eq("id", user.id).single();
   if (error || !profile) {
     document.getElementById("error-msg").textContent =
-      "Contul nu are un profil configurat (brand/nume). Cere administratorului să te adauge în tabelul 'profiles'.";
+      "Contul nu are un profil configurat. Cere administratorului să te adauge.";
+    return;
+  }
+  if (profile.activ === false) {
+    document.getElementById("error-msg").textContent = "Acest cont a fost dezactivat. Cere administratorului să îl reactiveze.";
+    await client.auth.signOut();
     return;
   }
 
   currentProfile = profile;
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("app-screen").style.display = "block";
-  document.getElementById("user-info").textContent = profile.nume + " (" + profile.brand + (profile.rol === "admin" ? ", admin" : "") + ")";
+  document.getElementById("user-info").textContent = profile.nume + (profile.rol === "admin" ? " (admin)" : "");
 
   populateStareComandaOptions();
   await loadMyPermissions();
@@ -1821,6 +1951,7 @@ function switchTab(tab) {
   document.getElementById("tab-receptie").classList.toggle("active", tab === "receptie");
   document.getElementById("tab-sarcini").classList.toggle("active", tab === "sarcini");
   document.getElementById("tab-garantii").classList.toggle("active", tab === "garantii");
+  document.getElementById("tab-daune").classList.toggle("active", tab === "daune");
 
   document.getElementById("tab-toate").classList.toggle("active", tab === "toate");
   document.getElementById("tab-termene").classList.toggle("active", tab === "termene");
@@ -1843,6 +1974,7 @@ function switchTab(tab) {
   document.getElementById("piese-comandat-view").style.display = (tab === "piese-comandat") ? "block" : "none";
   document.getElementById("sarcini-view").style.display = (tab === "sarcini") ? "block" : "none";
   document.getElementById("garantii-view").style.display = (tab === "garantii") ? "block" : "none";
+  document.getElementById("daune-view").style.display = (tab === "daune") ? "block" : "none";
   document.getElementById("filter-creat-de").style.display = (tab === "termene") ? "inline-block" : "none";
 
   if (tab === "clienti") loadClients();
@@ -1853,6 +1985,7 @@ function switchTab(tab) {
   else if (tab === "piese-comandat") renderPieseComandat();
   else if (tab === "sarcini") initSarciniViewIfNeeded();
   else if (tab === "garantii") loadGarantii();
+  else if (tab === "daune") loadDaune();
   else renderTable();
 }
 
@@ -2299,7 +2432,7 @@ function collectPieseInputs() {
 
 function populateAtribuitSelect(selectedId) {
   const sel = document.getElementById("f-atribuit-catre");
-  const colegi = allProfiles.filter(p => p.id !== (currentProfile && currentProfile.id));
+  const colegi = allProfiles.filter(p => p.id !== (currentProfile && currentProfile.id) && p.activ !== false);
   sel.innerHTML = '<option value="">— niciunul —</option>' + colegi.map(p => `<option value="${p.id}" data-nume="${escapeHtml(p.nume)}">${escapeHtml(p.nume)} (${escapeHtml(p.brand)})</option>`).join("");
   sel.value = selectedId || "";
 }
@@ -2577,7 +2710,7 @@ function updateTrimiteColegButton() {
 }
 
 async function loadAllProfiles() {
-  const { data, error } = await client.from("profiles").select("id,nume,brand,rol,rol_id,punct_lucru_id").order("nume");
+  const { data, error } = await client.from("profiles").select("id,nume,rol,rol_id,punct_lucru_id,activ").order("nume");
   if (error) { console.error(error); return; }
   allProfiles = data || [];
 }
@@ -2585,7 +2718,7 @@ async function loadAllProfiles() {
 async function openTrimiteColegModal() {
   if (!selectedOrderIds.size) { alert("Selectează cel puțin o comandă din tabel."); return; }
   await loadAllProfiles();
-  const colegi = allProfiles.filter(p => p.id !== currentProfile.id);
+  const colegi = allProfiles.filter(p => p.id !== currentProfile.id && p.activ !== false);
   if (!colegi.length) { alert("Nu există alți angajați înregistrați în profiles."); return; }
   const ids = [...selectedOrderIds];
   const comenziSel = currentOrders.filter(o => ids.includes(o.id));
@@ -2654,7 +2787,7 @@ function subscribeNotifRealtime() {
 
 async function openNotifPanel() {
   const { data, error } = await client.from("notificari")
-    .select("*, comenzi(id,brand,client_nume,client_prenume,stare_comanda,termen_livrare), sarcini(id,nume,stare)")
+    .select("*, comenzi(id,brand,client_nume,client_prenume,stare_comanda,termen_livrare), sarcini(id,nume,stare), daune(id,client_nume,client_prenume,stare)")
     .eq("destinatar_id", currentProfile.id)
     .order("creat_la", { ascending: false })
     .limit(100);
@@ -2677,6 +2810,7 @@ function renderNotifPanel() {
     currentNotifications.forEach(n => {
       const c = n.comenzi;
       const sarc = n.sarcini;
+      const dn = n.daune;
       html += `<div class="rz-hist-item" style="align-items:flex-start;flex-direction:column;gap:8px">
         <div style="width:100%;display:flex;justify-content:space-between;gap:8px">
           <div style="font-size:13px">${escapeHtml(n.mesaj)}</div>
@@ -2693,6 +2827,11 @@ function renderNotifPanel() {
           <span style="font-size:12.5px">${escapeHtml(sarc.nume)}</span>
           <button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="deschideSarcinaDinNotificare('${sarc.id}')">Deschide sarcina</button>
         </div>` : `<div class="hist-meta" style="font-style:italic">Sarcina a fost ștearsă între timp.</div>`) : ""}
+        ${n.dauna_id ? (dn ? `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span class="badge" style="background:${(DAUNE_STARE_STYLE[dn.stare] || {}).bg || "#eef0f4"};color:${(DAUNE_STARE_STYLE[dn.stare] || {}).color || "var(--muted)"}">${escapeHtml(dn.stare)}</span>
+          <span style="font-size:12.5px">${escapeHtml(dn.client_nume)} ${escapeHtml(dn.client_prenume || "")}</span>
+          <button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="deschideDaunaDinNotificare('${dn.id}')">Deschide dosarul</button>
+        </div>` : `<div class="hist-meta" style="font-style:italic">Dosarul a fost șters între timp.</div>`) : ""}
         <button class="icon-btn danger" style="align-self:flex-end" onclick="deleteNotif('${n.id}')" title="Șterge notificarea">${ICON_CLOSE}</button>
       </div>`;
     });
@@ -2820,6 +2959,16 @@ function openClientModal(id) {
 }
 function closeClientModal() { document.getElementById("client-modal-overlay").classList.remove("open"); }
 
+// deschide formularul obisnuit de Client nou, direct din Deviz — la salvare,
+// noul client (si prima lui motocicleta, daca a fost adaugata) se selecteaza
+// automat inapoi in devizul curent, ca sa nu mai fie nevoie sa il cauti manual
+function deschideClientNouDinDeviz() {
+  pendingClientSelectForDeviz = true;
+  const numeTastat = (document.getElementById("d-client-search").value || "").trim();
+  openClientModal();
+  if (numeTastat) document.getElementById("c-nume").value = numeTastat;
+}
+
 async function checkDuplicateClient(nume, prenume, excludeId) {
   const { data } = await client.from("clienti").select("*").ilike("nume", nume).ilike("prenume", prenume);
   return (data || []).filter(d => d.id !== excludeId);
@@ -2896,6 +3045,20 @@ async function persistClient(payload, id, motos) {
 
   closeClientModal();
   await loadClients();
+
+  if (pendingClientSelectForDeviz && clientId) {
+    pendingClientSelectForDeviz = false;
+    const newCli = currentClients.find(c => c.id === clientId);
+    if (newCli) {
+      populateClientDatalist();
+      document.getElementById("d-client-search").value = clientLabel(newCli);
+      document.getElementById("d-client-id").value = newCli.id;
+      const primaMoto = (newCli.motociclete && newCli.motociclete[0]) || null;
+      populateMotoSelectForClient(newCli, primaMoto ? primaMoto.id : null);
+      renderClientHistoryForTab(newCli, getActiveDevizTab());
+      if (typeof rzToast === "function") rzToast("Client nou creat și selectat în deviz", "ok");
+    }
+  }
 }
 
 // ---------- CLIENTI: export / import Excel ----------
@@ -3014,7 +3177,7 @@ function clientLabel(c) {
 async function loadDevize() {
   const { data, error } = await client
     .from("devize")
-    .select("*, linii:deviz_linii(*), clienti(nume,prenume), motociclete(marca,model,numar_inmatriculare), mecanici(nume)")
+    .select("*, linii:deviz_linii(*), clienti(nume,prenume,telefon,email,tip_client), motociclete(marca,model,numar_inmatriculare,serie_sasiu), mecanici(nume)")
     .order("creat_la", { ascending: false });
   if (error) { alert("Eroare la încărcarea devizelor: " + error.message); return; }
   currentDevize = data || [];
@@ -3051,12 +3214,41 @@ function renderDevizeTable() {
           <div class="actions-cell">
             <button class="icon-btn" title="Editează" onclick="openDevizTab('${d.id}')">${ICON_EDIT}</button>
             <button class="btn-secondary" onclick="printDeviz('${d.id}')">Printează</button>
+            ${(amAdmin() || canDo("perm_daune")) ? `<button class="btn-secondary" title="Trimite acest deviz către un dosar de daună" onclick="trimiteDevizLaDaune('${d.id}')">➡️ Daune</button>` : ""}
             ${currentProfile.rol === "admin" ? `<button class="icon-btn danger" title="Șterge" onclick="confirmDeleteDeviz('${d.id}')">${ICON_TRASH}</button>` : ""}
           </div>
         </td>
       </tr>
     `;
   }).join("");
+}
+
+// trimite un deviz existent catre un dosar de dauna nou, preluand automat
+// datele clientului si ale motocicletei legate de deviz
+async function trimiteDevizLaDaune(devizId) {
+  const d = currentDevize.find(x => x.id === devizId);
+  if (!d) return;
+  if (!(amAdmin() || canDo("perm_daune"))) { alert("Nu ai permisiunea „Daune”."); return; }
+  const cli = d.clienti || null;
+  const moto = d.motociclete || null;
+  switchTab("daune");
+  await loadDaune();
+  pendingDaunaDevizLink = devizId;
+  openDauneModal();
+  if (cli) {
+    selectDaunaTip(cli.tip_client || "fizica");
+    document.getElementById("dn-nume").value = cli.nume || "";
+    document.getElementById("dn-prenume").value = cli.prenume || "";
+    document.getElementById("dn-telefon").value = cli.telefon || "";
+    document.getElementById("dn-email").value = cli.email || "";
+  }
+  if (moto) {
+    document.getElementById("dn-vin").value = moto.serie_sasiu || "";
+    document.getElementById("dn-marca").value = moto.marca || "";
+    document.getElementById("dn-model").value = moto.model || "";
+    document.getElementById("dn-numar-inmatriculare").value = moto.numar_inmatriculare || "";
+  }
+  if (typeof rzToast === "function") rzToast("Completează dosarul și apasă Salvează — devizul rămâne legat de el.", "ok");
 }
 
 function selectDevizBrand(b) {
@@ -3084,6 +3276,27 @@ function populateMotoSelectForClient(clientObj, selectedMotoId) {
   sel.innerHTML = '<option value="">— fără motocicletă —</option>' + motos.map(m =>
     `<option value="${m.id}" ${selectedMotoId === m.id ? "selected" : ""}>${escapeHtml([(m.marca || ""), (m.model || "")].filter(Boolean).join(" ") + (m.numar_inmatriculare ? " · " + m.numar_inmatriculare : ""))}</option>`
   ).join("");
+  onDevizMotoChanged();
+}
+
+// arata sub select un rezumat cu VIN/marca/model/nr. inmatriculare, ca sa fie
+// limpede ce date s-au preluat automat odata cu alegerea motocicletei
+function onDevizMotoChanged() {
+  const el = document.getElementById("deviz-moto-detalii");
+  if (!el) return;
+  const motoId = document.getElementById("d-moto-id").value;
+  const clientId = document.getElementById("d-client-id").value;
+  const cli = currentClients.find(c => c.id === clientId);
+  const moto = cli && (cli.motociclete || []).find(m => m.id === motoId);
+  if (!moto) { el.style.display = "none"; el.textContent = ""; return; }
+  const parti = [
+    moto.serie_sasiu ? "VIN: " + moto.serie_sasiu : "",
+    moto.marca ? "Marcă: " + moto.marca : "",
+    moto.model ? "Model: " + moto.model : "",
+    moto.numar_inmatriculare ? "Nr. înmatriculare: " + moto.numar_inmatriculare : "",
+  ].filter(Boolean);
+  el.textContent = parti.length ? "Preluat automat — " + parti.join(" · ") : "";
+  el.style.display = parti.length ? "block" : "none";
 }
 
 function onTarifChange() {
@@ -3124,6 +3337,32 @@ function onDevizPiesaCodInput(input) {
   } else if (match.pret_ron) {
     row.querySelector(".dp-pret").value = (Number(match.pret_ron) * (1 + adaos / 100)).toFixed(2);
   }
+}
+
+// ---------- PIESE UZUALE (cele mai folosite piese, calculate din devizele deja facute) ----------
+function computePieseUzuale(limita) {
+  const counts = {};
+  currentDevize.forEach(d => (d.linii || []).forEach(l => {
+    if (l.tip !== "piesa" || !l.cod_piesa) return;
+    const cheie = l.cod_piesa.toUpperCase();
+    if (!counts[cheie]) counts[cheie] = { cod_piesa: l.cod_piesa, denumire: l.denumire || "", nr: 0 };
+    counts[cheie].nr++;
+  }));
+  return Object.values(counts).sort((a, b) => b.nr - a.nr).slice(0, limita || 12);
+}
+function renderPieseUzualeChips() {
+  const wrap = document.getElementById("deviz-piese-uzuale");
+  if (!wrap) return;
+  const top = computePieseUzuale(12);
+  if (!top.length) { wrap.innerHTML = ""; return; }
+  wrap.innerHTML = `<div class="muted" style="font-size:11px;width:100%">⭐ Piese folosite des — click ca să adaugi:</div>` +
+    top.map(p => `<button type="button" class="btn-secondary" style="padding:3px 9px;font-size:11.5px" onclick="adaugaPiesaUzuala(${JSON.stringify(p.cod_piesa)}, ${JSON.stringify(p.denumire)})">${escapeHtml(p.cod_piesa)}${p.denumire ? " — " + escapeHtml(p.denumire) : ""}</button>`).join("");
+}
+function adaugaPiesaUzuala(cod, denumire) {
+  addDevizPiesaRowEl({ cod_piesa: cod, denumire });
+  const rows = document.querySelectorAll("#deviz-piese-list .linie-row");
+  const last = rows[rows.length - 1];
+  if (last) onDevizPiesaCodInput(last.querySelector(".dp-cod"));
 }
 
 function renderDevizPieseInputs(linii) {
@@ -3319,6 +3558,7 @@ async function renderDevizFormFromTab(tab) {
   document.getElementById("d-stare").value = tab.stare || "Draft";
   document.getElementById("d-notite").value = tab.notite || "";
   renderDevizPieseInputs(tab.piese || []);
+  renderPieseUzualeChips();
   renderDevizManoperaInputs(tab.manopera || []);
   const bannerEl = document.getElementById("deviz-booking-banner");
   if (tab.bookingInfo) { bannerEl.style.display = "block"; bannerEl.textContent = tab.bookingInfo; }
@@ -4052,7 +4292,7 @@ function sarExportPerioadaExcel() {
 
 // ---------- MODAL SARCINA (adaugare/editare) ----------
 function populateSarcinaColegSelects(selectedAtribuit, selectedNotifica) {
-  const colegi = allProfiles.filter(p => p.id !== (currentProfile && currentProfile.id));
+  const colegi = allProfiles.filter(p => p.id !== (currentProfile && currentProfile.id) && p.activ !== false);
   const optsAtribuit = '<option value="">— niciunul —</option>' + colegi.map(p => `<option value="${p.id}" data-nume="${escapeHtml(p.nume)}">${escapeHtml(p.nume)}</option>`).join("");
   const selA = document.getElementById("sa-atribuit");
   selA.innerHTML = optsAtribuit;
@@ -4122,6 +4362,7 @@ async function saveSarcina() {
   const notificaLaRezolvareNume = notificaLaRezolvare ? (notificaSel.selectedOptions[0] && notificaSel.selectedOptions[0].dataset.nume) || "" : null;
 
   const prioritate = document.getElementById("sa-prioritate").value || "Normală";
+  const noulStare = document.getElementById("sa-stare").value;
   const payload = {
     nume,
     descriere: document.getElementById("sa-descriere").value.trim() || null,
@@ -4132,8 +4373,22 @@ async function saveSarcina() {
     atribuit_catre_nume: atribuitCatreNume,
     notifica_la_rezolvare: notificaLaRezolvare,
     notifica_la_rezolvare_nume: notificaLaRezolvareNume,
-    stare: document.getElementById("sa-stare").value,
+    stare: noulStare,
   };
+
+  // sarcina tocmai a fost marcata "Rezolvat" chiar din acest formular (nu doar salvata
+  // cu starea deja Rezolvat) — se comporta la fel ca butonul "✓ Rezolvată": ziua ei
+  // devine ziua rezolvarii (nu ziua initiala programata) si se retine cine/cand a rezolvat-o.
+  // Altfel, editarea unei sarcini mai vechi si trecerea ei pe "Rezolvat" din formular
+  // ramanea agatata pe data ei originala, in loc sa apara in ziua in care a fost rezolvata.
+  const existingForStare = id ? currentSarcini.find(x => x.id === id) : null;
+  const tocmaiRezolvata = noulStare === "Rezolvat" && (!existingForStare || existingForStare.stare !== "Rezolvat");
+  if (tocmaiRezolvata) {
+    payload.data = todayISODate();
+    payload.rezolvat_la = new Date().toISOString();
+    payload.rezolvat_de = currentProfile.id;
+    payload.rezolvat_de_nume = currentProfile.nume;
+  }
 
   let error;
   if (id) {
@@ -4151,6 +4406,13 @@ async function saveSarcina() {
     if (!error && atribuitCatre) await notificaAtribuireSarcina(res.data.id, atribuitCatre, atribuitCatreNume, nume);
   }
   if (error) { alert("Eroare la salvare: " + error.message); return; }
+  if (id && tocmaiRezolvata && notificaLaRezolvare && notificaLaRezolvare !== currentProfile.id) {
+    await client.from("notificari").insert({
+      destinatar_id: notificaLaRezolvare, destinatar_nume: notificaLaRezolvareNume,
+      mesaj: `Sarcina „${nume}” a fost marcată ca rezolvată de ${currentProfile.nume}.`,
+      sarcina_id: id, creat_de: currentProfile.id, creat_de_nume: currentProfile.nume,
+    });
+  }
   closeSarcinaModal();
   await loadSarcini();
   if (typeof rzToast === "function") rzToast("Sarcină salvată", "ok");
@@ -4202,7 +4464,7 @@ function openCereAjutorModal(id) {
   const t = currentSarcini.find(x => x.id === id);
   if (!t) return;
   const deja = new Set((t.ajutor || []).map(a => a.coleg_id));
-  const colegi = allProfiles.filter(p => p.id !== currentProfile.id);
+  const colegi = allProfiles.filter(p => p.id !== currentProfile.id && p.activ !== false);
   const html = `<h3>🤝 Cere ajutor — ${escapeHtml(t.nume)}</h3>
     <div class="muted" style="font-size:12.5px">Alege unul sau mai mulți colegi cărora vrei să le ceri ajutor la această sarcină. Fiecare va primi o notificare.</div>
     <div id="sa-ajutor-list" style="display:flex;flex-direction:column;gap:6px;margin:12px 0">
@@ -4351,6 +4613,21 @@ async function updateGarantieField(id, field, value) {
   if (typeof rzToast === "function") rzToast("Salvat", "ok");
 }
 
+// Codul complet din sistemul Triumph e de forma R000XXX-350002 (3 cifre) sau
+// R00XXXX-350002 (4 cifre) — mereu 6 cifre in total intre "R" si "-350002",
+// completate cu zerouri la stanga. In aplicatie se scrie doar partea variabila
+// (XXX/XXXX), iar codul complet se calculeaza si se salveaza automat.
+function construiesteCodGarantie(intrare) {
+  const cifre = (intrare || "").replace(/\D/g, "");
+  if (!cifre) return null;
+  return "R" + cifre.padStart(6, "0") + "-350002";
+}
+function extrageCodScurtGarantie(codComplet) {
+  if (!codComplet) return "";
+  const m = /^R0*([0-9]+)-350002$/.exec(codComplet.trim());
+  return m ? m[1] : codComplet; // cod vechi/neconform: il aratam asa cum e
+}
+
 function onGarantieStatusChanged() {
   const status = document.getElementById("g-status").value;
   document.getElementById("g-status-alt-wrap").style.display = (status === "Alt Status") ? "" : "none";
@@ -4362,7 +4639,7 @@ function openGarantieModal(id) {
     const g = currentGarantii.find(x => x.id === id);
     if (!g) return;
     document.getElementById("garantie-modal-title").textContent = "Editează garanție";
-    document.getElementById("g-cod").value = g.cod || "";
+    document.getElementById("g-cod").value = extrageCodScurtGarantie(g.cod);
     document.getElementById("g-vin").value = g.vin || "";
     document.getElementById("g-nume").value = g.client_nume || "";
     document.getElementById("g-prenume").value = g.client_prenume || "";
@@ -4390,7 +4667,7 @@ async function saveGarantie() {
   if (!clientNume) { alert("Numele clientului este obligatoriu."); return; }
   const status = document.getElementById("g-status").value || "Colet Sosit";
   const payload = {
-    cod: document.getElementById("g-cod").value.trim() || null,
+    cod: construiesteCodGarantie(document.getElementById("g-cod").value),
     vin: document.getElementById("g-vin").value.trim() || null,
     client_nume: clientNume,
     client_prenume: document.getElementById("g-prenume").value.trim() || null,
@@ -4436,6 +4713,424 @@ function exportGarantiiExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Garanții");
   XLSX.writeFile(wb, "garantii_" + new Date().toISOString().slice(0, 10) + ".xlsx");
+}
+
+// ======================================================
+// DAUNE — dosare de constatare/reconstatare daune auto, cu poze,
+// Notă de Constatare și deviz atașate, în două etape (colectare → predare
+// către un coleg care finalizează). Fișierele stau în Supabase Storage,
+// bucket privat "daune"; metadatele (nume, cine/când a încărcat) în
+// tabela `daune_fisiere`. Observațiile sunt un jurnal de comentarii, ca la Sarcini.
+// ======================================================
+async function loadDaune() {
+  const { data, error } = await client.from("daune")
+    .select("*, fisiere:daune_fisiere(*), observatii:daune_observatii(*)")
+    .order("data_dosar", { ascending: false })
+    .order("creat_la", { ascending: false });
+  if (error) { alert("Eroare la încărcarea dosarelor de daună: " + error.message); return; }
+  currentDaune = data || [];
+  renderDauneTable();
+}
+
+function dauneClientLabel(d) { return `${d.client_nume || ""} ${d.client_prenume || ""}`.trim() || "—"; }
+
+function findDaunaFisier(fisierId) {
+  for (const d of currentDaune) {
+    const f = (d.fisiere || []).find(x => x.id === fisierId);
+    if (f) return f;
+  }
+  return null;
+}
+
+function renderDauneTable() {
+  const tbody = document.getElementById("daune-table-body");
+  if (!tbody) return;
+  const cautare = (document.getElementById("dn-cautare").value || "").trim().toLowerCase();
+  const filtruStare = document.getElementById("dn-filtru-stare").value;
+  const filtruImplicat = document.getElementById("dn-filtru-implicat").value;
+  const rows = currentDaune.filter(matchesLocationFilter).filter(d => {
+    if (filtruStare && d.stare !== filtruStare) return false;
+    if (filtruImplicat === "mine" && d.creat_de !== currentProfile.id && d.predat_catre !== currentProfile.id) return false;
+    if (!cautare) return true;
+    const hay = [d.client_nume, d.client_prenume, d.vin, d.numar_inmatriculare, d.numar_dosar, d.marca, d.model].map(v => (v || "").toLowerCase()).join(" ");
+    return hay.includes(cautare);
+  });
+  if (!rows.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="10">Niciun dosar de daună înregistrat încă.</td></tr>'; return; }
+
+  tbody.innerHTML = rows.map(d => {
+    const st = DAUNE_STARE_STYLE[d.stare] || {};
+    const cr = [d.constatare ? "C" : "", d.reconstatare ? "R" : ""].filter(Boolean).join(" / ") || "—";
+    const potPreda = (amAdmin() || d.creat_de === currentProfile.id) && d.stare === "Etapa 1";
+    const potFinaliza = (amAdmin() || d.predat_catre === currentProfile.id) && d.stare === "Predat";
+    const potAnula = amAdmin() && (d.stare === "Etapa 1" || d.stare === "Predat");
+    return `<tr>
+      <td>${escapeHtml(dauneClientLabel(d))}</td>
+      <td>${d.tip_client === "juridica" ? "Juridică" : "Fizică"}</td>
+      <td>${escapeHtml(d.vin || "—")}${d.numar_inmatriculare ? " / " + escapeHtml(d.numar_inmatriculare) : ""}</td>
+      <td>${escapeHtml(d.numar_dosar || "—")}</td>
+      <td>${d.data_dosar ? formatDate(d.data_dosar) : "—"}</td>
+      <td>${cr}</td>
+      <td><span class="badge" style="background:${st.bg || "#eef0f4"};color:${st.color || "var(--muted)"}">${escapeHtml(d.stare)}</span></td>
+      <td>${escapeHtml(d.creat_de_nume || "—")}</td>
+      <td>${escapeHtml(d.predat_catre_nume || "—")}</td>
+      <td>
+        <div class="actions-cell" style="flex-wrap:wrap">
+          ${(amAdmin() || canDo("perm_daune")) ? `<button class="icon-btn" title="Editează" onclick="openDauneModal('${d.id}')">${ICON_EDIT}</button>` : ""}
+          <button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="openObservatiiDauna('${d.id}')">💬${(d.observatii || []).length ? " " + d.observatii.length : ""}</button>
+          ${potPreda ? `<button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="openPredareDaunaModal('${d.id}')">➡️ Predă</button>` : ""}
+          ${potFinaliza ? `<button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="finalizeazaDauna('${d.id}')">✅ Finalizează</button>` : ""}
+          ${potAnula ? `<button class="icon-btn danger" title="Anulează" onclick="anuleazaDauna('${d.id}')">${ICON_CLOSE}</button>` : ""}
+          ${amAdmin() ? `<button class="icon-btn danger" title="Șterge definitiv" onclick="stergeDauna('${d.id}')">${ICON_TRASH}</button>` : ""}
+        </div>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+function selectDaunaTip(tip) {
+  selectedDaunaTip = tip;
+  document.querySelectorAll("#dauna-tip-toggle .brand-opt").forEach(btn => {
+    const isActive = btn.getAttribute("data-tip") === tip;
+    btn.classList.toggle("active", isActive);
+    btn.style.background = isActive ? "var(--accent)" : "";
+    btn.style.color = isActive ? "#fff" : "";
+  });
+  document.getElementById("lbl-dn-nume").textContent = tip === "juridica" ? "Denumire firmă *" : "Nume *";
+  document.getElementById("wrap-dn-prenume").style.display = tip === "juridica" ? "none" : "block";
+  if (tip === "juridica") document.getElementById("dn-prenume").value = "";
+}
+
+function renderDaunaStareBar(d) {
+  const bar = document.getElementById("dn-stare-bar");
+  const st = DAUNE_STARE_STYLE[d.stare] || {};
+  let extra = "";
+  if (d.stare === "Predat") extra = `predat către ${escapeHtml(d.predat_catre_nume || "—")} pe ${formatDate(d.predat_la)}`;
+  if (d.stare === "Finalizat") extra = `finalizat de ${escapeHtml(d.finalizat_de_nume || "—")} pe ${formatDate(d.finalizat_la)}`;
+  bar.style.display = "flex"; bar.style.alignItems = "center"; bar.style.gap = "8px"; bar.style.flexWrap = "wrap";
+  bar.innerHTML = `<span class="badge" style="background:${st.bg || "#eef0f4"};color:${st.color || "var(--muted)"}">${escapeHtml(d.stare)}</span>` +
+    (extra ? `<span class="muted" style="font-size:12px">${extra}</span>` : "");
+
+  const actions = document.getElementById("dn-actions-stanga");
+  const potPreda = (amAdmin() || d.creat_de === currentProfile.id) && d.stare === "Etapa 1";
+  const potFinaliza = (amAdmin() || d.predat_catre === currentProfile.id) && d.stare === "Predat";
+  actions.innerHTML =
+    (potPreda ? `<button class="btn-secondary" onclick="openPredareDaunaModal('${d.id}')">➡️ Predă spre finalizare</button>` : "") +
+    (potFinaliza ? `<button class="btn-secondary" onclick="finalizeazaDauna('${d.id}')">✅ Finalizează dosarul</button>` : "") +
+    `<button class="btn-secondary" onclick="openObservatiiDauna('${d.id}')">💬 Observații${(d.observatii || []).length ? " (" + d.observatii.length + ")" : ""}</button>` +
+    (d.deviz_id ? `<button class="btn-secondary" onclick="openDevizDinDauna('${d.deviz_id}')">📄 Deschide devizul legat</button>` : "");
+}
+function openDevizDinDauna(devizId) {
+  closeDaunaModal();
+  switchTab("devize");
+  openDevizTab(devizId);
+}
+
+function renderDaunaFisiereSections(d) {
+  const wrap = document.getElementById("dn-fisiere-categorii");
+  if (!wrap) return;
+  const potSterge = amAdmin() || canDo("perm_daune");
+  wrap.innerHTML = DAUNE_FISIER_CATEGORII.filter(cat => cat.doarDaca(d)).map(cat => {
+    const fisiere = (d.fisiere || []).filter(f => f.categorie === cat.key);
+    return `<div style="margin-bottom:12px">
+      <div style="font-size:12.5px;font-weight:700;margin-bottom:4px">${cat.label}</div>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px">
+        ${fisiere.length ? fisiere.map(f => `
+          <div style="display:flex;align-items:center;gap:8px;font-size:12.5px">
+            <span style="cursor:pointer;color:var(--accent);text-decoration:underline" onclick="deschideFisierDauna('${f.id}')">${escapeHtml(f.nume_fisier)}</span>
+            <span class="muted" style="font-size:11px">${escapeHtml(f.creat_de_nume || "")} · ${formatDate(f.creat_la)}</span>
+            ${potSterge ? `<button class="icon-btn danger" title="Șterge" onclick="stergeFisierDauna('${f.id}')">${ICON_CLOSE}</button>` : ""}
+          </div>`).join("") : '<div class="muted" style="font-size:11.5px">Niciun fișier încă.</div>'}
+      </div>
+      <input type="file" multiple accept="image/*,application/pdf" onchange="uploadFisiereDauna('${d.id}','${cat.key}', this)" />
+    </div>`;
+  }).join("");
+}
+
+function openDauneModal(id) {
+  document.getElementById("dn-id").value = id || "";
+  document.getElementById("dn-fisiere-wrap").style.display = "none";
+  document.getElementById("dn-fisiere-hint").style.display = "block";
+  document.getElementById("dn-actions-stanga").innerHTML = "";
+  document.getElementById("dn-stare-bar").style.display = "none";
+  document.getElementById("dn-stare-bar").innerHTML = "";
+  if (id) {
+    const d = currentDaune.find(x => x.id === id);
+    if (!d) return;
+    document.getElementById("dauna-modal-title").textContent = "Editează dosar daună";
+    selectDaunaTip(d.tip_client || "fizica");
+    document.getElementById("dn-nume").value = d.client_nume || "";
+    document.getElementById("dn-prenume").value = d.client_prenume || "";
+    document.getElementById("dn-telefon").value = d.client_telefon || "";
+    document.getElementById("dn-email").value = d.client_email || "";
+    document.getElementById("dn-data-dosar").value = d.data_dosar || "";
+    document.getElementById("dn-data-incident").value = d.data_incident || "";
+    document.getElementById("dn-numar-dosar").value = d.numar_dosar || "";
+    document.getElementById("dn-vin").value = d.vin || "";
+    document.getElementById("dn-marca").value = d.marca || "";
+    document.getElementById("dn-model").value = d.model || "";
+    document.getElementById("dn-numar-inmatriculare").value = d.numar_inmatriculare || "";
+    document.getElementById("dn-km").value = d.numar_kilometri || "";
+    document.getElementById("dn-constatare").checked = !!d.constatare;
+    document.getElementById("dn-reconstatare").checked = !!d.reconstatare;
+    renderDaunaStareBar(d);
+    renderDaunaFisiereSections(d);
+    document.getElementById("dn-fisiere-wrap").style.display = "block";
+    document.getElementById("dn-fisiere-hint").style.display = "none";
+  } else {
+    document.getElementById("dauna-modal-title").textContent = "Dosar daună nou";
+    ["dn-nume", "dn-prenume", "dn-telefon", "dn-email", "dn-numar-dosar", "dn-vin", "dn-marca", "dn-model", "dn-numar-inmatriculare", "dn-km", "dn-data-incident"].forEach(fid => document.getElementById(fid).value = "");
+    document.getElementById("dn-data-dosar").value = todayISODate();
+    document.getElementById("dn-constatare").checked = false;
+    document.getElementById("dn-reconstatare").checked = false;
+    selectDaunaTip("fizica");
+  }
+  document.getElementById("dauna-modal-overlay").classList.add("open");
+}
+function closeDaunaModal() { document.getElementById("dauna-modal-overlay").classList.remove("open"); pendingDaunaDevizLink = null; }
+
+function onDaunaBifeChanged() {
+  const id = document.getElementById("dn-id").value;
+  if (!id) return;
+  const d = currentDaune.find(x => x.id === id);
+  if (!d) return;
+  renderDaunaFisiereSections({ ...d, constatare: document.getElementById("dn-constatare").checked, reconstatare: document.getElementById("dn-reconstatare").checked });
+}
+
+async function saveDauna() {
+  const id = document.getElementById("dn-id").value;
+  const nume = document.getElementById("dn-nume").value.trim();
+  if (!nume) { alert(selectedDaunaTip === "juridica" ? "Denumirea firmei este obligatorie." : "Numele clientului este obligatoriu."); return; }
+  const payload = {
+    tip_client: selectedDaunaTip,
+    client_nume: nume,
+    client_prenume: selectedDaunaTip === "juridica" ? null : (document.getElementById("dn-prenume").value.trim() || null),
+    client_telefon: formatTelefon(document.getElementById("dn-telefon").value),
+    client_email: document.getElementById("dn-email").value.trim() || null,
+    data_dosar: document.getElementById("dn-data-dosar").value || todayISODate(),
+    data_incident: document.getElementById("dn-data-incident").value || null,
+    numar_dosar: document.getElementById("dn-numar-dosar").value.trim() || null,
+    vin: document.getElementById("dn-vin").value.trim() || null,
+    marca: document.getElementById("dn-marca").value.trim() || null,
+    model: document.getElementById("dn-model").value.trim() || null,
+    numar_inmatriculare: document.getElementById("dn-numar-inmatriculare").value.trim() || null,
+    numar_kilometri: document.getElementById("dn-km").value ? parseInt(document.getElementById("dn-km").value, 10) : null,
+    constatare: document.getElementById("dn-constatare").checked,
+    reconstatare: document.getElementById("dn-reconstatare").checked,
+  };
+
+  let error, newId = null;
+  if (id) {
+    ({ error } = await client.from("daune").update(payload).eq("id", id));
+  } else {
+    payload.creat_de = currentProfile.id;
+    payload.creat_de_nume = currentProfile.nume;
+    payload.punct_lucru_id = getMyCreateLocationId();
+    if (pendingDaunaDevizLink) payload.deviz_id = pendingDaunaDevizLink;
+    const res = await client.from("daune").insert(payload).select().single();
+    error = res.error;
+    if (!error) newId = res.data.id;
+  }
+  if (error) { alert("Eroare la salvare: " + error.message); return; }
+  pendingDaunaDevizLink = null;
+  await loadDaune();
+  if (typeof rzToast === "function") rzToast("Dosar salvat", "ok");
+  if (newId) {
+    // dosar tocmai creat: ramanem in modul editare, ca sa se poata incarca imediat fisiere
+    openDauneModal(newId);
+  } else if (id) {
+    const d = currentDaune.find(x => x.id === id);
+    if (d) { renderDaunaStareBar(d); renderDaunaFisiereSections(d); }
+  }
+}
+
+// ---------- Predare / Finalizare / Anulare ----------
+function openPredareDaunaModal(id) {
+  const d = currentDaune.find(x => x.id === id);
+  if (!d) return;
+  const colegi = allProfiles.filter(p => p.id !== currentProfile.id && p.activ !== false);
+  const html = `<h3>➡️ Predă dosarul spre finalizare</h3>
+    <div class="muted" style="font-size:12.5px">${escapeHtml(dauneClientLabel(d))} — alege colegul care va finaliza dosarul. Va primi o notificare.</div>
+    <div class="field" style="margin-top:10px">
+      <label>Coleg</label>
+      <select id="dn-predare-coleg">${colegi.map(p => `<option value="${p.id}" data-nume="${escapeHtml(p.nume)}">${escapeHtml(p.nume)}</option>`).join("")}</select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="rzCloseModal()">Anulează</button>
+      <button class="btn-primary" onclick="predaDauna('${id}')">Predă dosarul</button>
+    </div>`;
+  rzOpenModal(html);
+}
+async function predaDauna(id) {
+  const sel = document.getElementById("dn-predare-coleg");
+  if (!sel || !sel.value) { alert("Alege un coleg."); return; }
+  const colegId = sel.value, colegNume = sel.selectedOptions[0].dataset.nume;
+  const d = currentDaune.find(x => x.id === id);
+  const { error } = await client.from("daune").update({
+    stare: "Predat", predat_catre: colegId, predat_catre_nume: colegNume,
+    predat_de: currentProfile.id, predat_de_nume: currentProfile.nume, predat_la: new Date().toISOString(),
+  }).eq("id", id);
+  if (error) { alert("Eroare: " + error.message); return; }
+  if (colegId !== currentProfile.id) {
+    await client.from("notificari").insert({
+      destinatar_id: colegId, destinatar_nume: colegNume,
+      mesaj: `${currentProfile.nume} ți-a predat dosarul de daună al lui ${d ? dauneClientLabel(d) : "un client"} spre finalizare.`,
+      dauna_id: id, creat_de: currentProfile.id, creat_de_nume: currentProfile.nume,
+    });
+  }
+  rzCloseModal();
+  await loadDaune();
+  closeDaunaModal();
+  if (typeof rzToast === "function") rzToast("Dosar predat spre finalizare", "ok");
+}
+async function finalizeazaDauna(id) {
+  if (!confirm("Marchezi acest dosar ca finalizat?")) return;
+  const d = currentDaune.find(x => x.id === id);
+  const { error } = await client.from("daune").update({
+    stare: "Finalizat", finalizat_de: currentProfile.id, finalizat_de_nume: currentProfile.nume, finalizat_la: new Date().toISOString(),
+  }).eq("id", id);
+  if (error) { alert("Eroare: " + error.message); return; }
+  if (d && d.predat_de && d.predat_de !== currentProfile.id) {
+    await client.from("notificari").insert({
+      destinatar_id: d.predat_de, destinatar_nume: d.predat_de_nume,
+      mesaj: `${currentProfile.nume} a finalizat dosarul de daună al lui ${dauneClientLabel(d)}.`,
+      dauna_id: id, creat_de: currentProfile.id, creat_de_nume: currentProfile.nume,
+    });
+  }
+  await loadDaune();
+  closeDaunaModal();
+  if (typeof rzToast === "function") rzToast("Dosar finalizat", "ok");
+}
+async function anuleazaDauna(id) {
+  if (!confirm("Anulezi acest dosar de daună?")) return;
+  const { error } = await client.from("daune").update({ stare: "Anulat" }).eq("id", id);
+  if (error) { alert("Eroare: " + error.message); return; }
+  await loadDaune();
+}
+async function stergeDauna(id) {
+  if (!amAdmin()) { alert("Doar administratorul poate șterge definitiv un dosar de daună."); return; }
+  const d = currentDaune.find(x => x.id === id);
+  if (!confirm("Ștergi DEFINITIV acest dosar de daună, împreună cu toate fișierele lui? Acțiunea nu poate fi anulată.")) return;
+  const paths = ((d && d.fisiere) || []).map(f => f.path);
+  if (paths.length) {
+    const { error: rmErr } = await client.storage.from("daune").remove(paths);
+    if (rmErr) console.warn("Nu s-au putut șterge toate fișierele din stocare:", rmErr.message);
+  }
+  const { error } = await client.from("daune").delete().eq("id", id);
+  if (error) { alert("Eroare: " + error.message); return; }
+  closeDaunaModal();
+  await loadDaune();
+  if (typeof rzToast === "function") rzToast("Dosar șters definitiv.", "ok");
+}
+
+// ---------- Fișiere (Supabase Storage, bucket privat "daune") ----------
+async function uploadFisiereDauna(dosarId, categorie, inputEl) {
+  const files = [...(inputEl.files || [])];
+  if (!files.length) return;
+  const punctId = (currentDaune.find(x => x.id === dosarId) || {}).punct_lucru_id || getMyCreateLocationId();
+  for (const file of files) {
+    if (file.size > 15 * 1024 * 1024) { alert(`„${file.name}” depășește 15 MB — nu a fost încărcat.`); continue; }
+    const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const path = `${punctId}/${dosarId}/${categorie}/${Date.now()}_${safeName}`;
+    const { error: upErr } = await client.storage.from("daune").upload(path, file, { upsert: false });
+    if (upErr) { alert(`Eroare la încărcarea „${file.name}”: ` + upErr.message); continue; }
+    const { error: dbErr } = await client.from("daune_fisiere").insert({
+      dosar_id: dosarId, categorie, nume_fisier: file.name, path,
+      marime_bytes: file.size, tip_mime: file.type || null,
+      creat_de: currentProfile.id, creat_de_nume: currentProfile.nume,
+    });
+    if (dbErr) alert("Fișierul a fost încărcat, dar înregistrarea lui nu s-a putut salva: " + dbErr.message);
+  }
+  inputEl.value = "";
+  await loadDaune();
+  const d = currentDaune.find(x => x.id === dosarId);
+  if (d) renderDaunaFisiereSections(d);
+  if (typeof rzToast === "function") rzToast("Fișiere încărcate", "ok");
+}
+async function deschideFisierDauna(fisierId) {
+  const f = findDaunaFisier(fisierId);
+  if (!f) { alert("Fișier negăsit."); return; }
+  const { data, error } = await client.storage.from("daune").createSignedUrl(f.path, 3600);
+  if (error) { alert("Nu s-a putut deschide fișierul: " + error.message); return; }
+  window.open(data.signedUrl, "_blank");
+}
+async function stergeFisierDauna(fisierId) {
+  const f = findDaunaFisier(fisierId);
+  if (!f) return;
+  if (!confirm(`Ștergi fișierul „${f.nume_fisier}”? Acțiunea nu poate fi anulată.`)) return;
+  const { error: rmErr } = await client.storage.from("daune").remove([f.path]);
+  if (rmErr) { alert("Eroare la ștergerea fișierului: " + rmErr.message); return; }
+  const { error: dbErr } = await client.from("daune_fisiere").delete().eq("id", fisierId);
+  if (dbErr) alert("Fișierul a fost șters din stocare, dar înregistrarea lui nu s-a putut șterge: " + dbErr.message);
+  await loadDaune();
+  const d = currentDaune.find(x => x.id === f.dosar_id);
+  if (d) renderDaunaFisiereSections(d);
+  if (typeof rzToast === "function") rzToast("Fișier șters", "ok");
+}
+
+// ---------- Observații (jurnal de comentarii, ca la Sarcini) ----------
+function openObservatiiDauna(id) {
+  const d = currentDaune.find(x => x.id === id);
+  if (!d) return;
+  renderObservatiiDaunaModalContent(d);
+}
+function renderObservatiiDaunaModalContent(d) {
+  const obs = (d.observatii || []).slice().sort((a, b) => (a.creat_la || "").localeCompare(b.creat_la || ""));
+  const html = `<h3>💬 Observații — ${escapeHtml(dauneClientLabel(d))}</h3>
+    <div style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin:10px 0">
+      ${obs.length ? obs.map(o => `
+        <div class="rz-hist-item" style="flex-direction:column;align-items:flex-start;gap:2px">
+          <div style="font-size:13px">${escapeHtml(o.text)}</div>
+          <div class="hist-meta">${escapeHtml(o.autor_nume || "—")} · ${formatDate(o.creat_la)}</div>
+        </div>`).join("") : '<div class="muted" style="font-size:12.5px">Nicio observație încă.</div>'}
+    </div>
+    <div class="field">
+      <label>Adaugă observație</label>
+      <textarea id="dn-obs-text" rows="2"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="rzCloseModal()">Închide</button>
+      <button class="btn-primary" onclick="adaugaObservatieDauna('${d.id}')">Adaugă</button>
+    </div>`;
+  rzOpenModal(html);
+}
+async function adaugaObservatieDauna(id) {
+  const textEl = document.getElementById("dn-obs-text");
+  const text = textEl.value.trim();
+  if (!text) { alert("Scrie o observație înainte de a o adăuga."); return; }
+  const { error } = await client.from("daune_observatii").insert({
+    dosar_id: id, autor_id: currentProfile.id, autor_nume: currentProfile.nume, text,
+  });
+  if (error) { alert("Eroare: " + error.message); return; }
+  await loadDaune();
+  const d = currentDaune.find(x => x.id === id);
+  if (d) renderObservatiiDaunaModalContent(d);
+  if (typeof rzToast === "function") rzToast("Observație adăugată.", "ok");
+}
+
+async function deschideDaunaDinNotificare(id) {
+  rzCloseModal();
+  switchTab("daune");
+  await loadDaune();
+  openDauneModal(id);
+}
+
+function exportDauneExcel() {
+  if (currentDaune.length === 0) { alert("Nu există dosare de daună de exportat."); return; }
+  const rows = currentDaune.filter(matchesLocationFilter).map(d => ({
+    "Tip client": d.tip_client === "juridica" ? "Juridică" : "Fizică",
+    "Nume": d.client_nume || "", "Prenume": d.client_prenume || "",
+    "Telefon": d.client_telefon || "", "Email": d.client_email || "",
+    "Data dosar": d.data_dosar ? formatDate(d.data_dosar) : "", "Data incident": d.data_incident ? formatDate(d.data_incident) : "",
+    "Nr. dosar": d.numar_dosar || "", "VIN": d.vin || "", "Marcă": d.marca || "", "Model": d.model || "",
+    "Nr. înmatriculare": d.numar_inmatriculare || "", "Km": d.numar_kilometri || "",
+    "Constatare": d.constatare ? "Da" : "Nu", "Reconstatare": d.reconstatare ? "Da" : "Nu",
+    "Stare": d.stare, "Creat de": d.creat_de_nume || "", "Predat către": d.predat_catre_nume || "",
+    "Finalizat de": d.finalizat_de_nume || "",
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Daune");
+  XLSX.writeFile(wb, "daune_" + new Date().toISOString().slice(0, 10) + ".xlsx");
 }
 
 // ---------- IMPORT ISTORIC PROGRAMATOR (JSON, din vechiul site extern) ----------
@@ -4926,12 +5621,14 @@ function rzApplyMarkupManual(pretManual, marca) {
   return +(parseFloat(pretManual) * (1 + adaos)).toFixed(2);
 }
 function rzFmtRON(v) { if (v === null || v === undefined || v === "") return "—"; return String(v).replace(".", ",") + " RON"; }
+function rzFmtEUR(v) { if (v === null || v === undefined || v === "") return "—"; return String(v).replace(".", ",") + " €"; }
 function rzPriceNoVat(v) { if (!v || isNaN(parseFloat(v))) return null; return +(parseFloat(v) / (1 + rzTvaRate() / 100)).toFixed(2); }
 function rzUpdateCursStatus() {
   const el = document.getElementById("rz-curs-status"); if (!el) return;
   const manual = parseFloat(rzSetari.curs_eur_manual);
   const bnr = rzSetari.curs_bnr_eur;
   let txt = (manual > 0) ? ("Curs EUR: " + manual + " RON (manual)") : (bnr ? ("Curs EUR: " + bnr + " RON") : "Curs EUR: indisponibil");
+  if (!(manual > 0) && rzSetari.curs_bnr_actualizat_la) txt += " (actualizat automat de la BNR pe " + formatDate(rzSetari.curs_bnr_actualizat_la) + ")";
   el.textContent = txt;
 }
 
@@ -5594,12 +6291,13 @@ function rzOpenPriceSettings() {
       <div class="rz-price-settings-box">
         <div class="title">Curs EUR/RON</div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Curs activ: <b>${rate ? rate + " RON" : "—"}</b> (sursă: ${rateSource})</div>
+        ${rzSetari.curs_bnr_actualizat_la ? `<div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">🔄 Curs BNR preluat automat, ultima actualizare: ${formatDate(rzSetari.curs_bnr_actualizat_la)}</div>` : ""}
         <div class="rz-inline-row">
           <input id="rz-ps-eur" type="number" step="0.0001" min="0" value="${rzSetari.curs_eur_manual || ""}" placeholder="ex: 5.0850" style="width:100px" />
           <button class="btn-secondary" onclick="rzPsSaveEur()">Salvează curs manual</button>
           <button class="btn-secondary" onclick="rzPsClearEur()">Șterge (folosește ultimul curs)</button>
         </div>
-        <div class="hint">Cursul manual are prioritate. La prețurile EUR se adaugă automat 1%.</div>
+        <div class="hint">Cursul manual are prioritate și oprește preluarea automată. La prețurile EUR se adaugă automat 1%. Fără curs manual, aplicația folosește cursul BNR preluat automat (vezi mai jos, INSTRUCTIUNI.md, „Curs BNR automat”).</div>
       </div>
       <div class="rz-price-settings-box markup">
         <div class="title">Adaos comercial (%) — pe fiecare marcă</div>
@@ -6033,7 +6731,7 @@ async function msgSendMessage() {
 
 async function msgOpenNewConversationModal() {
   await loadAllProfiles();
-  const colegi = allProfiles.filter(p => p.id !== currentProfile.id);
+  const colegi = allProfiles.filter(p => p.id !== currentProfile.id && p.activ !== false);
   if (!colegi.length) { alert("Nu există alți angajați înregistrați în profiles."); return; }
   const html = `<h3>✎ Conversație nouă</h3>
     <div class="field">
@@ -6147,15 +6845,21 @@ function renderCatalogTable() {
   if (search) rows = rows.filter(r => (r.cod_piesa || "").toLowerCase().includes(search) || (r.denumire || "").toLowerCase().includes(search));
   rows.sort((a, b) => (a.marca || "").localeCompare(b.marca || "") || (a.cod_piesa || "").localeCompare(b.cod_piesa || ""));
 
-  if (!rows.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Niciun cod în listă. Încarcă prețuri din Recepție &amp; Inventar.</td></tr>'; return; }
+  if (!rows.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Niciun cod în listă. Încarcă prețuri din Recepție &amp; Inventar.</td></tr>'; return; }
 
   tbody.innerHTML = rows.map(p => {
     const cuTva = rzPretPiesa(p);
     const faraTva = cuTva ? rzPriceNoVat(cuTva) : null;
+    // Preț EUR = prețul brut din lista de prețuri (așa cum a fost încărcat, „cu TVA”),
+    // înainte de conversia în RON cu curs+adaos — util ca referință față de prețul de vânzare.
+    const eurCuTva = (p.pret_eur !== null && p.pret_eur !== undefined && p.pret_eur !== "") ? Number(p.pret_eur) : null;
+    const eurFaraTva = eurCuTva !== null ? rzPriceNoVat(eurCuTva) : null;
     return `<tr>
       <td>${escapeHtml(p.marca || "")}</td>
       <td style="font-family:monospace">${escapeHtml(p.cod_piesa || "")}</td>
       <td>${escapeHtml(p.denumire || "")}</td>
+      <td>${rzFmtEUR(eurCuTva)}</td>
+      <td>${rzFmtEUR(eurFaraTva)}</td>
       <td>${rzFmtRON(cuTva)}</td>
       <td>${rzFmtRON(faraTva)}</td>
       <td class="muted" style="font-size:11px">${p.actualizat_la ? formatDate(p.actualizat_la) : "—"}</td>
@@ -6222,6 +6926,7 @@ const PERMISIUNI_DEF = [
   { key: "perm_clienti", label: "Clienți (editare/ștergere)" },
   { key: "perm_sarcini", label: "Sarcini (task-uri)" },
   { key: "perm_garantii", label: "Garanții" },
+  { key: "perm_daune", label: "Daune" },
 ];
 
 async function loadRoluriList() {
@@ -6231,7 +6936,7 @@ async function loadRoluriList() {
 }
 
 async function openUseriRoluriModal() {
-  if (currentProfile.rol !== "admin") { alert("Doar administratorul poate gestiona useri și roluri."); return; }
+  if (!isSuperAdminEmail()) { alert("Doar contul covoran.andrei@gmail.com poate gestiona useri și roluri."); return; }
   await Promise.all([loadRoluriList(), loadAllProfiles(), loadPuncteLucru(), loadFurnizori()]);
   renderUseriRoluriModal();
 }
@@ -6300,14 +7005,14 @@ function renderUseriRoluriModal() {
     </div>
 
     <div class="export-section-label">Angajați</div>
+    <div class="muted" style="font-size:12.5px;margin-bottom:8px">Contul de administrator (acces total) este mereu doar <b>covoran.andrei@gmail.com</b> — nu se mai poate acorda altui cont. Pentru oricine altcineva, cel mai mult acces posibil e un rol de permisiuni cu toate bifele puse (poți crea unul numit „Manager" mai sus, la „Roluri").</div>
     <div style="overflow-x:auto">
       <table class="roluri-table">
-        <thead><tr><th>Nume</th><th>Brand</th><th>Punct de lucru</th><th>Cont</th><th>Rol permisiuni</th></tr></thead>
+        <thead><tr><th>Nume</th><th>Punct de lucru</th><th>Cont</th><th>Rol permisiuni</th><th>Activ</th></tr></thead>
         <tbody>
           ${allProfiles.map(p => `
             <tr>
               <td>${escapeHtml(p.nume)}</td>
-              <td>${escapeHtml(p.brand || "")}</td>
               <td>
                 ${p.rol === "admin" ? '<span class="muted" style="font-size:11.5px">toate</span>' : `
                   <select onchange="assignUserPunctLucru('${p.id}', this.value)" style="font-size:12px;padding:5px 8px;border-radius:6px;border:1.5px solid var(--border)">
@@ -6322,13 +7027,69 @@ function renderUseriRoluriModal() {
                     ${currentRoluri.map(r => `<option value="${r.id}" ${p.rol_id === r.id ? "selected" : ""}>${escapeHtml(r.nume)}</option>`).join("")}
                   </select>`}
               </td>
+              <td style="text-align:center">
+                ${p.rol === "admin" ? '<span class="muted" style="font-size:11.5px">—</span>' : `
+                  <input type="checkbox" ${p.activ !== false ? "checked" : ""} onchange="toggleUserActiv('${p.id}', this.checked)" style="width:16px;height:16px" />`}
+              </td>
             </tr>
           `).join("")}
         </tbody>
       </table>
     </div>
+
+    <div class="export-section-label" style="margin-top:16px">➕ Adaugă angajat nou</div>
+    <div class="muted" style="font-size:12.5px;margin-bottom:8px">Creează direct de aici contul de autentificare și profilul angajatului — nu mai trebuie să faci nimic manual în Supabase.</div>
+    <div class="modal-grid" style="margin-bottom:8px">
+      <div class="field"><label>Nume și prenume</label><input id="au-nume" placeholder="ex: Ion Popescu" /></div>
+      <div class="field"><label>Email</label><input type="email" id="au-email" placeholder="ex: ion.popescu@exemplu.ro" /></div>
+      <div class="field"><label>Parolă (temporară)</label><input type="text" id="au-parola" placeholder="minim 6 caractere" /></div>
+      <div class="field">
+        <label>Punct de lucru</label>
+        <select id="au-punct-lucru">${currentPuncteLucru.map(pl => `<option value="${pl.id}">${escapeHtml(pl.nume)}</option>`).join("")}</select>
+      </div>
+      <div class="field span-2">
+        <label>Rol permisiuni</label>
+        <select id="au-rol">
+          <option value="">— fără permisiuni (le adaugi ulterior) —</option>
+          ${currentRoluri.map(r => `<option value="${r.id}">${escapeHtml(r.nume)}</option>`).join("")}
+        </select>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="creeazaAngajatNou()">+ Creează cont</button>
+
     <div class="modal-actions"><button class="btn-secondary" onclick="rzCloseModal()">Închide</button></div>`;
   rzOpenModal(html);
+}
+
+async function creeazaAngajatNou() {
+  const nume = document.getElementById("au-nume").value.trim();
+  const email = document.getElementById("au-email").value.trim();
+  const parola = document.getElementById("au-parola").value.trim();
+  const punctLucruId = document.getElementById("au-punct-lucru").value || null;
+  const rolId = document.getElementById("au-rol").value || null;
+  if (!nume || !email || !parola) { alert("Completează nume, email și parolă."); return; }
+  const { data, error } = await client.functions.invoke("admin-users", {
+    body: { action: "create", nume, email, password: parola, punct_lucru_id: punctLucruId, rol_id: rolId },
+  });
+  const rezultat = data || {};
+  if (error || !rezultat.ok) { alert("Eroare la crearea contului: " + (rezultat.error || (error && error.message) || "eroare necunoscută")); return; }
+  await loadAllProfiles();
+  renderUseriRoluriModal();
+  if (typeof rzToast === "function") rzToast("Cont creat: " + email, "ok");
+}
+
+async function toggleUserActiv(userId, activ) {
+  if (!activ && !confirm("Dezactivezi acest cont? Angajatul nu se va mai putea autentifica până îl reactivezi.")) {
+    await loadAllProfiles();
+    renderUseriRoluriModal();
+    return;
+  }
+  const { data, error } = await client.functions.invoke("admin-users", { body: { action: "setActive", user_id: userId, activ } });
+  const rezultat = data || {};
+  if (error || !rezultat.ok) { alert("Eroare: " + (rezultat.error || (error && error.message) || "eroare necunoscută")); await loadAllProfiles(); renderUseriRoluriModal(); return; }
+  await loadAllProfiles();
+  renderUseriRoluriModal();
+  if (typeof rzToast === "function") rzToast(activ ? "Cont activat" : "Cont dezactivat", "ok");
 }
 
 async function saveRolRow(rolId) {
