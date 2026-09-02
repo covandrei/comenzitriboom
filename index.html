@@ -293,9 +293,6 @@
   .linie-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
   .linie-row input { padding: 9px 11px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13.5px; font-family: inherit; }
   .linie-row input:focus { outline: none; border-color: var(--accent); }
-  /* NOTĂ: .dv-linie-row (rândurile <tr> de Piese/Manoperă din devizul-fișă D.R.I.S.P.) e
-     un nume de clasă diferit, intenționat — NU trebuie să moștenească regulile flex de mai sus,
-     care sunt gândite strict pentru rândurile div din modalul de preț piese (Recepție/Inventar). */
 
   /* ---------- RECEPTIE & INVENTAR ---------- */
   .rz-submodes { display: inline-flex; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
@@ -407,78 +404,6 @@
   .print-table tr:nth-child(even) td { background: #f4f5f7; }
   .print-total-row td { font-weight: 800; border-top: 2px solid #1e3a8a; }
 
-  /* ---------- DEVIZ TIPARIT — stil formular service (asemanator DRISP) ---------- */
-  .drisp-page { font-family: Arial, Helvetica, sans-serif; color: #000; font-size: 11.5px; }
-  .drisp-h1 { text-align: center; text-transform: uppercase; font-size: 19px; font-weight: 800; border-bottom: 2px solid #000; padding-bottom: 5px; margin: 0 0 10px; letter-spacing: .02em; }
-  .drisp-meta-row { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 10px; font-size: 12.5px; border: 1px solid #ccc; padding: 6px 10px; }
-  .drisp-section-title { font-weight: 800; background: #eaeaea; padding: 4px 8px; border: 1px solid #000; border-bottom: none; font-size: 12px; margin-top: 10px; }
-  /* min-width: 0 e necesar aici ca să anuleze regula generică „table { min-width: 1250px }” de mai
-     sus (gândită pt. tabelele mari de listare, cu scroll orizontal) — altfel fișa D.R.I.S.P. de mai
-     jos era împinsă mult mai lată decât pagina albă și „curgea” peste fundalul gri. */
-  .drisp-info-table { width: 100%; min-width: 0; table-layout: fixed; border-collapse: collapse; margin-bottom: 2px; }
-  .drisp-info-table td { border: 1px solid #000; padding: 4px 8px; font-size: 12px; overflow: hidden; }
-  .drisp-info-table td.lbl { width: 22%; font-weight: 700; background: #f7f7f7; }
-  .drisp-table { width: 100%; min-width: 0; table-layout: fixed; border-collapse: collapse; margin-bottom: 2px; }
-  .drisp-table th, .drisp-table td { border: 1px solid #000; padding: 5px 7px; font-size: 11.5px; text-align: left; overflow: hidden; }
-  .drisp-table th {
-    background: #eaeaea; text-align: center; font-weight: 700; white-space: normal; line-height: 1.25;
-    color: #000; text-transform: none; letter-spacing: normal; vertical-align: middle;
-  }
-  .drisp-table td.num { text-align: right; white-space: nowrap; }
-  .drisp-total-row td { font-weight: 800; background: #f4f4f4; }
-  .drisp-grand-total { border: 2px solid #000; padding: 7px 12px; text-align: right; font-size: 15px; font-weight: 800; background: #eaeaea; margin-top: 10px; }
-  .drisp-sign-area { display: flex; justify-content: space-between; margin-top: 34px; gap: 16px; }
-  .drisp-sign-box { flex: 1; border-top: 1px solid #000; padding-top: 6px; text-align: center; font-size: 11px; }
-  .drisp-company-details { text-align: center; font-size: 9.5px; line-height: 1.3; margin: 0 0 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
-  .drisp-textbox { border: 1px solid #000; min-height: 46px; padding: 4px 6px; font-size: 11px; white-space: pre-wrap; margin-bottom: 2px; }
-  .drisp-checkbox-cell { text-align: center; width: 42px; }
-  .drisp-guarantee-title { text-align: center; margin-top: 8px; font-weight: 800; border-top: 1px dashed #999; padding-top: 4px; font-size: 11.5px; }
-  .drisp-guarantee-text { font-size: 8px; text-align: justify; margin-top: 3px; line-height: 1.25; color: #333; }
-  .drisp-footer-note { font-size: 8px; text-align: center; color: #555; border-top: 1px solid #ddd; padding-top: 3px; margin-top: 10px; }
-  .drisp-page-break { page-break-before: always; margin-top: 26px; padding-top: 20px; border-top: 3px double #999; }
-  @media print { .drisp-page-break { border-top: none; margin-top: 0; padding-top: 0; } }
-
-  /* ---------- DEVIZ — ecran de completare IDENTIC cu fișierul D.R.I.S.P. (Deviz_Service.html) ----------
-     Formularul de Deviz nu mai e un formular CRM generic (etichetă deasupra câmpului) — e reconstruit
-     ca fișa albă cu tabele cu chenar negru, exact ca-n fișierul/screenshot-ul trimis de Andrei. Câmpurile
-     specifice CRM-ului (Mecanic, Tarif, Curs BNR, Stare, Notițe — care nu există în D.R.I.S.P., pentru
-     că ține de gestiunea internă, nu de fișa tipărită) stau într-o bară separată, clar etichetată. */
-  .drisp-editor-shell { background: #55555a; border-radius: 10px; padding: 20px; margin: 4px 0 16px; }
-  .drisp-page-live { background: #fff; max-width: 900px; margin: 0 auto 18px; padding: 18px 24px 22px; box-shadow: 0 4px 18px rgba(0,0,0,.35); border-radius: 2px; }
-  .drisp-page-live:last-child { margin-bottom: 0; }
-  .drisp-page-live .drisp-h1 { font-size: 17px; }
-  .drisp-crm-strip { background: var(--bg-soft, #f4f4f5); border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
-  .drisp-crm-strip-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 10px; }
-  .drisp-crm-strip .modal-grid { gap: 10px; }
-  .drisp-live-actions { display: flex; justify-content: flex-end; gap: 8px; margin: -2px 0 8px; }
-  .drisp-chips-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
-  .drisp-nr-cell { text-align: center; width: 26px; font-size: 11px; color: #666; }
-  .drisp-total-live-row td { font-weight: 800; background: #f4f4f4; text-align: right; }
-  .drisp-total-live-row td.num { text-align: right; }
-  /* input-urile din interiorul tabelelor cu chenar arată exact ca-n D.R.I.S.P.: fără margini proprii,
-     fundal transparent, text centrat, highlight albăstrui la focus */
-  .drisp-page-live .drisp-info-table input,
-  .drisp-page-live .drisp-info-table select,
-  .drisp-page-live .drisp-table input,
-  .drisp-page-live .drisp-table select,
-  .drisp-page-live .drisp-textbox textarea {
-    width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;
-    border: none; background: transparent; font-family: inherit; font-size: 12px;
-    outline: none; padding: 2px; text-align: center; color: #000;
-  }
-  .drisp-page-live .drisp-info-table input:focus,
-  .drisp-page-live .drisp-table input:focus,
-  .drisp-page-live .drisp-info-table select:focus,
-  .drisp-page-live .drisp-textbox textarea:focus { background: #eef; }
-  .drisp-page-live .drisp-info-table input[readonly],
-  .drisp-page-live .drisp-table input[readonly] { color: #555; background: #fafafa; }
-  .drisp-page-live .drisp-table input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
-  .drisp-page-live .drisp-table td { position: relative; }
-  .drisp-page-live .drisp-table .icon-btn.danger { padding: 2px 5px; }
-  .drisp-textbox { padding: 0; }
-  .drisp-textbox textarea { border: none; resize: vertical; min-height: 44px; padding: 5px 6px !important; text-align: left !important; font-family: inherit; }
-  .deviz-lock-banner { background: #fef3c7; color: #92400e; border: 1.5px solid #f59e0b; border-radius: 8px; padding: 8px 12px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
-
   /* ---------- ROLURI & PERMISIUNI (ecran admin) ---------- */
   .roluri-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 14px; }
   .roluri-table th, .roluri-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); text-align: left; }
@@ -513,40 +438,6 @@
     .programator-day-grid { grid-template-columns: 1fr; }
   }
 
-  /* ---------- DEVIZE — TAB-URI MULTIPLE (multi-deviz simultan, ca-n DRISP) ---------- */
-  .deviz-tabs-strip { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
-  .deviz-tab-pill {
-    display: inline-flex; align-items: center; gap: 8px; padding: 7px 8px 7px 14px; border-radius: 20px;
-    border: 1.5px solid var(--border); background: var(--card); color: var(--muted); font-size: 12.5px; font-weight: 700; cursor: pointer;
-  }
-  .deviz-tab-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .deviz-tab-pill .tab-close { width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(0,0,0,.08); font-size: 11px; line-height: 1; }
-  .deviz-tab-pill.active .tab-close { background: rgba(255,255,255,.25); }
-  .deviz-tab-pill .tab-dirty { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-2); flex-shrink: 0; }
-  .deviz-tab-add {
-    border: 1.5px dashed var(--border); background: transparent; color: var(--muted); border-radius: 20px;
-    padding: 7px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer;
-  }
-  .deviz-workspace {
-    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 18px; margin-bottom: 22px; box-shadow: 0 1px 4px rgba(0,0,0,.04);
-  }
-  .deviz-workspace-title { font-size: 15.5px; font-weight: 800; margin-bottom: 14px; }
-  .client-history-box {
-    grid-column: span 2; background: #f7f8fb; border: 1px dashed var(--border); border-radius: 10px;
-    padding: 10px 12px; margin-top: -2px;
-  }
-  .client-history-box .chb-title { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); margin-bottom: 6px; }
-  .client-history-item {
-    display: flex; justify-content: space-between; align-items: center; gap: 10px;
-    padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12.5px;
-  }
-  .client-history-item:last-child { border-bottom: none; }
-  .client-history-empty { font-size: 12px; color: var(--muted); padding: 4px 0; }
-  .booking-banner {
-    grid-column: span 2; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 10px;
-    padding: 10px 12px; font-size: 12.5px; color: #3730a3; line-height: 1.6; white-space: pre-line;
-  }
 
   /* ---------- PROGRAMATOR ---------- */
   .programator-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
@@ -650,7 +541,7 @@
       <button class="tab-btn active" id="tab-group-comenzi" onclick="switchTab('toate')">Comenzi</button>
       <button class="tab-btn" id="tab-programator" onclick="switchTab('programator')">📅 Programator</button>
       <button class="tab-btn" id="tab-clienti" onclick="switchTab('clienti')">Clienți</button>
-      <button class="tab-btn" id="tab-group-service" onclick="switchTab('devize')">Service</button>
+      <button class="tab-btn" id="tab-group-service" onclick="switchTab('catalog')">Piese (listă prețuri)</button>
       <button class="tab-btn" id="tab-receptie" onclick="switchTab('receptie')">Recepție &amp; Inventar</button>
       <button class="tab-btn" id="tab-sarcini" onclick="switchTab('sarcini')">🗒️ Sarcini</button>
       <button class="tab-btn" id="tab-garantii" onclick="switchTab('garantii')">🛡️ Garanții</button>
@@ -661,10 +552,6 @@
       <button class="subtab-btn active" id="tab-toate" onclick="switchTab('toate')">Toate comenzile</button>
       <button class="subtab-btn" id="tab-termene" onclick="switchTab('termene')">Termene apropiate</button>
       <button class="subtab-btn" id="tab-piese-comandat" onclick="switchTab('piese-comandat')">🛒 Piese de comandat</button>
-    </div>
-    <div class="subtabs" id="subtabs-service">
-      <button class="subtab-btn active" id="tab-devize" onclick="switchTab('devize')">Devize</button>
-      <button class="subtab-btn" id="tab-catalog" onclick="switchTab('catalog')">Piese (listă prețuri)</button>
     </div>
     <div class="subtabs" id="subtabs-programator">
       <button class="subtab-btn active" id="tab-prog-zi" onclick="setProgramatorMode('zi')">Programator Zi</button>
@@ -940,186 +827,6 @@
       </div>
     </div>
 
-    <!-- ===== VIEW DEVIZE ===== -->
-    <div id="devize-view" style="display:none;">
-      <div class="toolbar">
-        <div></div>
-        <div class="toolbar-actions">
-          <button class="btn-secondary" onclick="openDevizExportModal()">Exportă</button>
-          <button class="btn-primary" onclick="addNewDevizTab()">+ Deviz nou</button>
-        </div>
-      </div>
-
-      <div class="deviz-tabs-strip" id="deviz-tabs-strip" style="display:none;"></div>
-
-      <div class="deviz-workspace" id="deviz-workspace" style="display:none;">
-        <div class="deviz-workspace-title" id="deviz-workspace-title">Deviz nou</div>
-        <input type="hidden" id="dv-id" />
-        <div class="deviz-lock-banner" id="deviz-lock-banner" style="display:none">🔒 Acest deviz e „Finalizat” — doar administratorul mai poate modifica.</div>
-        <div class="booking-banner" id="deviz-booking-banner" style="display:none;"></div>
-
-        <!-- Câmpuri de gestiune CRM care nu există în fișa D.R.I.S.P. (mecanic, tarif, curs BNR,
-             stare internă, notițe interne) — separate clar de fișa identică de mai jos, ca să nu
-             se amestece cu ea. -->
-        <div class="drisp-crm-strip">
-          <div class="drisp-crm-strip-title">⚙️ Setări deviz (gestiune internă CRM — nu apar pe fișa tipărită)</div>
-          <div class="modal-grid">
-            <div class="field">
-              <label>Mecanic</label>
-              <select id="d-mecanic-id"></select>
-            </div>
-            <div class="field">
-              <label>Tarif manoperă</label>
-              <select id="d-tarif-id" onchange="onTarifChange()"></select>
-            </div>
-            <div class="field">
-              <label>Curs BNR (RON/EUR)</label>
-              <input type="number" step="0.0001" id="d-curs-bnr" />
-            </div>
-            <div class="field">
-              <label>Stare</label>
-              <select id="d-stare" onchange="onDevizStareChange()">
-                <option>Draft</option>
-                <option>Finalizat</option>
-                <option>Anulat</option>
-              </select>
-            </div>
-            <div class="field span-2">
-              <label>Notițe interne</label>
-              <textarea id="d-notite" rows="2"></textarea>
-            </div>
-          </div>
-        </div>
-
-        <div class="client-history-box" id="deviz-client-history">
-          <div class="chb-title">📋 Istoric vizite client</div>
-          <div class="client-history-empty">Selectează un client pentru a vedea devizele anterioare.</div>
-        </div>
-
-        <!-- ================= FIȘA — identică cu Deviz_Service.html ================= -->
-        <div class="drisp-editor-shell">
-
-          <!-- ---- PAGINA 1: FISA INTRARE SERVICE ---- -->
-          <div class="drisp-page-live">
-            <h1 class="drisp-h1">Fisa intrare service</h1>
-            <div class="drisp-company-details">
-              <strong>MOTOBOOM S.R.L.</strong> CIF: RO18684947 Reg. Com.: J01/509/2006<br>
-              Adresa: Str. Crinului nr. 3, Sebes, ALBA<br>
-              Punct lucru: Sos. Pipera nr. 48, Sector 2, BUCURESTI<br>
-              Contact: 0744 313 982 - info@motocicletetriumph.ro - www.motocicletetriumph.ro
-            </div>
-            <div class="drisp-meta-row">
-              <div><b>Nr:</b> <span id="d-numar-display">—</span></div>
-              <div><b>Data:</b> <span id="d-data-display"></span></div>
-            </div>
-
-            <div class="drisp-section-title">DATE CLIENT</div>
-            <table class="drisp-info-table">
-              <tr><td class="lbl">Nume/Firma</td><td style="position:relative">
-                <input id="d-client-search" placeholder="Caută sau scrie numele clientului..." oninput="onClientSearchInput()" onfocus="onClientSearchFocus()" autocomplete="off" style="text-align:left" />
-                <input type="hidden" id="d-client-id" />
-              </td></tr>
-              <tr><td class="lbl">Adresa</td><td><input id="d-client-adresa" readonly placeholder="—" style="text-align:left" /></td></tr>
-              <tr><td class="lbl">Telefon / Email</td><td><input id="d-client-contact" readonly placeholder="—" /></td></tr>
-              <tr><td class="lbl">CUI</td><td><input id="d-client-cui" readonly placeholder="—" /></td></tr>
-            </table>
-            <div class="drisp-live-actions">
-              <button type="button" class="btn-secondary" onclick="deschideClientNouDinDeviz()">+ Client nou</button>
-            </div>
-
-            <div class="drisp-section-title">DATE MOTOCICLETA</div>
-            <table class="drisp-info-table">
-              <colgroup><col style="width:15%"><col style="width:35%"><col style="width:15%"><col style="width:35%"></colgroup>
-              <tr><td class="lbl">Motocicletă</td><td colspan="3">
-                <select id="d-moto-id" onchange="onDevizMotoChanged()" style="text-align:left"><option value="">— fără motocicletă —</option></select>
-              </td></tr>
-              <tr><td class="lbl">Marca</td><td><input id="dvm-marca" placeholder="Marcă" /></td><td class="lbl">Model</td><td><input id="dvm-model" placeholder="Model" /></td></tr>
-              <tr><td class="lbl">Serie Sasiu</td><td><input id="dvm-serie-sasiu" placeholder="VIN" /></td><td class="lbl">An fabr.</td><td><input id="dvm-an-fabricatie" /></td></tr>
-              <tr><td class="lbl">Nr. Inmatr.</td><td><input id="dvm-numar-inmatriculare" placeholder="ex: B-12-ABC" /></td><td class="lbl">Km</td><td><input id="dvm-km" /></td></tr>
-              <tr><td class="lbl">Data intrare</td><td><input type="date" id="d-data-intrare" /></td><td class="lbl">Ora</td><td><input type="time" id="d-ora-intrare" /></td></tr>
-            </table>
-
-            <div class="drisp-section-title">STAREA MOTOCICLETEI LA MOMENTUL INTRARII IN SERVICE</div>
-            <div class="drisp-textbox"><textarea id="d-stare-vizuala" rows="2" placeholder="Descrierea stării vizuale (zgârieturi, lipsuri, nivel combustibil etc.)..."></textarea></div>
-
-            <div class="drisp-section-title">Lucrari solicitate de client / Defectiuni (declaratie client)</div>
-            <div class="drisp-textbox"><textarea id="d-cerinte-client" rows="2" placeholder="Descrierea lucrărilor solicitate..."></textarea></div>
-
-            <div class="drisp-section-title">Constatari preliminare (unitatea service)</div>
-            <table class="drisp-table" id="constatari-table">
-              <thead><tr><th>Defect constatat</th><th>Recomandare</th><th class="drisp-checkbox-cell">Accept</th><th class="drisp-checkbox-cell">Refuz</th><th style="width:26px"></th></tr></thead>
-              <tbody id="constatari-rows"></tbody>
-            </table>
-            <button type="button" class="btn-secondary" style="margin-top:6px" onclick="addConstatareRow()">+ Adaugă rând</button>
-          </div>
-
-          <!-- ---- PAGINA 2: DEVIZ REPARATIE ---- -->
-          <div class="drisp-page-live">
-            <h1 class="drisp-h1">Deviz reparatie</h1>
-            <div class="drisp-company-details">
-              <strong>MOTOBOOM S.R.L.</strong> CIF: RO18684947 Reg. Com.: J01/509/2006<br>
-              Adresa: Str. Crinului nr. 3, Sebes, ALBA<br>
-              Punct lucru: Sos. Pipera nr. 48, Sector 2, BUCURESTI<br>
-              Contact: 0744 313 982 - info@motocicletetriumph.ro - www.motocicletetriumph.ro
-            </div>
-            <div class="drisp-meta-row">
-              <div><b>Deviz Nr:</b> <span id="d-numar-display-2">—</span></div>
-              <div><b>Data:</b> <span id="d-data-display-2"></span></div>
-              <div><b>Dosar dauna:</b> <input type="text" id="d-dosar-dauna" placeholder="opțional" style="display:inline-block;width:90px" /></div>
-              <div><b>Data Dauna:</b> <input type="date" id="d-data-dauna" style="display:inline-block;width:120px" /></div>
-            </div>
-
-            <div class="drisp-section-title">I. PIESE SI CONSUMABILE</div>
-            <div id="deviz-piese-catalog-uzuale" class="drisp-chips-row"></div>
-            <div id="deviz-piese-uzuale" class="drisp-chips-row"></div>
-            <table class="drisp-table">
-              <thead><tr><th style="width:26px">Nr.</th><th style="width:80px">Cod produs</th><th>Denumire produs</th><th style="width:44px">U.M.</th><th style="width:40px">Cant.</th><th style="width:80px">Pret (fără TVA)</th><th style="width:80px">Pret</th><th style="width:90px">Valoare</th><th style="width:26px"></th></tr></thead>
-              <tbody id="deviz-piese-list"></tbody>
-              <tfoot><tr class="drisp-total-live-row"><td colspan="7">Total Piese</td><td class="num" id="deviz-total-piese-live">0.00 RON</td><td></td></tr></tfoot>
-            </table>
-            <button type="button" class="btn-secondary" style="margin-top:6px" onclick="addDevizPiesaRow()">+ Adaugă piesă</button>
-
-            <div class="drisp-section-title" style="margin-top:14px">II. OPERATIUNI EFECTUATE (MANOPERA)</div>
-            <div id="deviz-manopera-catalog-uzuale" class="drisp-chips-row"></div>
-            <table class="drisp-table">
-              <thead><tr><th style="width:26px">Nr.</th><th>Denumire operatiune</th><th style="width:44px">U.M.</th><th style="width:40px">Ore</th><th style="width:80px">Tarif/Ora (fără TVA)</th><th style="width:80px">Tarif/Ora</th><th style="width:90px">Valoare</th><th style="width:26px"></th></tr></thead>
-              <tbody id="deviz-manopera-list"></tbody>
-              <tfoot><tr class="drisp-total-live-row"><td colspan="6">Total Manopera</td><td class="num" id="deviz-total-manopera-live">0.00 RON</td><td></td></tr></tfoot>
-            </table>
-            <button type="button" class="btn-secondary" style="margin-top:6px" onclick="addDevizManoperaRow()">+ Adaugă operație</button>
-
-            <div class="drisp-grand-total">TOTAL GENERAL DE PLATA: <span id="deviz-total-general-live">0.00 RON</span></div>
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn-secondary" onclick="closeDevizTab()">Închide tab</button>
-          <button class="btn-primary" onclick="saveDevizFromTab()">Salvează</button>
-        </div>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Nr.</th>
-              <th>Brand</th>
-              <th>Client</th>
-              <th>Motocicletă</th>
-              <th>Mecanic</th>
-              <th>Total</th>
-              <th>Stare</th>
-              <th>Data</th>
-              <th>Acțiuni</th>
-            </tr>
-          </thead>
-          <tbody id="devize-table-body">
-            <tr class="empty-row"><td colspan="9">Se încarcă...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
     <!-- ===== VIEW CATALOG PIESE (listă prețuri, sub Service) ===== -->
     <div id="catalog-view" style="display:none;">
       <div class="toolbar">
@@ -1256,10 +963,6 @@
   </main>
 </div>
 
-<datalist id="clienti-datalist"></datalist>
-<datalist id="pricelist-datalist"></datalist>
-<datalist id="piese-uzuale-denumire-datalist"></datalist>
-<datalist id="manopera-uzuale-denumire-datalist"></datalist>
 <div id="print-area"></div>
 
 <!-- ============ MODAL ADAUGA/EDITEAZA COMANDA ============ -->
@@ -1474,7 +1177,6 @@
       <div class="field">
         <label>Marcă</label>
         <input id="pr-marca" placeholder="ex: Triumph, Honda, Yamaha..." />
-        <div class="muted" style="font-size:11px;margin-top:2px;">Folosită la crearea devizului pentru a stabili Triumph/Motoboom.</div>
       </div>
       <div class="field">
         <label>Model</label>
@@ -1780,14 +1482,6 @@ let pendingDelete = null;
 let pendingClientPayload = null;
 let pendingClientId = null;
 let pendingClientMotos = null;
-let pendingClientSelectForDeviz = false; // clientul nou creat din "+ Client nou" (in Deviz) se selecteaza automat inapoi in deviz
-
-let currentDevize = [];
-let currentMecanici = [];
-let currentTarife = [];
-let currentPriceList = [];
-let devizTabs = [];
-let activeDevizTabKey = null;
 
 let currentProgramari = [];
 let programatorMode = "zi";
@@ -1826,7 +1520,6 @@ const GARANTII_STATUS_STYLE = {
 };
 let currentDaune = [];
 let selectedDaunaTip = "fizica";
-let pendingDaunaDevizLink = null; // id-ul devizului de legat la urmatorul dosar nou creat, via "Trimite la Daune"
 let daunaDraftUnconfirmed = false; // true intre deschiderea unui dosar nou (schita auto-creata) si primul Salveaza explicit
 const DAUNE_STARE_STYLE = {
   "Etapa 1": { bg: "#e0f2fe", color: "#075985" },
@@ -1901,7 +1594,7 @@ function applyPermissionsToUI() {
   document.getElementById("prog-import-istoric-bar").style.display = isAdmin ? "block" : "none";
   document.getElementById("tab-group-comenzi").style.display = canDo("perm_comenzi") ? "" : "none";
   document.getElementById("tab-programator").style.display = canDo("perm_programator") ? "" : "none";
-  document.getElementById("tab-group-service").style.display = canDo("perm_devize") ? "" : "none";
+  document.getElementById("tab-group-service").style.display = canDo("perm_devize") ? "" : "none"; // perm_devize gateste acum accesul la catalogul de piese (deviz a fost eliminat)
   document.getElementById("tab-receptie").style.display = canDo("perm_receptie") ? "" : "none";
   document.getElementById("tab-piese-comandat").style.display = (canDo("perm_comenzi") || canDo("perm_piese_comandat")) ? "" : "none";
   document.getElementById("tab-sarcini").style.display = canDo("perm_sarcini") ? "" : "none";
@@ -1912,7 +1605,7 @@ function applyPermissionsToUI() {
     canDo("perm_comenzi") ? "toate" :
     canDo("perm_programator") ? "programator" :
     true ? "clienti" :
-    canDo("perm_devize") ? "devize" :
+    canDo("perm_devize") ? "catalog" :
     canDo("perm_receptie") ? "receptie" :
     canDo("perm_sarcini") ? "sarcini" :
     canDo("perm_garantii") ? "garantii" :
@@ -1920,7 +1613,7 @@ function applyPermissionsToUI() {
     (canDo("perm_comenzi") || canDo("perm_piese_comandat")) ? "piese-comandat" : "clienti";
   if ((activeTab === "toate" || activeTab === "termene") && !canDo("perm_comenzi")) switchTab(tabDisponibil);
   else if (activeTab === "programator" && !canDo("perm_programator")) switchTab(tabDisponibil);
-  else if ((activeTab === "devize" || activeTab === "catalog") && !canDo("perm_devize")) switchTab(tabDisponibil);
+  else if (activeTab === "catalog" && !canDo("perm_devize")) switchTab(tabDisponibil);
   else if (activeTab === "receptie" && !canDo("perm_receptie")) switchTab(tabDisponibil);
   else if (activeTab === "piese-comandat" && !canDo("perm_comenzi") && !canDo("perm_piese_comandat")) switchTab(tabDisponibil);
   else if (activeTab === "sarcini" && !canDo("perm_sarcini")) switchTab(tabDisponibil);
@@ -2029,7 +1722,6 @@ function savePunctLucruModal() {
 function rerenderAllForLocationFilter() {
   if (document.getElementById("table-body")) renderTable();
   if (document.getElementById("clients-table-body")) renderClientsTable();
-  if (document.getElementById("devize-table-body")) renderDevizeTable();
   if (document.getElementById("rz-list-container")) rzRender();
   if (document.getElementById("piese-comandat-table-body")) renderPieseComandat();
   if (document.getElementById("programator-view")) renderProgramatorModCurent();
@@ -2146,11 +1838,10 @@ async function afterLogin() {
   populateStareComandaOptions();
   await loadMyPermissions();
   currentUserEmail = user.email || null;
-  await Promise.all([loadOrders(), loadMecanici(), loadTarife(), rzLoadSetari(), rzLoadAdaosuri(), rzLoadPriceListFull(), loadAllProfiles(), loadProgramari(), loadPuncteLucru(), loadBranduriMoto(), loadFurnizori(), loadSarcini(), loadPreturiUzuale()]);
+  await Promise.all([loadOrders(), rzLoadSetari(), rzLoadAdaosuri(), rzLoadPriceListFull(), loadAllProfiles(), loadProgramari(), loadPuncteLucru(), loadBranduriMoto(), loadFurnizori(), loadSarcini()]);
   applyPermissionsToUI();
   restoreLocationPrefsFromStorage();
   updatePunctLucruHeaderBtn();
-  restoreDevizTabsFromStorage();
 
   const unread = await loadNotifCount();
   subscribeNotifRealtime();
@@ -2171,12 +1862,11 @@ function switchTab(tab) {
   activeTab = tab;
   const inComenziGroup = (tab === "toate" || tab === "termene" || tab === "piese-comandat");
   const showComenziStats = (tab === "toate" || tab === "termene");
-  const inService = (tab === "devize" || tab === "catalog");
 
   document.getElementById("tab-group-comenzi").classList.toggle("active", inComenziGroup);
   document.getElementById("tab-programator").classList.toggle("active", tab === "programator");
   document.getElementById("tab-clienti").classList.toggle("active", tab === "clienti");
-  document.getElementById("tab-group-service").classList.toggle("active", inService);
+  document.getElementById("tab-group-service").classList.toggle("active", tab === "catalog");
   document.getElementById("tab-receptie").classList.toggle("active", tab === "receptie");
   document.getElementById("tab-sarcini").classList.toggle("active", tab === "sarcini");
   document.getElementById("tab-garantii").classList.toggle("active", tab === "garantii");
@@ -2185,19 +1875,15 @@ function switchTab(tab) {
   document.getElementById("tab-toate").classList.toggle("active", tab === "toate");
   document.getElementById("tab-termene").classList.toggle("active", tab === "termene");
   document.getElementById("tab-piese-comandat").classList.toggle("active", tab === "piese-comandat");
-  document.getElementById("tab-devize").classList.toggle("active", tab === "devize");
-  document.getElementById("tab-catalog").classList.toggle("active", tab === "catalog");
 
   document.getElementById("subtabs-comenzi").classList.toggle("open", inComenziGroup);
   document.getElementById("subtabs-programator").classList.toggle("open", tab === "programator");
-  document.getElementById("subtabs-service").classList.toggle("open", inService);
   document.getElementById("subtabs-sarcini").classList.toggle("open", tab === "sarcini");
 
   document.getElementById("stats-bar").style.display = showComenziStats ? "flex" : "none";
   document.getElementById("orders-view").style.display = showComenziStats ? "block" : "none";
   document.getElementById("programator-view").style.display = (tab === "programator") ? "block" : "none";
   document.getElementById("clients-view").style.display = (tab === "clienti") ? "block" : "none";
-  document.getElementById("devize-view").style.display = (tab === "devize") ? "block" : "none";
   document.getElementById("catalog-view").style.display = (tab === "catalog") ? "block" : "none";
   document.getElementById("receptie-view").style.display = (tab === "receptie") ? "block" : "none";
   document.getElementById("piese-comandat-view").style.display = (tab === "piese-comandat") ? "block" : "none";
@@ -2208,7 +1894,6 @@ function switchTab(tab) {
 
   if (tab === "clienti") loadClients();
   else if (tab === "programator") initProgramatorViewIfNeeded();
-  else if (tab === "devize") loadDevize();
   else if (tab === "catalog") renderCatalogTable();
   else if (tab === "receptie") rzInitIfNeeded();
   else if (tab === "piese-comandat") renderPieseComandat();
@@ -2537,17 +2222,12 @@ function confirmDeleteClient(id) {
   document.getElementById("confirm-title").textContent = "Ștergi acest client?";
   document.getElementById("confirm-overlay").classList.add("open");
 }
-function confirmDeleteDeviz(id) {
-  pendingDelete = { type: "deviz", id };
-  document.getElementById("confirm-title").textContent = "Ștergi acest deviz?";
-  document.getElementById("confirm-overlay").classList.add("open");
-}
 function closeConfirm() {
   pendingDelete = null;
   document.getElementById("confirm-overlay").classList.remove("open");
 }
 const PENDING_DELETE_TABLES = {
-  client: "clienti", deviz: "devize", comanda: "comenzi", garantie: "garantii",
+  client: "clienti", comanda: "comenzi", garantie: "garantii",
   "receptie-item": "receptie_articole", "inventar-item": "inventar_articole", "receptie-sesiune": "receptie_sesiuni",
 };
 async function executeDelete() {
@@ -2567,11 +2247,6 @@ async function executeDelete() {
   closeConfirm();
   if (error) { alert("Nu s-a putut șterge: " + error.message); return; }
   if (table === "clienti") await loadClients();
-  else if (table === "devize") {
-    await loadDevize();
-    const orphanTab = devizTabs.find(t => t.devizId === pendingDelete.id);
-    if (orphanTab) closeDevizTabSilent(orphanTab.tabKey);
-  }
   else if (table === "receptie_articole") { await rzLoadItems(); rzPopulateDNFilter(); rzUpdateStats(); rzRender(); }
   else if (table === "inventar_articole") { await rzLoadInvItems(); rzUpdateStats(); rzRender(); }
   else if (table === "receptie_sesiuni") { rzOpenHistory(); }
@@ -3143,7 +2818,6 @@ async function loadClients() {
   const { data, error } = await client.from("clienti").select("*, motociclete(*)").order("creat_la", { ascending: false });
   if (error) { alert("Eroare la încărcarea clienților: " + error.message); return; }
   currentClients = data || [];
-  populateClientDatalist();
   renderClientsTable();
 }
 
@@ -3249,16 +2923,6 @@ function openClientModal(id) {
 }
 function closeClientModal() { document.getElementById("client-modal-overlay").classList.remove("open"); }
 
-// deschide formularul obisnuit de Client nou, direct din Deviz — la salvare,
-// noul client (si prima lui motocicleta, daca a fost adaugata) se selecteaza
-// automat inapoi in devizul curent, ca sa nu mai fie nevoie sa il cauti manual
-function deschideClientNouDinDeviz() {
-  pendingClientSelectForDeviz = true;
-  const numeTastat = (document.getElementById("d-client-search").value || "").trim();
-  openClientModal();
-  if (numeTastat) document.getElementById("c-nume").value = numeTastat;
-}
-
 async function checkDuplicateClient(nume, prenume, excludeId) {
   const { data } = await client.from("clienti").select("*").ilike("nume", nume).ilike("prenume", prenume);
   return (data || []).filter(d => d.id !== excludeId);
@@ -3335,20 +2999,6 @@ async function persistClient(payload, id, motos) {
 
   closeClientModal();
   await loadClients();
-
-  if (pendingClientSelectForDeviz && clientId) {
-    pendingClientSelectForDeviz = false;
-    const newCli = currentClients.find(c => c.id === clientId);
-    if (newCli) {
-      populateClientDatalist();
-      document.getElementById("d-client-search").value = clientLabel(newCli);
-      document.getElementById("d-client-id").value = newCli.id;
-      const primaMoto = (newCli.motociclete && newCli.motociclete[0]) || null;
-      populateMotoSelectForClient(newCli, primaMoto ? primaMoto.id : null);
-      renderClientHistoryForTab(newCli, getActiveDevizTab());
-      if (typeof rzToast === "function") rzToast("Client nou creat și selectat în deviz", "ok");
-    }
-  }
 }
 
 // ---------- CLIENTI: export / import Excel ----------
@@ -3424,963 +3074,6 @@ async function handleImportFile(event) {
     alert("Nu am putut citi fișierul: " + e.message);
     event.target.value = "";
   }
-}
-
-// ======================================================
-// DEVIZE
-// ======================================================
-
-async function loadMecanici() {
-  const { data } = await client.from("mecanici").select("*").order("nume");
-  currentMecanici = data || [];
-  const sel = document.getElementById("d-mecanic-id");
-  sel.innerHTML = '<option value="">— fără mecanic —</option>' + currentMecanici.map(m => `<option value="${m.id}">${escapeHtml(m.nume)}</option>`).join("");
-}
-
-async function loadTarife() {
-  const { data } = await client.from("tarife_manopera").select("*").order("tarif_ora", { ascending: false });
-  currentTarife = data || [];
-  const sel = document.getElementById("d-tarif-id");
-  sel.innerHTML = currentTarife.map(t => `<option value="${t.id}" data-rate="${t.tarif_ora}">${escapeHtml(t.denumire)} (${t.tarif_ora} RON/h)</option>`).join("");
-}
-
-async function loadPriceList() {
-  const { data } = await client.from("price_list").select("*");
-  currentPriceList = data || [];
-  populatePriceListDatalist();
-}
-
-function populatePriceListDatalist() {
-  document.getElementById("pricelist-datalist").innerHTML =
-    currentPriceList.map(p => `<option value="${escapeHtml(p.cod_piesa)}">`).join("");
-}
-
-function populateClientDatalist() {
-  document.getElementById("clienti-datalist").innerHTML =
-    currentClients.map(c => `<option value="${escapeHtml(clientLabel(c))}">`).join("");
-}
-
-function clientLabel(c) {
-  return c.nume + (c.prenume ? " " + c.prenume : "") + (c.telefon ? " — " + c.telefon : "");
-}
-
-async function loadDevize() {
-  const { data, error } = await client
-    .from("devize")
-    .select("*, linii:deviz_linii(*), clienti(nume,prenume,telefon,email,tip_client,adresa,cui), motociclete(marca,model,numar_inmatriculare,serie_sasiu,an_fabricatie,km), mecanici(nume)")
-    .order("creat_la", { ascending: false });
-  if (error) { alert("Eroare la încărcarea devizelor: " + error.message); return; }
-  currentDevize = data || [];
-  renderDevizeTable();
-}
-
-function devizTotal(d) {
-  return (d.linii || []).reduce((s, l) => s + Number(l.cantitate) * Number(l.pret_unitar), 0);
-}
-
-function renderDevizeTable() {
-  const tbody = document.getElementById("devize-table-body");
-  const rows = currentDevize.filter(matchesLocationFilter);
-  if (rows.length === 0) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Niciun deviz încă.</td></tr>';
-    return;
-  }
-  const stareStyles = { "Draft": { bg: "#e5e7eb", text: "#374151" }, "Finalizat": { bg: "#dcfce7", text: "#166534" }, "Anulat": { bg: "#fee2e2", text: "#991b1b" } };
-  tbody.innerHTML = rows.map(d => {
-    const st = stareStyles[d.stare] || { bg: "#eee", text: "#333" };
-    const cliNume = d.clienti ? (d.clienti.nume + " " + d.clienti.prenume) : "—";
-    const motoNume = d.motociclete ? [(d.motociclete.marca || ""), (d.motociclete.model || "")].filter(Boolean).join(" ") + (d.motociclete.numar_inmatriculare ? " · " + d.motociclete.numar_inmatriculare : "") : "—";
-    return `
-      <tr>
-        <td><b>#${d.numar}</b></td>
-        <td>${d.brand ? renderBrandBadge(d.brand) : '<span class="muted">—</span>'}</td>
-        <td>${escapeHtml(cliNume)}</td>
-        <td>${escapeHtml(motoNume)}</td>
-        <td>${escapeHtml(d.mecanici ? d.mecanici.nume : "—")}</td>
-        <td><b>${devizTotal(d).toFixed(2)} RON</b></td>
-        <td><span class="badge" style="background:${st.bg};color:${st.text}">${escapeHtml(d.stare)}</span></td>
-        <td>${formatDate(d.creat_la)}</td>
-        <td>
-          <div class="actions-cell">
-            <button class="icon-btn" title="Editează" onclick="openDevizTab('${d.id}')">${ICON_EDIT}</button>
-            <button class="btn-secondary" onclick="printDeviz('${d.id}')">Printează</button>
-            ${(amAdmin() || canDo("perm_daune")) ? `<button class="btn-secondary" title="Trimite acest deviz către un dosar de daună" onclick="trimiteDevizLaDaune('${d.id}')">➡️ Daune</button>` : ""}
-            ${currentProfile.rol === "admin" ? `<button class="icon-btn danger" title="Șterge" onclick="confirmDeleteDeviz('${d.id}')">${ICON_TRASH}</button>` : ""}
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join("");
-}
-
-// trimite un deviz existent catre un dosar de dauna nou, preluand automat
-// datele clientului si ale motocicletei legate de deviz
-async function trimiteDevizLaDaune(devizId) {
-  const d = currentDevize.find(x => x.id === devizId);
-  if (!d) return;
-  if (!(amAdmin() || canDo("perm_daune"))) { alert("Nu ai permisiunea „Daune”."); return; }
-  const cli = d.clienti || null;
-  const moto = d.motociclete || null;
-  switchTab("daune");
-  await loadDaune();
-  pendingDaunaDevizLink = devizId;
-  openDauneModal();
-  if (cli) {
-    selectDaunaTip(cli.tip_client || "fizica");
-    document.getElementById("dn-nume").value = cli.nume || "";
-    document.getElementById("dn-prenume").value = cli.prenume || "";
-    document.getElementById("dn-telefon").value = cli.telefon || "";
-    document.getElementById("dn-email").value = cli.email || "";
-  }
-  if (moto) {
-    document.getElementById("dn-vin").value = moto.serie_sasiu || "";
-    document.getElementById("dn-marca").value = moto.marca || "";
-    document.getElementById("dn-model").value = moto.model || "";
-    document.getElementById("dn-numar-inmatriculare").value = moto.numar_inmatriculare || "";
-  }
-  if (typeof rzToast === "function") rzToast("Completează dosarul și apasă Salvează — devizul rămâne legat de el.", "ok");
-}
-
-// ---------- CAUTARE CLIENT ÎN DEVIZ (dropdown propriu, cu click — nu mai depinde de <datalist>) ----------
-// Cautarea veche folosea un <input list="..."> nativ, care cerea o potrivire EXACTA intre
-// textul scris si eticheta clientului ca sa functioneze "onchange" — pe multe telefoane/
-// browsere alegerea din datalist nu completeaza corect valoarea, deci "nu alegea nimic".
-// Noua varianta e un dropdown construit de noi (la fel ca la piese/manopera), care selecteaza
-// clientul direct la click, indiferent de browser.
-function onClientSearchInput() {
-  const val = document.getElementById("d-client-search").value;
-  // daca userul modifica textul dupa ce alesese deja un client, deselecteaza
-  const prevId = document.getElementById("d-client-id").value;
-  if (prevId) {
-    const prev = currentClients.find(c => c.id === prevId);
-    if (!prev || clientLabel(prev) !== val) {
-      document.getElementById("d-client-id").value = "";
-      fillDevizClientReadonlyFields(null);
-      populateMotoSelectForClient(null);
-      renderClientHistoryForTab(null, getActiveDevizTab());
-    }
-  }
-  showClientDropdown(val);
-}
-
-function onClientSearchFocus() {
-  showClientDropdown(document.getElementById("d-client-search").value);
-}
-
-function showClientDropdown(query) {
-  closeClientDropdown();
-  const q = (query || "").trim().toLowerCase();
-  const matches = (q
-    ? currentClients.filter(c => clientLabel(c).toLowerCase().includes(q) || (c.telefon || "").toLowerCase().includes(q))
-    : currentClients
-  ).slice(0, 40);
-  if (!matches.length) return;
-  const inputEl = document.getElementById("d-client-search");
-  const dd = document.createElement("div");
-  dd.className = "client-autocomplete";
-  dd.id = "d-client-dropdown";
-  dd.innerHTML = matches.map(c => `
-    <div class="client-ac-item" data-id="${c.id}">
-      <div class="client-ac-name">${escapeHtml(c.nume)} ${escapeHtml(c.prenume || "")}</div>
-      <div class="client-ac-sub">${escapeHtml(c.telefon || "fără telefon")}${c.email ? " · " + escapeHtml(c.email) : ""}</div>
-    </div>`).join("");
-  dd.querySelectorAll(".client-ac-item").forEach(el => {
-    el.addEventListener("pointerdown", e => {
-      e.preventDefault();
-      selectClientForDeviz(el.getAttribute("data-id"));
-    });
-  });
-  const rect = inputEl.getBoundingClientRect();
-  dd.style.position = "fixed";
-  dd.style.top = (rect.bottom + 3) + "px";
-  dd.style.left = rect.left + "px";
-  dd.style.width = rect.width + "px";
-  document.body.appendChild(dd);
-}
-
-function closeClientDropdown() {
-  const dd = document.getElementById("d-client-dropdown");
-  if (dd) dd.remove();
-}
-
-function selectClientForDeviz(clientId) {
-  const cli = currentClients.find(c => c.id === clientId);
-  closeClientDropdown();
-  if (!cli) return;
-  document.getElementById("d-client-search").value = clientLabel(cli);
-  document.getElementById("d-client-id").value = cli.id;
-  fillDevizClientReadonlyFields(cli);
-  populateMotoSelectForClient(cli);
-  renderClientHistoryForTab(cli, getActiveDevizTab());
-}
-
-// completeaza campurile needitabile Adresa/Telefon-Email/CUI din DATE CLIENT —
-// vin din fisa clientului (Clienti), nu se editeaza direct de aici, ca sa nu
-// existe doua surse de adevar pentru aceleasi date.
-function fillDevizClientReadonlyFields(cli) {
-  document.getElementById("d-client-adresa").value = (cli && cli.adresa) || "";
-  document.getElementById("d-client-contact").value = cli ? [cli.telefon, cli.email].filter(Boolean).join(" · ") : "";
-  document.getElementById("d-client-cui").value = (cli && cli.cui) || "";
-}
-
-document.addEventListener("pointerdown", e => {
-  const dd = document.getElementById("d-client-dropdown");
-  if (dd && !dd.contains(e.target) && e.target.id !== "d-client-search") closeClientDropdown();
-});
-
-function populateMotoSelectForClient(clientObj, selectedMotoId) {
-  const sel = document.getElementById("d-moto-id");
-  const motos = (clientObj && clientObj.motociclete) || [];
-  let optiuni = '<option value="">— fără motocicletă —</option>' + motos.map(m =>
-    `<option value="${m.id}" ${selectedMotoId === m.id ? "selected" : ""}>${escapeHtml([(m.marca || ""), (m.model || "")].filter(Boolean).join(" ") + (m.numar_inmatriculare ? " · " + m.numar_inmatriculare : ""))}</option>`
-  ).join("");
-  if (clientObj) {
-    optiuni += `<option value="__nou__" ${selectedMotoId === "__nou__" ? "selected" : ""}>+ Motocicletă nouă (date manuale)</option>`;
-  }
-  sel.innerHTML = optiuni;
-  onDevizMotoChanged();
-}
-
-const DVM_FIELD_IDS = ["dvm-marca", "dvm-model", "dvm-serie-sasiu", "dvm-numar-inmatriculare", "dvm-an-fabricatie", "dvm-km"];
-
-// Câmpurile Marca/Model/Serie șasiu/An fabr./Nr. înmatr./Km din tabelul DATE MOTOCICLETA
-// sunt acum parte din fișă (identic vizual cu Deviz_Service.html), nu un panou separat:
-// quando se alege o motocicletă existentă, se completează automat și devin needitabile
-// (sursa de-adevăr rămâne fișa motocicletei, editabilă din Clienți); la „+ Motocicletă
-// nouă", devin editabile, ca să introduci direct datele, exact ca-n fișierul D.R.I.S.P.
-function onDevizMotoChanged() {
-  const motoId = document.getElementById("d-moto-id").value;
-  if (motoId === "__nou__") {
-    DVM_FIELD_IDS.forEach(id => { document.getElementById(id).readOnly = false; });
-    return;
-  }
-  const clientId = document.getElementById("d-client-id").value;
-  const cli = currentClients.find(c => c.id === clientId);
-  const moto = cli && (cli.motociclete || []).find(m => m.id === motoId);
-  document.getElementById("dvm-marca").value = (moto && moto.marca) || "";
-  document.getElementById("dvm-model").value = (moto && moto.model) || "";
-  document.getElementById("dvm-serie-sasiu").value = (moto && moto.serie_sasiu) || "";
-  document.getElementById("dvm-numar-inmatriculare").value = (moto && moto.numar_inmatriculare) || "";
-  document.getElementById("dvm-an-fabricatie").value = (moto && moto.an_fabricatie) || "";
-  document.getElementById("dvm-km").value = (moto && moto.km) || "";
-  DVM_FIELD_IDS.forEach(id => { document.getElementById(id).readOnly = true; });
-}
-
-function collectDevizMotoManual() {
-  const marca = (document.getElementById("dvm-marca") || {}).value || "";
-  const model = (document.getElementById("dvm-model") || {}).value || "";
-  const serieSasiu = (document.getElementById("dvm-serie-sasiu") || {}).value || "";
-  const numarInmatriculare = (document.getElementById("dvm-numar-inmatriculare") || {}).value || "";
-  const anFabricatie = (document.getElementById("dvm-an-fabricatie") || {}).value || "";
-  const km = (document.getElementById("dvm-km") || {}).value || "";
-  return {
-    marca: marca.trim(), model: model.trim(),
-    serie_sasiu: serieSasiu.trim(), numar_inmatriculare: numarInmatriculare.trim(),
-    an_fabricatie: anFabricatie.trim(), km: km.trim(),
-  };
-}
-function restoreDevizMotoManual(m) {
-  document.getElementById("dvm-marca").value = (m && m.marca) || "";
-  document.getElementById("dvm-model").value = (m && m.model) || "";
-  document.getElementById("dvm-serie-sasiu").value = (m && m.serie_sasiu) || "";
-  document.getElementById("dvm-numar-inmatriculare").value = (m && m.numar_inmatriculare) || "";
-  document.getElementById("dvm-an-fabricatie").value = (m && m.an_fabricatie) || "";
-  document.getElementById("dvm-km").value = (m && m.km) || "";
-}
-
-function onTarifChange() {
-  const sel = document.getElementById("d-tarif-id");
-  const opt = sel.options[sel.selectedIndex];
-  const rate = opt ? parseFloat(opt.getAttribute("data-rate")) : 0;
-  document.querySelectorAll("#deviz-manopera-list .dm-tarif").forEach(inp => {
-    if (!inp.value) { inp.value = roFmtNum(rate); recalcDevizManoperaRow(inp.closest(".dv-linie-row")); }
-  });
-}
-
-// ---------- LINII DEVIZ: PIESE ----------
-// Tabelele de piese/manoperă sunt acum rânduri de tabel (<tr>) cu chenar, exact ca-n
-// Deviz_Service.html — Nr./Cod produs/Denumire/U.M./Cant./Preț fără TVA/Preț/Valoare —
-// nu mai sunt "bare" stilizate CRM. Totalurile (Total Piese/Manoperă/General) se
-// recalculează live, la fiecare tastare, la fel ca-n fișierul original.
-function renumberDevizRows(containerId, nrSelector) {
-  document.querySelectorAll("#" + containerId + " " + nrSelector).forEach((cell, i) => { cell.textContent = i + 1; });
-}
-
-function recalcDevizTotalsLive() {
-  let totalPiese = 0, totalManopera = 0;
-  document.querySelectorAll("#deviz-piese-list .dv-linie-row").forEach(row => {
-    const cant = parseFloat(row.querySelector(".dp-cant").value) || 0;
-    const pret = roParseNum(row.querySelector(".dp-pret").value) || 0;
-    totalPiese += cant * pret;
-  });
-  document.querySelectorAll("#deviz-manopera-list .dv-linie-row").forEach(row => {
-    const ore = parseFloat(row.querySelector(".dm-ore").value) || 0;
-    const tarif = roParseNum(row.querySelector(".dm-tarif").value) || 0;
-    totalManopera += ore * tarif;
-  });
-  const elP = document.getElementById("deviz-total-piese-live");
-  const elM = document.getElementById("deviz-total-manopera-live");
-  const elG = document.getElementById("deviz-total-general-live");
-  if (elP) elP.textContent = totalPiese.toFixed(2) + " RON";
-  if (elM) elM.textContent = totalManopera.toFixed(2) + " RON";
-  if (elG) elG.textContent = (totalPiese + totalManopera).toFixed(2) + " RON";
-}
-
-function recalcDevizPiesaRow(row) {
-  const cant = parseFloat(row.querySelector(".dp-cant").value) || 0;
-  const pret = roParseNum(row.querySelector(".dp-pret").value);
-  row.querySelector(".dp-pret-fara").value = pret === null ? "" : roFmtNum(roPretFaraTva(pret));
-  const val = cant * (pret || 0);
-  row.querySelector(".dp-valoare").value = val ? roFmtNum(val) : "";
-  recalcDevizTotalsLive();
-}
-
-function addDevizPiesaRowEl(l) {
-  l = l || {};
-  const tbody = document.getElementById("deviz-piese-list");
-  const row = document.createElement("tr");
-  row.className = "dv-linie-row";
-  const val = l.cantitate && l.pret_unitar ? Number(l.cantitate) * Number(l.pret_unitar) : 0;
-  row.innerHTML = `
-    <td class="drisp-nr-cell"></td>
-    <td><input class="dp-cod" list="pricelist-datalist" value="${escapeHtml(l.cod_piesa || "")}" /></td>
-    <td><input class="dp-denumire" list="piese-uzuale-denumire-datalist" value="${escapeHtml(l.denumire || "")}" style="text-align:left" /></td>
-    <td><input class="dp-um" value="${escapeHtml(l.um || "buc")}" /></td>
-    <td><input class="dp-cant" type="number" step="1" min="0" value="${l.cantitate || 1}" /></td>
-    <td><input class="dp-pret-fara" type="text" readonly value="${l.pret_unitar ? roFmtNum(roPretFaraTva(l.pret_unitar)) : ""}" /></td>
-    <td><input class="dp-pret" type="text" value="${l.pret_unitar ? roFmtNum(l.pret_unitar) : ""}" /></td>
-    <td><input class="dp-valoare" type="text" readonly value="${val ? roFmtNum(val) : ""}" /></td>
-    <td><button type="button" class="icon-btn danger">${ICON_CLOSE}</button></td>
-  `;
-  row.querySelector(".dp-cod").addEventListener("input", function () { onDevizPiesaCodInput(this); });
-  row.querySelector(".dp-denumire").addEventListener("input", function () { onDevizPiesaDenumireInput(this); });
-  row.querySelector(".dp-cant").addEventListener("input", function () { recalcDevizPiesaRow(row); });
-  row.querySelector(".dp-pret").addEventListener("input", function () { recalcDevizPiesaRow(row); });
-  row.querySelector(".icon-btn.danger").onclick = () => { row.remove(); renumberDevizRows("deviz-piese-list", ".drisp-nr-cell"); recalcDevizTotalsLive(); };
-  tbody.appendChild(row);
-  renumberDevizRows("deviz-piese-list", ".drisp-nr-cell");
-}
-function addDevizPiesaRow() { addDevizPiesaRowEl({}); recalcDevizTotalsLive(); }
-
-function onDevizPiesaCodInput(input) {
-  const match = (rzPriceList.length ? rzPriceList : currentPriceList).find(p => p.cod_piesa.toLowerCase() === input.value.trim().toLowerCase());
-  if (!match) return;
-  const row = input.closest(".dv-linie-row");
-  const curs = parseFloat(document.getElementById("d-curs-bnr").value) || 0;
-  row.querySelector(".dp-denumire").value = match.denumire || "";
-  const adaos = (typeof rzAdaosuri !== "undefined" && rzAdaosuri[match.marca]) || 0;
-  let pret = null;
-  if (match.pret_eur && curs) {
-    pret = Number(match.pret_eur) * curs * 1.01 * (1 + adaos / 100);
-  } else if (match.pret_ron) {
-    pret = Number(match.pret_ron) * (1 + adaos / 100);
-  }
-  if (pret !== null) {
-    row.querySelector(".dp-pret").value = roFmtNum(pret);
-    recalcDevizPiesaRow(row);
-  }
-}
-
-// completeaza automat cod + pret cand se alege o denumire din lista de piese uzuale
-function onDevizPiesaDenumireInput(input) {
-  const match = currentPreturiUzuale.find(p => p.tip === "piesa" && p.nume.toLowerCase() === input.value.trim().toLowerCase());
-  if (!match) return;
-  const row = input.closest(".dv-linie-row");
-  if (match.cod) row.querySelector(".dp-cod").value = match.cod;
-  row.querySelector(".dp-pret").value = roFmtNum(match.pret_cu_tva);
-  recalcDevizPiesaRow(row);
-}
-
-// ---------- PIESE UZUALE (cele mai folosite piese, calculate din devizele deja facute) ----------
-function computePieseUzuale(limita) {
-  const counts = {};
-  currentDevize.forEach(d => (d.linii || []).forEach(l => {
-    if (l.tip !== "piesa" || !l.cod_piesa) return;
-    const cheie = l.cod_piesa.toUpperCase();
-    if (!counts[cheie]) counts[cheie] = { cod_piesa: l.cod_piesa, denumire: l.denumire || "", nr: 0 };
-    counts[cheie].nr++;
-  }));
-  return Object.values(counts).sort((a, b) => b.nr - a.nr).slice(0, limita || 12);
-}
-function renderPieseUzualeChips() {
-  const wrap = document.getElementById("deviz-piese-uzuale");
-  if (!wrap) return;
-  const top = computePieseUzuale(12);
-  if (!top.length) { wrap.innerHTML = ""; return; }
-  wrap.innerHTML = `<div class="muted" style="font-size:11px;width:100%">⭐ Piese folosite des — click ca să adaugi:</div>` +
-    top.map(p => `<button type="button" class="btn-secondary" style="padding:3px 9px;font-size:11.5px" onclick="adaugaPiesaUzuala(${JSON.stringify(p.cod_piesa)}, ${JSON.stringify(p.denumire)})">${escapeHtml(p.cod_piesa)}${p.denumire ? " — " + escapeHtml(p.denumire) : ""}</button>`).join("");
-}
-function adaugaPiesaUzuala(cod, denumire) {
-  addDevizPiesaRowEl({ cod_piesa: cod, denumire });
-  const rows = document.querySelectorAll("#deviz-piese-list .dv-linie-row");
-  const last = rows[rows.length - 1];
-  if (last) onDevizPiesaCodInput(last.querySelector(".dp-cod"));
-  recalcDevizTotalsLive();
-}
-
-function renderDevizPieseInputs(linii) {
-  const container = document.getElementById("deviz-piese-list");
-  container.innerHTML = "";
-  (linii || []).forEach(l => addDevizPiesaRowEl(l));
-}
-
-function collectDevizPiese() {
-  return [...document.querySelectorAll("#deviz-piese-list .dv-linie-row")].map(row => ({
-    tip: "piesa",
-    cod_piesa: row.querySelector(".dp-cod").value.trim(),
-    denumire: row.querySelector(".dp-denumire").value.trim(),
-    um: row.querySelector(".dp-um").value.trim() || "buc",
-    cantitate: parseFloat(row.querySelector(".dp-cant").value) || 0,
-    pret_unitar: roParseNum(row.querySelector(".dp-pret").value) || 0,
-  })).filter(l => l.denumire || l.cod_piesa);
-}
-
-// ---------- PIESE / MANOPERE UZUALE (catalog gestionabil, ca la vechiul deviz) ----------
-let currentPreturiUzuale = [];
-let presetUzualeTab = "piesa";
-async function loadPreturiUzuale() {
-  const { data, error } = await client.from("preturi_uzuale").select("*").order("nume");
-  if (!error) currentPreturiUzuale = data || [];
-}
-function renderPieseCatalogUzuale() {
-  const wrap = document.getElementById("deviz-piese-catalog-uzuale");
-  if (!wrap) return;
-  const items = currentPreturiUzuale.filter(p => p.tip === "piesa");
-  wrap.innerHTML = `<span class="muted" style="font-size:11px;display:inline-flex;align-items:center;gap:6px">🔩 Piese uzuale<button type="button" class="btn-secondary" style="padding:1px 7px;font-size:10.5px" onclick="openPreturiUzualeModal('piesa')">⚙️ Gestionează</button></span>` +
-    items.map(p => `<button type="button" class="btn-secondary" style="padding:3px 9px;font-size:11.5px" onclick="adaugaPiesaDinCatalogUzual(${JSON.stringify(p.id)})">${escapeHtml(p.nume)}${p.cod ? " — " + escapeHtml(p.cod) : ""} · ${roFmtNum(p.pret_cu_tva)} lei</button>`).join("");
-  const dl = document.getElementById("piese-uzuale-denumire-datalist");
-  if (dl) dl.innerHTML = items.map(p => `<option value="${escapeHtml(p.nume)}">`).join("");
-}
-function adaugaPiesaDinCatalogUzual(id) {
-  const p = currentPreturiUzuale.find(x => x.id === id);
-  if (!p) return;
-  addDevizPiesaRowEl({ cod_piesa: p.cod || "", denumire: p.nume, pret_unitar: p.pret_cu_tva });
-  recalcDevizTotalsLive();
-}
-function renderManoperaCatalogUzuale() {
-  const wrap = document.getElementById("deviz-manopera-catalog-uzuale");
-  if (!wrap) return;
-  const items = currentPreturiUzuale.filter(p => p.tip === "manopera");
-  wrap.innerHTML = `<span class="muted" style="font-size:11px;display:inline-flex;align-items:center;gap:6px">🔧 Manopere uzuale<button type="button" class="btn-secondary" style="padding:1px 7px;font-size:10.5px" onclick="openPreturiUzualeModal('manopera')">⚙️ Gestionează</button></span>` +
-    items.map(p => `<button type="button" class="btn-secondary" style="padding:3px 9px;font-size:11.5px" onclick="adaugaManoperaDinCatalogUzual(${JSON.stringify(p.id)})">${escapeHtml(p.nume)} · ${roFmtNum(p.pret_cu_tva)} lei</button>`).join("");
-  const dl = document.getElementById("manopera-uzuale-denumire-datalist");
-  if (dl) dl.innerHTML = items.map(p => `<option value="${escapeHtml(p.nume)}">`).join("");
-}
-function adaugaManoperaDinCatalogUzual(id) {
-  const p = currentPreturiUzuale.find(x => x.id === id);
-  if (!p) return;
-  addDevizManoperaRowEl({ denumire: p.nume, pret_unitar: p.pret_cu_tva });
-  recalcDevizTotalsLive();
-}
-function openPreturiUzualeModal(tip) { presetUzualeTab = tip || "piesa"; renderPreturiUzualeModal(); }
-function switchPresetUzualeTab(tip) { presetUzualeTab = tip; renderPreturiUzualeModal(); }
-function renderPreturiUzualeModal() {
-  const canEdit = amAdmin();
-  const items = currentPreturiUzuale.filter(p => p.tip === presetUzualeTab).sort((a, b) => (a.nume || "").localeCompare(b.nume || ""));
-  const html = `<h3>⭐ Piese &amp; manopere uzuale</h3>
-    <div class="muted" style="font-size:12.5px">Apar ca butoane rapide în formularul de Deviz. Prețul e cu TVA — fără TVA se calculează automat.${canEdit ? "" : " Doar administratorul poate edita lista."}</div>
-    <div class="brand-toggle" style="margin:10px 0">
-      <button type="button" class="brand-opt" style="${presetUzualeTab === "piesa" ? "background:var(--accent);color:#fff" : ""}" onclick="switchPresetUzualeTab('piesa')">🔩 Piese</button>
-      <button type="button" class="brand-opt" style="${presetUzualeTab === "manopera" ? "background:var(--accent);color:#fff" : ""}" onclick="switchPresetUzualeTab('manopera')">🔧 Manoperă</button>
-    </div>
-    <div style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
-      ${items.length ? items.map(p => canEdit ? `
-        <div class="rz-inline-row">
-          <input type="text" value="${escapeHtml(p.cod || "")}" placeholder="Cod" style="max-width:110px" onchange="savePreturiUzualeRow('${p.id}','cod',this.value)" />
-          <input type="text" value="${escapeHtml(p.nume)}" placeholder="Denumire" style="flex:1;min-width:140px" onchange="savePreturiUzualeRow('${p.id}','nume',this.value)" />
-          <input type="text" value="${roFmtNum(p.pret_cu_tva)}" placeholder="Preț cu TVA" style="max-width:100px" onchange="savePreturiUzualeRow('${p.id}','pret_cu_tva',this.value)" />
-          <span class="muted" style="font-size:11px;min-width:80px;white-space:nowrap">${roFmtNum(roPretFaraTva(p.pret_cu_tva))} fără TVA</span>
-          <button class="btn-secondary" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="stergePreturiUzualeRow('${p.id}')">🗑</button>
-        </div>` : `
-        <div class="rz-inline-row">
-          <span style="min-width:80px">${escapeHtml(p.cod || "—")}</span>
-          <span style="flex:1">${escapeHtml(p.nume)}</span>
-          <span>${roFmtNum(p.pret_cu_tva)} lei cu TVA · ${roFmtNum(roPretFaraTva(p.pret_cu_tva))} fără TVA</span>
-        </div>`).join("") : '<div class="muted" style="font-size:12.5px">Nimic adăugat încă.</div>'}
-    </div>
-    ${canEdit ? `<div class="rz-inline-row">
-      <input id="pu-nou-cod" placeholder="Cod (opțional)" style="max-width:110px" />
-      <input id="pu-nou-nume" placeholder="Denumire" style="flex:1;min-width:140px" />
-      <input id="pu-nou-pret" placeholder="Preț cu TVA" style="max-width:100px" />
-      <button class="btn-primary" onclick="adaugaPreturiUzualeRow()">+ Adaugă</button>
-    </div>` : ""}
-    <div class="modal-actions"><button class="btn-secondary" onclick="rzCloseModal()">Închide</button></div>`;
-  rzOpenModal(html);
-}
-async function adaugaPreturiUzualeRow() {
-  const cod = document.getElementById("pu-nou-cod").value.trim() || null;
-  const nume = document.getElementById("pu-nou-nume").value.trim();
-  const pret = roParseNum(document.getElementById("pu-nou-pret").value);
-  if (!nume || pret === null) { alert("Completează denumirea și prețul cu TVA."); return; }
-  const { error } = await client.from("preturi_uzuale").insert({ tip: presetUzualeTab, cod, nume, pret_cu_tva: pret });
-  if (error) { alert("Eroare: " + error.message); return; }
-  await loadPreturiUzuale();
-  renderPreturiUzualeModal();
-  renderPieseCatalogUzuale();
-  renderManoperaCatalogUzuale();
-}
-async function savePreturiUzualeRow(id, field, value) {
-  const payload = {};
-  payload[field] = field === "pret_cu_tva" ? roParseNum(value) : (value.trim() || null);
-  const { error } = await client.from("preturi_uzuale").update(payload).eq("id", id);
-  if (error) { alert("Eroare: " + error.message); return; }
-  await loadPreturiUzuale();
-  renderPreturiUzualeModal();
-  renderPieseCatalogUzuale();
-  renderManoperaCatalogUzuale();
-}
-async function stergePreturiUzualeRow(id) {
-  if (!confirm("Ștergi acest produs din lista uzuale?")) return;
-  const { error } = await client.from("preturi_uzuale").delete().eq("id", id);
-  if (error) { alert("Eroare: " + error.message); return; }
-  await loadPreturiUzuale();
-  renderPreturiUzualeModal();
-  renderPieseCatalogUzuale();
-  renderManoperaCatalogUzuale();
-}
-
-// ---------- LINII DEVIZ: MANOPERA ----------
-function recalcDevizManoperaRow(row) {
-  const ore = parseFloat(row.querySelector(".dm-ore").value) || 0;
-  const tarif = roParseNum(row.querySelector(".dm-tarif").value);
-  row.querySelector(".dm-tarif-fara").value = tarif === null ? "" : roFmtNum(roPretFaraTva(tarif));
-  const val = ore * (tarif || 0);
-  row.querySelector(".dm-valoare").value = val ? roFmtNum(val) : "";
-  recalcDevizTotalsLive();
-}
-
-function addDevizManoperaRowEl(l) {
-  l = l || {};
-  const tbody = document.getElementById("deviz-manopera-list");
-  const row = document.createElement("tr");
-  row.className = "dv-linie-row";
-  const val = l.cantitate && l.pret_unitar ? Number(l.cantitate) * Number(l.pret_unitar) : 0;
-  row.innerHTML = `
-    <td class="drisp-nr-cell"></td>
-    <td><input class="dm-denumire" list="manopera-uzuale-denumire-datalist" value="${escapeHtml(l.denumire || "")}" style="text-align:left" /></td>
-    <td><input class="dm-um" value="${escapeHtml(l.um || "oră")}" /></td>
-    <td><input class="dm-ore" type="number" step="0.5" min="0" value="${l.cantitate || 1}" /></td>
-    <td><input class="dm-tarif-fara" type="text" readonly value="${l.pret_unitar ? roFmtNum(roPretFaraTva(l.pret_unitar)) : ""}" /></td>
-    <td><input class="dm-tarif" type="text" value="${l.pret_unitar ? roFmtNum(l.pret_unitar) : ""}" /></td>
-    <td><input class="dm-valoare" type="text" readonly value="${val ? roFmtNum(val) : ""}" /></td>
-    <td><button type="button" class="icon-btn danger">${ICON_CLOSE}</button></td>
-  `;
-  row.querySelector(".dm-denumire").addEventListener("input", function () { onDevizManoperaDenumireInput(this); });
-  row.querySelector(".dm-ore").addEventListener("input", function () { recalcDevizManoperaRow(row); });
-  row.querySelector(".dm-tarif").addEventListener("input", function () { recalcDevizManoperaRow(row); });
-  row.querySelector(".icon-btn.danger").onclick = () => { row.remove(); renumberDevizRows("deviz-manopera-list", ".drisp-nr-cell"); recalcDevizTotalsLive(); };
-  tbody.appendChild(row);
-  renumberDevizRows("deviz-manopera-list", ".drisp-nr-cell");
-}
-function addDevizManoperaRow() { addDevizManoperaRowEl({}); recalcDevizTotalsLive(); }
-
-// completeaza automat tariful cand se alege o denumire din lista de manopere uzuale
-function onDevizManoperaDenumireInput(input) {
-  const match = currentPreturiUzuale.find(p => p.tip === "manopera" && p.nume.toLowerCase() === input.value.trim().toLowerCase());
-  if (!match) return;
-  const row = input.closest(".dv-linie-row");
-  row.querySelector(".dm-tarif").value = roFmtNum(match.pret_cu_tva);
-  recalcDevizManoperaRow(row);
-}
-
-function renderDevizManoperaInputs(linii) {
-  const container = document.getElementById("deviz-manopera-list");
-  container.innerHTML = "";
-  (linii || []).forEach(l => addDevizManoperaRowEl(l));
-}
-
-function collectDevizManopera() {
-  return [...document.querySelectorAll("#deviz-manopera-list .dv-linie-row")].map(row => ({
-    tip: "manopera",
-    denumire: row.querySelector(".dm-denumire").value.trim(),
-    um: row.querySelector(".dm-um").value.trim() || "oră",
-    cantitate: parseFloat(row.querySelector(".dm-ore").value) || 0,
-    pret_unitar: roParseNum(row.querySelector(".dm-tarif").value) || 0,
-  })).filter(l => l.denumire);
-}
-
-// ======================================================
-// DEVIZE — TAB-URI MULTIPLE SIMULTANE (ca-n D.R.I.S.P.)
-// ======================================================
-// In loc de un modal unic, poti avea deschise mai multe devize deodata,
-// fiecare intr-un "tab" propriu (Deviz nou / Deviz #N). Un singur set de
-// campuri (formularul de mai jos) e refolosit pentru tab-ul activ — la
-// schimbarea tab-ului, valorile curente se "capturează" in obiectul
-// tab-ului inchis, apoi formularul se reincarca din tab-ul nou activ.
-// Tab-urile se pastreaza si la refresh de pagina (localStorage).
-
-function newDevizTabObj(overrides) {
-  const now = new Date();
-  const todayISO = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
-  const nowHHMM = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
-  return Object.assign({
-    tabKey: "dt" + Date.now() + Math.random().toString(36).slice(2, 7),
-    devizId: null, numar: null, creatLa: null,
-    brand: null,
-    clientId: null, clientSearchText: "",
-    motoId: null, motoManual: null, mecanicId: null, tarifRate: null, cursBnr: null,
-    stare: "Draft", notite: "",
-    // ---- Fișă intrare service (v24, identică cu Deviz_Service.html) ----
-    dataIntrare: todayISO, oraIntrare: nowHHMM,
-    stareVizuala: "", cerinteClient: "", constatari: [],
-    dosarDauna: "", dataDauna: "",
-    piese: [], manopera: [],
-    pendingBooking: null, bookingInfo: null,
-  }, overrides || {});
-}
-
-function saveDevizTabsToStorage() {
-  try { localStorage.setItem("crm_deviz_tabs", JSON.stringify({ tabs: devizTabs, active: activeDevizTabKey })); } catch (e) {}
-}
-
-async function restoreDevizTabsFromStorage() {
-  try {
-    const raw = localStorage.getItem("crm_deviz_tabs");
-    if (!raw) return;
-    const parsed = JSON.parse(raw);
-    if (parsed && Array.isArray(parsed.tabs) && parsed.tabs.length) {
-      devizTabs = parsed.tabs;
-      activeDevizTabKey = (parsed.active && devizTabs.some(t => t.tabKey === parsed.active)) ? parsed.active : devizTabs[0].tabKey;
-      renderDevizTabsStrip();
-      const tab = getActiveDevizTab();
-      if (tab) await renderDevizFormFromTab(tab);
-    }
-  } catch (e) { console.warn("restoreDevizTabsFromStorage", e); }
-}
-
-function getActiveDevizTab() { return devizTabs.find(t => t.tabKey === activeDevizTabKey) || null; }
-
-function showDevizWorkspace() {
-  const has = devizTabs.length > 0;
-  document.getElementById("deviz-tabs-strip").style.display = has ? "flex" : "none";
-  document.getElementById("deviz-workspace").style.display = has ? "block" : "none";
-}
-
-function renderDevizTabsStrip() {
-  const strip = document.getElementById("deviz-tabs-strip");
-  strip.innerHTML = devizTabs.map(t => {
-    const label = t.devizId ? ("Deviz #" + t.numar) : "Deviz nou";
-    const active = t.tabKey === activeDevizTabKey;
-    return `<span class="deviz-tab-pill ${active ? "active" : ""}" onclick="switchDevizTab('${t.tabKey}')">${escapeHtml(label)}<span class="tab-close" onclick="event.stopPropagation();closeDevizTab('${t.tabKey}')">✕</span></span>`;
-  }).join("") + `<button type="button" class="deviz-tab-add" onclick="addNewDevizTab()">+ tab</button>`;
-  showDevizWorkspace();
-}
-
-function switchDevizTab(tabKey) {
-  const cur = getActiveDevizTab();
-  if (cur) captureDevizFormToTab(cur);
-  activeDevizTabKey = tabKey;
-  saveDevizTabsToStorage();
-  renderDevizTabsStrip();
-  const tab = getActiveDevizTab();
-  if (tab) renderDevizFormFromTab(tab);
-}
-
-async function addNewDevizTab() {
-  const cur = getActiveDevizTab();
-  if (cur) captureDevizFormToTab(cur);
-  const tab = newDevizTabObj({});
-  devizTabs.push(tab);
-  activeDevizTabKey = tab.tabKey;
-  saveDevizTabsToStorage();
-  renderDevizTabsStrip();
-  await renderDevizFormFromTab(tab);
-}
-
-async function openDevizTab(id) {
-  const already = devizTabs.find(t => t.devizId === id);
-  if (already) { switchDevizTab(already.tabKey); return; }
-  await loadClients();
-  populateClientDatalist();
-  const d = currentDevize.find(x => x.id === id);
-  if (!d) return;
-  const cli = currentClients.find(c => c.id === d.client_id);
-  const cur = getActiveDevizTab();
-  if (cur) captureDevizFormToTab(cur);
-  const tab = newDevizTabObj({
-    devizId: d.id, numar: d.numar, creatLa: d.creat_la || null, brand: d.brand,
-    clientId: d.client_id || null, clientSearchText: cli ? clientLabel(cli) : "",
-    motoId: d.motocicleta_id || null, mecanicId: d.mecanic_id || null,
-    tarifRate: (d.tarif_manopera !== null && d.tarif_manopera !== undefined) ? Number(d.tarif_manopera) : null,
-    cursBnr: d.curs_bnr || null, stare: d.stare || "Draft", notite: d.notite || "",
-    dataIntrare: d.data_intrare || "", oraIntrare: d.ora_intrare || "",
-    stareVizuala: d.stare_vizuala || "", cerinteClient: d.cerinte_client || "",
-    constatari: Array.isArray(d.constatari) ? d.constatari : [],
-    dosarDauna: d.dosar_dauna || "", dataDauna: d.data_dauna || "",
-    piese: (d.linii || []).filter(l => l.tip === "piesa"),
-    manopera: (d.linii || []).filter(l => l.tip === "manopera"),
-  });
-  devizTabs.push(tab);
-  activeDevizTabKey = tab.tabKey;
-  saveDevizTabsToStorage();
-  renderDevizTabsStrip();
-  await renderDevizFormFromTab(tab);
-}
-
-function closeDevizTab(tabKey) {
-  tabKey = tabKey || activeDevizTabKey;
-  if (!tabKey) return;
-  if (!confirm("Închizi acest deviz? Modificările nesalvate se pierd.")) return;
-  closeDevizTabSilent(tabKey);
-}
-
-function closeDevizTabSilent(tabKey) {
-  devizTabs = devizTabs.filter(t => t.tabKey !== tabKey);
-  if (activeDevizTabKey === tabKey) activeDevizTabKey = devizTabs.length ? devizTabs[0].tabKey : null;
-  saveDevizTabsToStorage();
-  renderDevizTabsStrip();
-  if (activeDevizTabKey) renderDevizFormFromTab(getActiveDevizTab());
-}
-
-async function renderDevizFormFromTab(tab) {
-  await loadClients();
-  populateClientDatalist();
-  document.getElementById("dv-id").value = tab.devizId || "";
-  document.getElementById("deviz-workspace-title").textContent = tab.devizId ? ("Deviz #" + tab.numar) : "Deviz nou";
-  document.getElementById("d-client-search").value = tab.clientSearchText || "";
-  document.getElementById("d-client-id").value = tab.clientId || "";
-  const cli = currentClients.find(c => c.id === tab.clientId);
-  fillDevizClientReadonlyFields(cli);
-  populateMotoSelectForClient(cli, tab.motoId);
-  if (tab.motoId === "__nou__") restoreDevizMotoManual(tab.motoManual);
-  const numarTxt = tab.numar ? String(tab.numar) : "—";
-  const dataTxt = tab.creatLa ? formatDate(tab.creatLa) : new Date().toLocaleDateString("ro-RO");
-  document.getElementById("d-numar-display").textContent = numarTxt;
-  document.getElementById("d-data-display").textContent = dataTxt;
-  document.getElementById("d-numar-display-2").textContent = numarTxt;
-  document.getElementById("d-data-display-2").textContent = dataTxt;
-  document.getElementById("d-mecanic-id").value = tab.mecanicId || "";
-  const tarifSel = document.getElementById("d-tarif-id");
-  const matchIdx = [...tarifSel.options].findIndex(o => parseFloat(o.getAttribute("data-rate")) === Number(tab.tarifRate));
-  tarifSel.selectedIndex = matchIdx >= 0 ? matchIdx : 0;
-  let cursVal = tab.cursBnr;
-  if (!cursVal) {
-    const cursSetari = await client.from("setari").select("valoare").eq("cheie", "curs_bnr_eur").single();
-    cursVal = cursSetari.data ? cursSetari.data.valoare : "5.30";
-  }
-  document.getElementById("d-curs-bnr").value = cursVal;
-  document.getElementById("d-stare").value = tab.stare || "Draft";
-  document.getElementById("d-notite").value = tab.notite || "";
-  document.getElementById("d-data-intrare").value = tab.dataIntrare || "";
-  document.getElementById("d-ora-intrare").value = tab.oraIntrare || "";
-  document.getElementById("d-dosar-dauna").value = tab.dosarDauna || "";
-  document.getElementById("d-data-dauna").value = tab.dataDauna || "";
-  document.getElementById("d-stare-vizuala").value = tab.stareVizuala || "";
-  document.getElementById("d-cerinte-client").value = tab.cerinteClient || "";
-  renderConstatariRows(tab.constatari && tab.constatari.length ? tab.constatari : [{}, {}, {}]);
-  renderDevizPieseInputs(tab.piese || []);
-  renderPieseUzualeChips();
-  renderPieseCatalogUzuale();
-  renderDevizManoperaInputs(tab.manopera || []);
-  renderManoperaCatalogUzuale();
-  recalcDevizTotalsLive();
-  const bannerEl = document.getElementById("deviz-booking-banner");
-  if (tab.bookingInfo) { bannerEl.style.display = "block"; bannerEl.textContent = tab.bookingInfo; }
-  else { bannerEl.style.display = "none"; bannerEl.textContent = ""; }
-  renderClientHistoryForTab(cli, tab);
-  applyDevizLockState(tab);
-  showDevizWorkspace();
-}
-
-function captureDevizFormToTab(tab) {
-  tab.clientSearchText = document.getElementById("d-client-search").value;
-  tab.clientId = document.getElementById("d-client-id").value || null;
-  tab.motoId = document.getElementById("d-moto-id").value || null;
-  tab.motoManual = tab.motoId === "__nou__" ? collectDevizMotoManual() : null;
-  tab.mecanicId = document.getElementById("d-mecanic-id").value || null;
-  const tarifSel = document.getElementById("d-tarif-id");
-  const tarifOpt = tarifSel.options[tarifSel.selectedIndex];
-  tab.tarifRate = tarifOpt ? parseFloat(tarifOpt.getAttribute("data-rate")) : null;
-  tab.cursBnr = document.getElementById("d-curs-bnr").value;
-  tab.stare = document.getElementById("d-stare").value;
-  tab.notite = document.getElementById("d-notite").value;
-  tab.dataIntrare = document.getElementById("d-data-intrare").value;
-  tab.oraIntrare = document.getElementById("d-ora-intrare").value;
-  tab.dosarDauna = document.getElementById("d-dosar-dauna").value;
-  tab.dataDauna = document.getElementById("d-data-dauna").value;
-  tab.stareVizuala = document.getElementById("d-stare-vizuala").value;
-  tab.cerinteClient = document.getElementById("d-cerinte-client").value;
-  tab.constatari = collectConstatari();
-  tab.piese = collectDevizPiese();
-  tab.manopera = collectDevizManopera();
-}
-
-// blocheaza editarea in interfata cand devizul e "Finalizat" si userul nu e admin —
-// acelasi blocaj impus si de baza de date (trigger trg_devize_lock), dar aici e vizibil
-// din prima, nu doar dupa ce incerci sa salvezi si "nu se intampla nimic".
-function applyDevizLockState(tab) {
-  const locked = tab.stare === "Finalizat" && !amAdmin();
-  const banner = document.getElementById("deviz-lock-banner");
-  if (banner) banner.style.display = locked ? "block" : "none";
-  const ws = document.getElementById("deviz-workspace");
-  if (!ws) return;
-  ws.querySelectorAll("input, select, textarea, button").forEach(el => {
-    if (el.getAttribute("onclick") === "closeDevizTab()") return; // tab-ul tot trebuie sa poata fi inchis
-    el.disabled = locked;
-  });
-  const saveBtn = ws.querySelector('button[onclick="saveDevizFromTab()"]');
-  if (saveBtn) saveBtn.style.display = locked ? "none" : "";
-}
-
-function onDevizStareChange() {
-  const tab = getActiveDevizTab();
-  if (!tab) return;
-  tab.stare = document.getElementById("d-stare").value;
-  applyDevizLockState(tab);
-}
-
-// ---------- CONSTATĂRI PRELIMINARE (pagina „Fișă intrare service") ----------
-function renderConstatariRows(list) {
-  const body = document.getElementById("constatari-rows");
-  body.innerHTML = "";
-  (list && list.length ? list : [{}]).forEach(c => addConstatareRowEl(c || {}));
-}
-function addConstatareRowEl(c) {
-  c = c || {};
-  const body = document.getElementById("constatari-rows");
-  const tr = document.createElement("tr");
-  tr.innerHTML = `
-    <td><input type="text" class="ct-defect" value="${escapeHtml(c.defect || "")}" /></td>
-    <td><input type="text" class="ct-recomandare" value="${escapeHtml(c.recomandare || "")}" /></td>
-    <td class="drisp-checkbox-cell"><input type="checkbox" class="ct-accept" ${c.accept ? "checked" : ""} /></td>
-    <td class="drisp-checkbox-cell"><input type="checkbox" class="ct-refuz" ${c.refuz ? "checked" : ""} /></td>
-    <td><button type="button" class="icon-btn danger">${ICON_CLOSE}</button></td>
-  `;
-  tr.querySelector(".icon-btn.danger").onclick = () => tr.remove();
-  body.appendChild(tr);
-}
-function addConstatareRow() { addConstatareRowEl({}); }
-function collectConstatari() {
-  return [...document.querySelectorAll("#constatari-rows tr")].map(tr => ({
-    defect: tr.querySelector(".ct-defect").value.trim(),
-    recomandare: tr.querySelector(".ct-recomandare").value.trim(),
-    accept: tr.querySelector(".ct-accept").checked,
-    refuz: tr.querySelector(".ct-refuz").checked,
-  })).filter(c => c.defect || c.recomandare || c.accept || c.refuz);
-}
-
-// ---------- ISTORIC VIZITE CLIENT (din baza de date proprie CRM) ----------
-async function renderClientHistoryForTab(cli, tab) {
-  const box = document.getElementById("deviz-client-history");
-  if (!box) return;
-  if (!cli) {
-    box.innerHTML = '<div class="chb-title">📋 Istoric vizite client</div><div class="client-history-empty">Selectează un client pentru a vedea devizele anterioare.</div>';
-    return;
-  }
-  box.innerHTML = '<div class="chb-title">📋 Istoric vizite client</div><div class="client-history-empty">Se încarcă...</div>';
-  const { data, error } = await client
-    .from("devize")
-    .select("id, numar, stare, creat_la, linii:deviz_linii(cantitate,pret_unitar), motociclete(marca,model,numar_inmatriculare)")
-    .eq("client_id", cli.id)
-    .order("creat_la", { ascending: false })
-    .limit(8);
-  if (error) { box.innerHTML = '<div class="chb-title">📋 Istoric vizite client</div><div class="client-history-empty">Eroare la încărcare.</div>'; return; }
-  const list = (data || []).filter(d => !tab || d.id !== tab.devizId);
-  if (!list.length) {
-    box.innerHTML = '<div class="chb-title">📋 Istoric vizite client</div><div class="client-history-empty">Niciun deviz anterior pentru acest client.</div>';
-    return;
-  }
-  box.innerHTML = '<div class="chb-title">📋 Istoric vizite client (' + list.length + ')</div>' +
-    list.map(d => {
-      const total = (d.linii || []).reduce((s, l) => s + Number(l.cantitate) * Number(l.pret_unitar), 0);
-      const moto = d.motociclete ? [(d.motociclete.marca || ""), (d.motociclete.model || "")].filter(Boolean).join(" ") : "";
-      return `<div class="client-history-item">
-        <span><b>#${d.numar}</b> — ${formatDate(d.creat_la)}${moto ? " · " + escapeHtml(moto) : ""} — ${total.toFixed(2)} RON — <span class="muted">${escapeHtml(d.stare)}</span></span>
-        <button type="button" class="btn-secondary" style="padding:4px 10px;font-size:11px" onclick="openDevizTab('${d.id}')">Deschide</button>
-      </div>`;
-    }).join("");
-}
-
-async function saveDevizFromTab() {
-  const tab = getActiveDevizTab();
-  if (!tab) return;
-  captureDevizFormToTab(tab);
-  const id = tab.devizId;
-  const clientId = tab.clientId;
-  if (!clientId) { alert("Selectează un client existent din listă (caută după nume)."); return; }
-
-  let motocicletaId = tab.motoId || null;
-  if (motocicletaId === "__nou__") {
-    const m = tab.motoManual || {};
-    if (!m.marca && !m.model && !m.serie_sasiu && !m.numar_inmatriculare && !m.an_fabricatie && !m.km) {
-      alert("Completează cel puțin un câmp pentru motocicleta nouă (marcă, model, serie șasiu, an fabricație, nr. înmatriculare sau km).");
-      return;
-    }
-    const { data: motoData, error: motoErr } = await client.from("motociclete").insert({ client_id: clientId, ...m }).select().single();
-    if (motoErr) { alert("Eroare la salvarea motocicletei noi: " + motoErr.message); return; }
-    motocicletaId = motoData.id;
-    await loadClients();
-    populateClientDatalist();
-  }
-
-  const payload = {
-    brand: tab.brand || null,
-    client_id: clientId,
-    motocicleta_id: motocicletaId,
-    mecanic_id: tab.mecanicId || null,
-    curs_bnr: parseFloat(tab.cursBnr) || null,
-    stare: tab.stare,
-    notite: (tab.notite || "").trim(),
-    tarif_manopera: (tab.tarifRate !== null && tab.tarifRate !== undefined && !isNaN(tab.tarifRate)) ? tab.tarifRate : null,
-    data_intrare: tab.dataIntrare || null,
-    ora_intrare: tab.oraIntrare || null,
-    stare_vizuala: (tab.stareVizuala || "").trim() || null,
-    cerinte_client: (tab.cerinteClient || "").trim() || null,
-    constatari: tab.constatari || [],
-    dosar_dauna: (tab.dosarDauna || "").trim() || null,
-    data_dauna: tab.dataDauna || null,
-  };
-
-  const linii = [...tab.piese, ...tab.manopera];
-
-  let error, devizId = id;
-  if (id) {
-    // folosim .select() ca sa detectam sigur daca update-ul a modificat 0 randuri —
-    // RLS blocheaza silentios (fara eroare) daca devizul nu mai apartine punctului tau
-    // de lucru; trigger-ul de blocaj pe "Finalizat" arunca eroare explicita, separat.
-    const { data: updData, error: updErr } = await client.from("devize").update(payload).eq("id", id).select();
-    error = updErr;
-    if (!error && (!updData || !updData.length)) {
-      alert("Devizul nu a fost actualizat — fie e „Finalizat” (doar administratorul mai poate modifica), fie nu mai aparține punctului tău de lucru.");
-      return;
-    }
-    if (!error) {
-      await client.from("deviz_linii").delete().eq("deviz_id", id);
-      if (linii.length) ({ error } = await client.from("deviz_linii").insert(linii.map(l => ({ ...l, deviz_id: id }))));
-    }
-  } else {
-    payload.creat_de = currentProfile.id;
-    payload.creat_de_nume = currentProfile.nume;
-    payload.punct_lucru_id = getMyCreateLocationId();
-    const { data, error: insErr } = await client.from("devize").insert(payload).select().single();
-    error = insErr;
-    if (!error && data) {
-      devizId = data.id;
-      if (linii.length) ({ error } = await client.from("deviz_linii").insert(linii.map(l => ({ ...l, deviz_id: devizId }))));
-    }
-  }
-
-  if (error) { alert("Eroare la salvare: " + error.message); return; }
-  await client.from("setari").update({ valoare: String(payload.curs_bnr) }).eq("cheie", "curs_bnr_eur");
-
-  if (tab.pendingBooking) {
-    await client.from("programari").update({ deviz_id: devizId, client_id: clientId, motocicleta_id: payload.motocicleta_id || null }).eq("id", tab.pendingBooking.id);
-    tab.pendingBooking = null;
-    await loadProgramari();
-  }
-
-  await loadDevize();
-  const savedD = currentDevize.find(x => x.id === devizId);
-  tab.devizId = devizId;
-  tab.numar = savedD ? savedD.numar : tab.numar;
-  tab.creatLa = savedD ? savedD.creat_la : tab.creatLa;
-  tab.motoId = motocicletaId;
-  tab.motoManual = null;
-  tab.bookingInfo = null;
-  saveDevizTabsToStorage();
-  renderDevizTabsStrip();
-  await renderDevizFormFromTab(tab);
-  if (typeof rzToast === "function") rzToast("Deviz salvat" + (tab.numar ? " — #" + tab.numar : ""), "ok");
 }
 
 // ======================================================
@@ -4478,7 +3171,6 @@ function renderApptCard(p) {
   if (p.stare !== "Anulat") {
     if (p.stare !== "Confirmat") actions += `<button type="button" class="btn-secondary" onclick="confirmaProgramare('${p.id}')">✓ Confirmă clientul</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="openProgramareModal('${p.id}')">🔄 Reprogramează</button>`;
-    if (canDo("perm_devize")) actions += `<button type="button" class="btn-primary" onclick="creazaDevizDinProgramare('${p.id}')">🧾 Creează deviz</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="anuleazaProgramare('${p.id}')">✕ Anulează</button>`;
   }
   if (amAdmin()) actions += `<button type="button" class="btn-secondary" style="color:#b91c1c" onclick="stergeProgramare('${p.id}')">🗑 Șterge definitiv</button>`;
@@ -4488,7 +3180,6 @@ function renderApptCard(p) {
     ${moto.trim() ? `<div class="appt-moto">${escapeHtml(moto)}${p.vin ? " · VIN: " + escapeHtml(p.vin) : ""}</div>` : ""}
     ${p.servicii ? `<div class="appt-servicii">${escapeHtml(p.servicii)}</div>` : ""}
     ${p.observatii ? `<div class="appt-obs">Obs: ${escapeHtml(p.observatii)}</div>` : ""}
-    ${p.deviz_id ? `<div class="appt-obs" style="color:#166534">✓ Deviz creat</div>` : ""}
     <div class="appt-actions">${actions}</div>
   </div>`;
 }
@@ -4801,62 +3492,6 @@ async function stergeProgramare(id) {
   if (error) { alert("Eroare: " + error.message); return; }
   await loadProgramari();
   if (typeof rzToast === "function") rzToast("Programare ștearsă definitiv.", "ok");
-}
-
-// ---------- CREEAZA DEVIZ DINTR-O PROGRAMARE (nativ, in acelasi soft, fara fisiere) ----------
-function buildProgramareBookingInfo(p) {
-  const parts = [];
-  parts.push("Din programare: " + formatDate(p.data) + " " + fmtOra(p.ora_inceput) + ", Rampa " + p.rampa);
-  if (p.marca || p.model) parts.push("Moto: " + [p.marca, p.model].filter(Boolean).join(" "));
-  if (p.nr_inmatriculare) parts.push("Nr. înreg: " + p.nr_inmatriculare);
-  if (p.vin) parts.push("VIN: " + p.vin);
-  if (p.servicii) parts.push("Servicii solicitate: " + p.servicii);
-  if (p.observatii) parts.push("Obs: " + p.observatii);
-  return parts.join("\n");
-}
-
-function brandDinMarca(marca) {
-  const m = (marca || "").trim().toLowerCase();
-  if (!m) return null;
-  return m.includes("triumph") ? "Triumph" : "Motoboom";
-}
-
-async function creazaDevizDinProgramare(pid) {
-  const p = currentProgramari.find(x => x.id === pid);
-  if (!p) return;
-  await loadClients();
-  populateClientDatalist();
-
-  let matchClient = null, matchMoto = null;
-  const telNorm = (p.contact || "").replace(/\D/g, "");
-  if (telNorm && telNorm.length >= 7) matchClient = currentClients.find(c => (c.telefon || "").replace(/\D/g, "") === telNorm);
-  if (!matchClient && p.nr_inmatriculare) {
-    for (const c of currentClients) {
-      const m = (c.motociclete || []).find(mm => (mm.numar_inmatriculare || "").toUpperCase() === p.nr_inmatriculare.toUpperCase());
-      if (m) { matchClient = c; matchMoto = m; break; }
-    }
-  }
-  if (matchClient && !matchMoto && p.vin) {
-    matchMoto = (matchClient.motociclete || []).find(mm => (mm.serie_sasiu || "").toUpperCase() === (p.vin || "").toUpperCase());
-  }
-
-  const cur = getActiveDevizTab();
-  if (cur) captureDevizFormToTab(cur);
-  const tab = newDevizTabObj({
-    brand: brandDinMarca(matchMoto ? matchMoto.marca : p.marca) || (currentProfile && currentProfile.brand) || "Triumph",
-    clientId: matchClient ? matchClient.id : null,
-    clientSearchText: matchClient ? clientLabel(matchClient) : (p.nume_client || ""),
-    motoId: matchMoto ? matchMoto.id : null,
-    pendingBooking: { id: p.id },
-    bookingInfo: buildProgramareBookingInfo(p),
-  });
-  devizTabs.push(tab);
-  activeDevizTabKey = tab.tabKey;
-  saveDevizTabsToStorage();
-  switchTab("devize");
-  renderDevizTabsStrip();
-  await renderDevizFormFromTab(tab);
-  if (!matchClient && typeof rzToast === "function") rzToast("Client negăsit automat după telefon/nr. înmatriculare — caută-l sau creează-l mai jos.", "warn");
 }
 
 // ======================================================
@@ -5653,13 +4288,7 @@ function renderDaunaStareBar(d) {
   actions.innerHTML =
     (potPreda ? `<button class="btn-secondary" onclick="openPredareDaunaModal('${d.id}')">➡️ Predă spre finalizare</button>` : "") +
     (potFinaliza ? `<button class="btn-secondary" onclick="finalizeazaDauna('${d.id}')">✅ Finalizează dosarul</button>` : "") +
-    `<button class="btn-secondary" onclick="openObservatiiDauna('${d.id}')">💬 Observații${(d.observatii || []).length ? " (" + d.observatii.length + ")" : ""}</button>` +
-    (d.deviz_id ? `<button class="btn-secondary" onclick="openDevizDinDauna('${d.deviz_id}')">📄 Deschide devizul legat</button>` : "");
-}
-function openDevizDinDauna(devizId) {
-  closeDaunaModal();
-  switchTab("devize");
-  openDevizTab(devizId);
+    `<button class="btn-secondary" onclick="openObservatiiDauna('${d.id}')">💬 Observații${(d.observatii || []).length ? " (" + d.observatii.length + ")" : ""}</button>`;
 }
 
 function renderDaunaFisiereSections(d) {
@@ -5736,7 +4365,6 @@ async function openDauneModal(id) {
       creat_de: currentProfile.id, creat_de_nume: currentProfile.nume,
       punct_lucru_id: getMyCreateLocationId(),
     };
-    if (pendingDaunaDevizLink) payload.deviz_id = pendingDaunaDevizLink;
     const { data, error } = await client.from("daune").insert(payload).select().single();
     if (error) {
       document.getElementById("dn-fisiere-hint").textContent = "Nu s-au putut pregăti fișierele: " + error.message + " — le poți încărca după ce salvezi dosarul.";
@@ -5754,7 +4382,6 @@ async function openDauneModal(id) {
 async function closeDaunaModal() {
   document.getElementById("dauna-modal-overlay").classList.remove("open");
   const id = document.getElementById("dn-id").value;
-  pendingDaunaDevizLink = null;
   if (daunaDraftUnconfirmed && id) {
     const d = currentDaune.find(x => x.id === id);
     const areFisiere = d && (d.fisiere || []).length > 0;
@@ -5804,13 +4431,11 @@ async function saveDauna() {
     payload.creat_de = currentProfile.id;
     payload.creat_de_nume = currentProfile.nume;
     payload.punct_lucru_id = getMyCreateLocationId();
-    if (pendingDaunaDevizLink) payload.deviz_id = pendingDaunaDevizLink;
     const res = await client.from("daune").insert(payload).select().single();
     error = res.error;
     if (!error) document.getElementById("dn-id").value = res.data.id;
   }
   if (error) { alert("Eroare la salvare: " + error.message); return; }
-  pendingDaunaDevizLink = null;
   daunaDraftUnconfirmed = false;
   await loadDaune();
   if (typeof rzToast === "function") rzToast("Dosar salvat", "ok");
@@ -6145,243 +4770,6 @@ async function confirmImportIstoric() {
   if (typeof rzToast === "function") rzToast("Import finalizat: " + imported + " programări istorice adăugate.", "ok");
 }
 
-// ---------- EXPORT DEVIZE (Excel sau PDF, coloane la alegere) ----------
-const DEVIZ_EXPORT_FIELDS = [
-  { key: "numar", label: "Nr." },
-  { key: "brand", label: "Brand" },
-  { key: "client", label: "Client" },
-  { key: "cui", label: "CUI (dacă e firmă)" },
-  { key: "motocicleta", label: "Motocicletă" },
-  { key: "mecanic", label: "Mecanic" },
-  { key: "tarif_manopera", label: "Tarif manoperă" },
-  { key: "curs_bnr", label: "Curs BNR" },
-  { key: "total_piese", label: "Total piese (RON)" },
-  { key: "total_manopera", label: "Total manoperă (RON)" },
-  { key: "total_general", label: "Total general (RON)" },
-  { key: "stare", label: "Stare" },
-  { key: "notite", label: "Notițe" },
-  { key: "creat_de_nume", label: "Creat de" },
-  { key: "creat_la", label: "Data" },
-];
-function devizExportRow(d) {
-  const cli = d.clienti ? (d.clienti.nume + " " + d.clienti.prenume) : "";
-  const moto = d.motociclete ? [(d.motociclete.marca || ""), (d.motociclete.model || "")].filter(Boolean).join(" ") + (d.motociclete.numar_inmatriculare ? " · " + d.motociclete.numar_inmatriculare : "") : "";
-  const piese = (d.linii || []).filter(l => l.tip === "piesa");
-  const manopera = (d.linii || []).filter(l => l.tip === "manopera");
-  const totalPiese = piese.reduce((s, l) => s + Number(l.cantitate) * Number(l.pret_unitar), 0);
-  const totalManopera = manopera.reduce((s, l) => s + Number(l.cantitate) * Number(l.pret_unitar), 0);
-  const cliObj = currentClients.find(c => c.id === d.client_id);
-  return {
-    numar: d.numar, brand: d.brand, client: cli, cui: cliObj ? (cliObj.cui || "") : "",
-    motocicleta: moto, mecanic: d.mecanici ? d.mecanici.nume : "",
-    tarif_manopera: d.tarif_manopera, curs_bnr: d.curs_bnr,
-    total_piese: totalPiese.toFixed(2), total_manopera: totalManopera.toFixed(2), total_general: (totalPiese + totalManopera).toFixed(2),
-    stare: d.stare, notite: d.notite || "", creat_de_nume: d.creat_de_nume || "", creat_la: formatDate(d.creat_la),
-  };
-}
-function openDevizExportModal() {
-  const stari = ["Draft", "Finalizat", "Anulat"];
-  let html = `<h3>Exportă devize</h3>
-    <div class="muted" style="font-size:13px;margin:6px 0 12px">Alege ce coloane vrei incluse, filtrele și formatul.</div>
-    <div class="export-section-label">Coloane</div>
-    <div class="export-fields">${DEVIZ_EXPORT_FIELDS.map(f => `<label class="export-field"><input type="checkbox" class="dev-exp-field" value="${f.key}" checked /> ${f.label}</label>`).join("")}</div>
-    <div class="export-section-label">Filtrează după stare</div>
-    <div class="export-fields">${stari.map(s => `<label class="export-field"><input type="checkbox" class="dev-exp-stare" value="${s}" checked /> ${s}</label>`).join("")}</div>
-    <div class="export-section-label">Filtrează după brand</div>
-    <div class="export-fields">${["Triumph", "Motoboom", ""].map(b => `<label class="export-field"><input type="checkbox" class="dev-exp-brand" value="${b}" checked /> ${b || "Fără brand"}</label>`).join("")}</div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="rzCloseModal()">Anulează</button>
-      <button class="btn-primary" onclick="doDevizExport('excel')">Excel (.xlsx)</button>
-      <button class="btn-primary" onclick="doDevizExport('pdf')">PDF</button>
-    </div>`;
-  rzOpenModal(html);
-}
-function doDevizExport(fmt) {
-  const checked = [...document.querySelectorAll(".dev-exp-field:checked")].map(c => c.value);
-  const stariChecked = [...document.querySelectorAll(".dev-exp-stare:checked")].map(c => c.value);
-  const brandsChecked = [...document.querySelectorAll(".dev-exp-brand:checked")].map(c => c.value);
-  if (!checked.length) { alert("Selectează cel puțin o coloană."); return; }
-  if (!stariChecked.length || !brandsChecked.length) { alert("Selectează cel puțin o stare și un brand."); return; }
-  const filtrate = currentDevize.filter(d => stariChecked.includes(d.stare) && brandsChecked.includes(d.brand || ""));
-  if (!filtrate.length) { alert("Niciun deviz nu corespunde filtrelor alese."); return; }
-  const fieldDefs = DEVIZ_EXPORT_FIELDS.filter(f => checked.includes(f.key));
-  const rowsObj = filtrate.map(devizExportRow);
-  rzCloseModal();
-
-  if (fmt === "excel") {
-    const rows = rowsObj.map(r => { const o = {}; fieldDefs.forEach(f => { o[f.label] = r[f.key]; }); return o; });
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Devize");
-    XLSX.writeFile(wb, "devize_" + new Date().toISOString().slice(0, 10) + ".xlsx");
-  } else {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    doc.setFontSize(13); doc.setFont("helvetica", "bold");
-    doc.text("Export devize — " + new Date().toLocaleDateString("ro-RO"), 14, 14);
-    const colWidth = 269 / fieldDefs.length;
-    const cols = fieldDefs.map((f, i) => 14 + i * colWidth);
-    let y = 24;
-    doc.setFillColor(30, 58, 138); doc.rect(14, y - 4, 269, 6, "F"); doc.setTextColor(255, 255, 255);
-    fieldDefs.forEach((f, i) => { doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.text(String(f.label), cols[i], y); });
-    doc.setTextColor(0, 0, 0); y += 7;
-    rowsObj.forEach((r, idx) => {
-      if (y > 190) { doc.addPage(); y = 14; }
-      if (idx % 2 === 0) { doc.setFillColor(244, 245, 247); doc.rect(14, y - 4, 269, 6, "F"); }
-      doc.setFont("helvetica", "normal"); doc.setFontSize(7);
-      fieldDefs.forEach((f, i) => { doc.text(String(r[f.key] === null || r[f.key] === undefined ? "" : r[f.key]).slice(0, 28), cols[i], y); });
-      y += 6;
-    });
-    doc.save("devize_" + new Date().toISOString().slice(0, 10) + ".pdf");
-  }
-}
-
-// ---------- PRINTARE DEVIZ ----------
-// Antetul de firmă e identic pe ambele pagini și pentru ambele branduri
-// (Triumph și Motoboom) — exact textul din fișierul Deviz_Service.html
-// trimis de Andrei, confirmat ca atare.
-function drispCompanyDetailsHtml() {
-  return `<div class="drisp-company-details">
-    <strong>MOTOBOOM S.R.L.</strong> CIF: RO18684947 Reg. Com.: J01/509/2006<br>
-    Adresa: Str. Crinului nr. 3, Sebes, ALBA<br>
-    Punct lucru: Sos. Pipera nr. 48, Sector 2, BUCURESTI<br>
-    Contact: 0744 313 982 - info@motocicletetriumph.ro - www.motocicletetriumph.ro
-  </div>`;
-}
-function drispSemnaturiHtml() {
-  return `<div class="drisp-sign-area">
-    <div class="drisp-sign-box">Semnatura Client</div>
-    <div class="drisp-sign-box">Semnatura Mecanic</div>
-    <div class="drisp-sign-box">Semnatura Sef Unitate<br><strong>Radu Constantinescu</strong></div>
-  </div>`;
-}
-function drispDataScurta(v) {
-  if (!v) return "";
-  // acceptă atât "YYYY-MM-DD" (din <input type="date">), cât și un timestamp complet
-  const dt = /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(v + "T00:00:00") : new Date(v);
-  return isNaN(dt) ? escapeHtml(String(v)) : dt.toLocaleDateString("ro-RO");
-}
-
-// Tipărește devizul EXACT ca fișierul Deviz_Service.html (D.R.I.S.P.) trimis de Andrei:
-// pagina 1 „FISA INTRARE SERVICE” (recepție motocicletă) + pagina 2 „DEVIZ REPARATIE”
-// (piese și manoperă), cu aceleași titluri de secțiune, coloane și zonă de semnături.
-function printDeviz(id) {
-  const d = currentDevize.find(x => x.id === id);
-  if (!d) return;
-  const cli = d.clienti || null;
-  const moto = d.motociclete || null;
-  const numeClient = cli ? (cli.tip_client === "juridica" ? cli.nume : (cli.nume + " " + (cli.prenume || "")).trim()) : "—";
-  const piese = (d.linii || []).filter(l => l.tip === "piesa");
-  const manopera = (d.linii || []).filter(l => l.tip === "manopera");
-  const totalPiese = piese.reduce((s, l) => s + Number(l.cantitate) * Number(l.pret_unitar), 0);
-  const totalManopera = manopera.reduce((s, l) => s + Number(l.cantitate) * Number(l.pret_unitar), 0);
-  const constatari = Array.isArray(d.constatari) ? d.constatari.filter(c => c && (c.defect || c.recomandare || c.accept || c.refuz)) : [];
-
-  // ---------------- PAGINA 1: FISA INTRARE SERVICE ----------------
-  let html = `
-    <div class="drisp-page">
-      <h1 class="drisp-h1">Fisa intrare service</h1>
-      ${drispCompanyDetailsHtml()}
-      <div class="drisp-meta-row">
-        <div><b>Nr:</b> ${escapeHtml(String(d.numar))}</div>
-        <div><b>Data:</b> ${formatDate(d.creat_la)}</div>
-      </div>
-
-      <div class="drisp-section-title">DATE CLIENT</div>
-      <table class="drisp-info-table">
-        <tr><td class="lbl">Nume/Firma</td><td>${escapeHtml(numeClient)}</td></tr>
-        <tr><td class="lbl">Adresa</td><td>${escapeHtml((cli && cli.adresa) || "")}</td></tr>
-        <tr><td class="lbl">Telefon / Email</td><td>${escapeHtml([cli && cli.telefon, cli && cli.email].filter(Boolean).join(" · "))}</td></tr>
-        <tr><td class="lbl">CUI</td><td>${escapeHtml((cli && cli.cui) || "")}</td></tr>
-      </table>
-
-      <div class="drisp-section-title">DATE MOTOCICLETA</div>
-      <table class="drisp-info-table">
-        <tr><td class="lbl">Marca</td><td>${escapeHtml((moto && moto.marca) || "")}</td><td class="lbl">Model</td><td>${escapeHtml((moto && moto.model) || "")}</td></tr>
-        <tr><td class="lbl">Serie Sasiu</td><td>${escapeHtml((moto && moto.serie_sasiu) || "")}</td><td class="lbl">An fabr.</td><td>${escapeHtml((moto && moto.an_fabricatie) || "")}</td></tr>
-        <tr><td class="lbl">Nr. Inmatr.</td><td>${escapeHtml((moto && moto.numar_inmatriculare) || "")}</td><td class="lbl">Km</td><td>${escapeHtml((moto && moto.km) || "")}</td></tr>
-        <tr><td class="lbl">Data intrare</td><td>${drispDataScurta(d.data_intrare)}</td><td class="lbl">Ora</td><td>${escapeHtml(d.ora_intrare || "")}</td></tr>
-      </table>
-
-      <div class="drisp-section-title">STAREA MOTOCICLETEI LA MOMENTUL INTRARII IN SERVICE</div>
-      <div class="drisp-textbox">${escapeHtml(d.stare_vizuala || "")}</div>
-
-      <div class="drisp-section-title">Lucrari solicitate de client / Defectiuni (declaratie client)</div>
-      <div class="drisp-textbox">${escapeHtml(d.cerinte_client || "")}</div>
-
-      <div class="drisp-section-title">Constatari preliminare (unitatea service)</div>
-      <table class="drisp-table">
-        <thead><tr><th>Defect constatat</th><th>Recomandare</th><th style="width:50px">Accept</th><th style="width:50px">Refuz</th></tr></thead>
-        <tbody>
-          ${(constatari.length ? constatari : [{}, {}, {}]).map(c => `<tr>
-            <td>${escapeHtml(c.defect || "")}</td>
-            <td>${escapeHtml(c.recomandare || "")}</td>
-            <td class="drisp-checkbox-cell">${c.accept ? "☑" : "☐"}</td>
-            <td class="drisp-checkbox-cell">${c.refuz ? "☑" : "☐"}</td>
-          </tr>`).join("")}
-        </tbody>
-      </table>
-
-      ${drispSemnaturiHtml()}
-      <div class="drisp-footer-note">Sunt de acord cu prelucrarea datelor personale conform Legii 677/2001</div>
-    </div>
-  `;
-
-  // ---------------- PAGINA 2: DEVIZ REPARATIE ----------------
-  html += `
-    <div class="drisp-page drisp-page-break">
-      <h1 class="drisp-h1">Deviz reparatie</h1>
-      ${drispCompanyDetailsHtml()}
-      <div class="drisp-meta-row">
-        <div><b>Deviz Nr:</b> ${escapeHtml(String(d.numar))}</div>
-        <div><b>Data:</b> ${formatDate(d.creat_la)}</div>
-        <div><b>Dosar dauna:</b> ${escapeHtml(d.dosar_dauna || "—")}</div>
-        <div><b>Data Dauna:</b> ${d.data_dauna ? drispDataScurta(d.data_dauna) : "—"}</div>
-      </div>
-  `;
-
-  html += `<div class="drisp-section-title">I. PIESE SI CONSUMABILE</div>
-    <table class="drisp-table"><thead><tr><th style="width:28px">Nr.</th><th style="width:80px">Cod produs</th><th>Denumire produs</th><th style="width:40px">U.M.</th><th style="width:40px">Cant.</th><th style="width:80px">Pret (fără TVA)</th><th style="width:80px">Pret</th><th style="width:90px">Valoare</th></tr></thead><tbody>`;
-  if (piese.length) {
-    piese.forEach((l, i) => {
-      html += `<tr><td style="text-align:center">${i + 1}</td><td>${escapeHtml(l.cod_piesa || "")}</td><td>${escapeHtml(l.denumire)}</td><td style="text-align:center">${escapeHtml(l.um || "buc")}</td><td style="text-align:center">${l.cantitate}</td><td class="num">${roPretFaraTva(l.pret_unitar).toFixed(2)}</td><td class="num">${Number(l.pret_unitar).toFixed(2)}</td><td class="num">${(l.cantitate * l.pret_unitar).toFixed(2)}</td></tr>`;
-    });
-  } else {
-    html += `<tr><td colspan="8" style="text-align:center;color:#999">—</td></tr>`;
-  }
-  html += `<tr class="drisp-total-row"><td colspan="7" style="text-align:right">Total Piese</td><td class="num">${totalPiese.toFixed(2)}</td></tr></tbody></table>`;
-
-  html += `<div class="drisp-section-title">II. OPERATIUNI EFECTUATE (MANOPERA)</div>
-    <table class="drisp-table"><thead><tr><th style="width:28px">Nr.</th><th>Denumire operatiune</th><th style="width:40px">U.M.</th><th style="width:40px">Ore</th><th style="width:80px">Tarif/Ora (fără TVA)</th><th style="width:80px">Tarif/Ora</th><th style="width:90px">Valoare</th></tr></thead><tbody>`;
-  if (manopera.length) {
-    manopera.forEach((l, i) => {
-      html += `<tr><td style="text-align:center">${i + 1}</td><td>${escapeHtml(l.denumire)}</td><td style="text-align:center">${escapeHtml(l.um || "ora")}</td><td style="text-align:center">${l.cantitate}</td><td class="num">${roPretFaraTva(l.pret_unitar).toFixed(2)}</td><td class="num">${Number(l.pret_unitar).toFixed(2)}</td><td class="num">${(l.cantitate * l.pret_unitar).toFixed(2)}</td></tr>`;
-    });
-  } else {
-    html += `<tr><td colspan="7" style="text-align:center;color:#999">—</td></tr>`;
-  }
-  html += `<tr class="drisp-total-row"><td colspan="6" style="text-align:right">Total Manopera</td><td class="num">${totalManopera.toFixed(2)}</td></tr></tbody></table>`;
-
-  html += `<div class="drisp-grand-total">TOTAL GENERAL DE PLATA: ${(totalPiese + totalManopera).toFixed(2)} RON</div>`;
-  if (d.notite) html += `<div style="margin-top:8px"><b>Notițe:</b> ${escapeHtml(d.notite)}</div>`;
-
-  html += `
-      <div class="drisp-guarantee-title">CERTIFICAT DE CALITATE SI GARANTIE</div>
-      <div class="drisp-guarantee-text">
-        Perioada de garantie pentru piesele inlocuite si lucrarile executate<br>
-        Unitatea service garanteaza lucrarea executata*) si conformitatea acesteia**), potrivit OUG 140/2021 si Legii 296/2004,<br>
-        *3 luni de la data receptiei autovehiculului/motocicletei/scuterului/atv-ului, daca lucrarea nu a necesitat inlocuiri de piese sau daca s-a executat cu piesa de schimb a clientului.<br>
-        **Garantia pieselor furnizate de unitate, in baza OUG 140/2021 - conf. declaratiei producatorului/prin conventie intre parti, conditionat de respectarea indicatiilor de exploatare prevazute de producatorul motocicletei/scuterului/atv-ului este de 12 luni.
-      </div>
-      ${drispSemnaturiHtml()}
-      <div class="drisp-footer-note">Sunt de acord cu prelucrarea datelor personale conform Legii 677/2001</div>
-    </div>
-  `;
-
-  document.getElementById("print-area").innerHTML = html;
-  window.print();
-}
-
 // ---------- FORMATARE LIVE TELEFON (in timp ce se scrie) ----------
 document.getElementById("f-telefon").addEventListener("input", function () {
   const laSfarsit = this.selectionStart === this.value.length;
@@ -6409,10 +4797,8 @@ let rzInvItems = [];     // inventar_articole
 let rzPriceList = [];    // price_list (id, marca, cod_piesa, denumire, pret_eur, pret_ron)
 let rzAdaosuri = {};     // {marca: procent}
 let rzSetari = {};       // cheie -> valoare (din tabela "setari")
-let rzSelection = {};    // {COD: {cod, denumire}} - selectie "catre Deviz" din Inventar
 let rzAudioCtx = null;
 let rzPendingImport = null;   // rezultat parsare PDF, in asteptarea confirmarii
-let rzPendingDevizParts = null;
 let rzHistoryCache = [];
 
 async function rzInitIfNeeded() {
@@ -6456,9 +4842,6 @@ async function rzLoadPriceListFull() {
   const cnt = rzPriceList.length;
   const st = document.getElementById("rz-pl-status");
   if (st) { st.textContent = "Listă prețuri: " + cnt + " coduri"; st.className = "rz-badge " + (cnt ? "ok" : "no"); }
-  // alimenteaza si autocomplete-ul din formularul de Deviz (multi-marca)
-  currentPriceList = rzPriceList.map(p => ({ cod_piesa: p.cod_piesa, denumire: p.denumire, pret_eur: p.pret_eur, pret_ron: p.pret_ron, marca: p.marca }));
-  if (typeof populatePriceListDatalist === "function") populatePriceListDatalist();
 }
 
 async function loadBranduriMoto() {
@@ -7344,13 +5727,7 @@ async function rzPsSaveTva() {
   rzToast("TVA setat la " + tva + "%", "ok");
 }
 
-// ---------- SELECTIE "CATRE DEVIZ" (din Inventar) ----------
-function rzToggleDevizSel(cod, checked, denumire) {
-  const up = cod.toUpperCase();
-  if (checked) rzSelection[up] = { cod, denumire: denumire || "" };
-  else delete rzSelection[up];
-  rzRender();
-}
+// ---------- ADAUGA IN INVENTAR (din lista de preturi) ----------
 async function rzAddTriumphToInv(cod) {
   const up = cod.toUpperCase();
   if (rzInvItems.some(it => it.cod.toUpperCase() === up)) { rzToast("Deja în inventar", "ok"); return; }
@@ -7361,49 +5738,6 @@ async function rzAddTriumphToInv(cod) {
   rzUpdateStats(); rzRender();
   rzToast("Adăugat în inventar: " + escapeHtml(cod), "ok");
 }
-async function rzSendSelectionToDeviz() {
-  const parts = [];
-  for (const up in rzSelection) {
-    const sel = rzSelection[up];
-    const invIt = rzInvItems.find(it => it.cod.toUpperCase() === up);
-    let pret = null, denumire = sel.denumire || "";
-    if (invIt) { pret = invIt.pret_manual ? rzApplyMarkupManual(invIt.pret_manual, invIt.marca) : rzGetPrice(invIt.cod); if (!denumire) denumire = invIt.denumire || ""; }
-    else { pret = rzGetPrice(sel.cod); if (!denumire) denumire = sel.cod; }
-    parts.push({ cod_piesa: sel.cod, denumire: denumire || sel.cod, cantitate: 1, pret_unitar: pret ? Number(pret) : 0 });
-  }
-  if (!parts.length) { rzToast("Nu ai selectat nicio piesă", "err"); return; }
-  rzPendingDevizParts = parts;
-  await loadDevize();
-  const draftDevize = (currentDevize || []).filter(d => d.stare === "Draft");
-  let html = `<h3>În care deviz pui piesele?</h3><p style="font-size:13px;color:var(--muted);margin:6px 0 12px">Ai ${parts.length} piese selectate.</p>`;
-  html += `<div style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto">`;
-  draftDevize.forEach(d => {
-    const cli = d.clienti ? (d.clienti.nume + " " + d.clienti.prenume) : "fără client";
-    html += `<button class="btn-secondary" style="text-align:left" onclick="rzConfirmRouteToDeviz('${d.id}')"><b>Deviz #${d.numar}</b> — ${d.brand ? escapeHtml(d.brand) + " · " : ""}${escapeHtml(cli)}</button>`;
-  });
-  html += `</div><div class="modal-actions"><button class="btn-secondary" onclick="rzCloseModal()">Anulează</button><button class="btn-primary" onclick="rzConfirmRouteToDeviz('NEW')">+ Deviz nou</button></div>`;
-  rzOpenModal(html);
-}
-async function rzConfirmRouteToDeviz(target) {
-  const parts = rzPendingDevizParts; rzPendingDevizParts = null;
-  rzCloseModal();
-  if (!parts || !parts.length) return;
-  rzSelection = {};
-  if (target === "NEW") {
-    switchTab("devize");
-    await loadDevize();
-    await addNewDevizTab();
-    parts.forEach(p => addDevizPiesaRowEl(p));
-    rzToast(parts.length + " piese pregătite în deviz nou", "ok");
-    return;
-  }
-  const { error } = await client.from("deviz_linii").insert(parts.map(p => ({ ...p, tip: "piesa", deviz_id: target })));
-  if (error) { rzToast("Eroare: " + error.message, "err"); return; }
-  switchTab("devize");
-  await loadDevize();
-  rzToast(parts.length + " piese trimise în deviz", "ok");
-}
-
 // ---------- FILTRU DN ----------
 function rzPopulateDNFilter() {
   const sel = document.getElementById("rz-filter-dn"); if (!sel) return;
@@ -7491,19 +5825,15 @@ function rzRenderInventar() {
     }
   }
 
-  const selCount = Object.keys(rzSelection).length;
   let h = `<div class="rz-dn-section"><div class="rz-dn-header"><span class="dntitle">📋 Inventar liber — ${list.length} coduri proprii${filterText && catalogRows.length ? " + " + catalogRows.length + " din lista de prețuri" : ""}</span>`;
-  if (selCount > 0) h += `<button class="btn-primary" style="padding:6px 12px;font-size:12px" onclick="rzSendSelectionToDeviz()">📄 Trimite ${selCount} în Deviz</button>`;
   h += `<button class="icon-btn danger" onclick="rzClearInventar()" title="Golește inventarul">${ICON_CLOSE}</button></div>`;
   if (!list.length && !catalogRows.length) {
     h += `<div class="rz-no-items">${filterText ? "Niciun rezultat. Încearcă alt cod." : "Scanează primul cod sau caută o piesă din lista de prețuri după cod."}</div></div>`;
     container.innerHTML = h; return;
   }
-  h += `<div class="table-wrap"><table><thead><tr><th>Către Deviz</th><th>Cod</th><th>Denumire</th><th>Cant.</th><th>Destinatar</th><th>Preț</th><th>Fără TVA</th><th>Observații</th><th></th></tr></thead><tbody>`;
+  h += `<div class="table-wrap"><table><thead><tr><th>Cod</th><th>Denumire</th><th>Cant.</th><th>Destinatar</th><th>Preț</th><th>Fără TVA</th><th>Observații</th><th></th></tr></thead><tbody>`;
   list.forEach(it => {
-    const checked = rzSelection[it.cod.toUpperCase()] ? "checked" : "";
     h += `<tr id="rz-inv-row-${it.id}">
-      <td style="text-align:center"><input type="checkbox" ${checked} onchange="rzToggleDevizSel('${it.cod.replace(/'/g, "")}', this.checked, ${JSON.stringify(it.denumire || "")})" style="width:16px;height:16px;cursor:pointer" /></td>
       <td style="font-family:monospace;font-size:11.5px;color:var(--accent)">${escapeHtml(it.cod)}</td>
       <td><span style="cursor:pointer;color:${it.denumire ? "var(--text)" : "var(--muted)"}" onclick="rzEditInvField('${it.id}','denumire')">${escapeHtml(it.denumire || "(click pentru denumire)")}</span></td>
       <td><div class="rz-qty-wrap"><span style="font-weight:700" id="rz-inv-qty-${it.id}">${it.cantitate}</span><button class="rz-mini-edit" onclick="rzEditInvField('${it.id}','cantitate')">✎</button></div></td>
@@ -7516,9 +5846,7 @@ function rzRenderInventar() {
   });
   catalogRows.forEach(p => {
     const eff = rzPretPiesa(p);
-    const checked = rzSelection[p.cod_piesa.toUpperCase()] ? "checked" : "";
     h += `<tr style="background:#faf5ff">
-      <td style="text-align:center"><input type="checkbox" ${checked} onchange="rzToggleDevizSel('${p.cod_piesa.replace(/'/g, "")}', this.checked, ${JSON.stringify(p.denumire || "")})" style="width:16px;height:16px;cursor:pointer" /></td>
       <td style="font-family:monospace;font-size:11.5px;color:#7b1fa2">${escapeHtml(p.cod_piesa)}</td>
       <td><span style="color:#7b1fa2;font-size:11.5px;font-style:italic">${escapeHtml(p.denumire || ("Piesă " + p.marca))}</span></td>
       <td style="text-align:center;color:var(--muted)">—</td>
@@ -7915,7 +6243,7 @@ function renderPieseComandat() {
 const PERMISIUNI_DEF = [
   { key: "perm_comenzi", label: "Comenzi clienți (creare/editare)" },
   { key: "perm_programator", label: "Programator" },
-  { key: "perm_devize", label: "Devize" },
+  { key: "perm_devize", label: "Piese (listă prețuri)" },
   { key: "perm_receptie", label: "Recepție & Inventar" },
   { key: "perm_piese_comandat", label: "Piese de comandat (preț)" },
   { key: "perm_clienti", label: "Clienți (editare/ștergere)" },
