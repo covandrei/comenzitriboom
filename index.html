@@ -242,7 +242,7 @@
   .modal.xwide { max-width: 900px; }
   .modal.xxwide { max-width: 1180px; }
   .modal h2 { margin-top: 0; font-size: 18px; font-weight: 700; }
-  .modal .muted { font-size: 13px; margin-top: -8px; margin-bottom: 16px; }
+  .modal > .muted { font-size: 13px; margin-top: -8px; margin-bottom: 16px; }
   .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
   .span-2 { grid-column: span 2; }
@@ -1164,10 +1164,10 @@
         </div>
       </div>
       <div class="field">
-        <label>Nume client *</label>
+        <label id="lbl-f-nume">Nume client *</label>
         <input id="f-nume" />
       </div>
-      <div class="field">
+      <div class="field" id="wrap-f-prenume">
         <label>Prenume client *</label>
         <input id="f-prenume" />
       </div>
@@ -1319,7 +1319,7 @@
       </div>
       <div class="field">
         <label>Stare</label>
-        <select id="pr-stare"><option value="Programat">Programat</option><option value="Neconfirmat">Neconfirmat</option></select>
+        <select id="pr-stare"><option value="Programat & Neconfirmat">Programat & Neconfirmat</option><option value="Confirmat">Confirmat</option></select>
       </div>
       <div class="field">
         <label>Data *</label>
@@ -2494,6 +2494,9 @@ function selectComandaTip(tip) {
   });
   document.getElementById("wrap-f-cui").style.display = tip === "juridica" ? "block" : "none";
   if (tip === "fizica") document.getElementById("f-cui").value = "";
+  document.getElementById("lbl-f-nume").textContent = tip === "juridica" ? "Denumire firmă *" : "Nume client *";
+  document.getElementById("wrap-f-prenume").style.display = tip === "juridica" ? "none" : "block";
+  if (tip === "juridica") document.getElementById("f-prenume").value = "";
 }
 
 // ---------- TIP CLIENT (fizica / juridica, in modalul de client) ----------
@@ -2716,7 +2719,8 @@ async function saveOrder() {
   const atribuitCatreNume = atribuitCatre ? (atribuitSel.selectedOptions[0] && atribuitSel.selectedOptions[0].dataset.nume) || "" : null;
 
   if (!selectedBrand) { alert("Selectează brandul (Triumph sau Motoboom)."); return; }
-  if (!nume || !prenume || !termen) { alert("Completează cel puțin: Nume, Prenume și Termen livrare."); return; }
+  if (!nume || !termen) { alert(selectedComandaTip === "juridica" ? "Completează cel puțin: Denumire firmă și Termen livrare." : "Completează cel puțin: Nume, Prenume și Termen livrare."); return; }
+  if (selectedComandaTip === "fizica" && !prenume) { alert("Completează cel puțin: Nume, Prenume și Termen livrare."); return; }
 
   const piese = collectPieseInputs();
   if (piese.length === 0) { alert("Adaugă cel puțin o piesă (cod + denumire)."); return; }
@@ -4183,11 +4187,11 @@ function programareEndLabel(p) {
 }
 
 function renderApptCard(p) {
-  const stCls = p.stare === "Anulat" ? "st-anulat" : (p.stare === "Neconfirmat" ? "st-neconfirmat" : "st-programat");
+  const stCls = p.stare === "Anulat" ? "st-anulat" : (p.stare === "Confirmat" ? "st-programat" : "st-neconfirmat");
   const moto = [p.marca, p.model].filter(Boolean).join(" ") + (p.nr_inmatriculare ? " · " + p.nr_inmatriculare : "");
   let actions = "";
   if (p.stare !== "Anulat") {
-    if (p.stare === "Neconfirmat") actions += `<button type="button" class="btn-secondary" onclick="confirmaProgramare('${p.id}')">✓ Confirmă</button>`;
+    if (p.stare !== "Confirmat") actions += `<button type="button" class="btn-secondary" onclick="confirmaProgramare('${p.id}')">✓ Confirmă clientul</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="openProgramareModal('${p.id}')">🔄 Reprogramează</button>`;
     if (canDo("perm_devize")) actions += `<button type="button" class="btn-primary" onclick="creazaDevizDinProgramare('${p.id}')">🧾 Creează deviz</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="anuleazaProgramare('${p.id}')">✕ Anulează</button>`;
@@ -4264,7 +4268,7 @@ function renderProgramatorSlotGrid(list) {
       if (occ) {
         const pStart = progHHMMToMin(fmtOra(occ.ora_inceput));
         const isFirst = t === pStart;
-        const cls = occ.stare === "Neconfirmat" ? "slot-cell busy neconfirmat" : "slot-cell busy";
+        const cls = occ.stare === "Confirmat" ? "slot-cell busy" : "slot-cell busy neconfirmat";
         const label = isFirst ? `${fmtOra(occ.ora_inceput)}–${programareEndLabel(occ)}<br>${escapeHtml(occ.nume_client)}` : "";
         cellsHtml += `<div class="${cls}" title="${escapeHtml(occ.nume_client)} — ${fmtOra(occ.ora_inceput)}–${programareEndLabel(occ)}" onclick="openProgramareModal('${occ.id}')">${label}</div>`;
         i++;
@@ -4367,8 +4371,8 @@ function renderProgramatorPerioada() {
     const r1 = list.filter(p => p.rampa === 1).length, r2 = list.filter(p => p.rampa === 2).length;
     summaryEl.innerHTML = `
       <div class="rz-stat"><div class="num">${list.length}</div><div class="lbl">Total programări</div></div>
-      <div class="rz-stat ok"><div class="num">${byStare["Programat"] || 0}</div><div class="lbl">Programate</div></div>
-      <div class="rz-stat"><div class="num">${byStare["Neconfirmat"] || 0}</div><div class="lbl">Neconfirmate</div></div>
+      <div class="rz-stat ok"><div class="num">${byStare["Confirmat"] || 0}</div><div class="lbl">Confirmate</div></div>
+      <div class="rz-stat"><div class="num">${byStare["Programat & Neconfirmat"] || 0}</div><div class="lbl">Neconfirmate</div></div>
       <div class="rz-stat miss"><div class="num">${byStare["Anulat"] || 0}</div><div class="lbl">Anulate</div></div>
       <div class="rz-stat"><div class="num">${r1}</div><div class="lbl">Rampa 1</div></div>
       <div class="rz-stat"><div class="num">${r2}</div><div class="lbl">Rampa 2</div></div>`;
@@ -4408,7 +4412,7 @@ function openProgramareModal(id) {
     if (!p) return;
     document.getElementById("programare-modal-title").textContent = "Editează programare";
     document.getElementById("pr-rampa").value = p.rampa;
-    document.getElementById("pr-stare").value = (p.stare === "Anulat") ? "Programat" : p.stare;
+    document.getElementById("pr-stare").value = (p.stare === "Anulat") ? "Programat & Neconfirmat" : p.stare;
     document.getElementById("pr-data").value = p.data;
     const startVal = fmtOra(p.ora_inceput);
     populateOraInceputSelect(startVal);
@@ -4425,7 +4429,7 @@ function openProgramareModal(id) {
   } else {
     document.getElementById("programare-modal-title").textContent = "Programare nouă";
     document.getElementById("pr-rampa").value = "1";
-    document.getElementById("pr-stare").value = "Programat";
+    document.getElementById("pr-stare").value = "Programat & Neconfirmat";
     document.getElementById("pr-data").value = document.getElementById("prog-data").value || todayISODate();
     populateOraInceputSelect("");
     populateOraSfarsitSelect("", null);
@@ -4495,7 +4499,7 @@ async function saveProgramare() {
 }
 
 async function confirmaProgramare(id) {
-  const { error } = await client.from("programari").update({ stare: "Programat" }).eq("id", id);
+  const { error } = await client.from("programari").update({ stare: "Confirmat" }).eq("id", id);
   if (error) { alert("Eroare: " + error.message); return; }
   await loadProgramari();
 }
@@ -5739,7 +5743,10 @@ function normalizeImportIstoricAppointment(ap) {
   ora = oraMatch ? oraMatch[1].padStart(2, "0") + ":" + oraMatch[2] : "";
   const nume = String(get("nume", "nume_client", "client", "client_nume") || "").trim();
   const stareRaw = String(get("stare", "status") || "").toLowerCase();
-  const stare = stareRaw.includes("anul") ? "Anulat" : (stareRaw.includes("neconf") || stareRaw.includes("pending")) ? "Neconfirmat" : "Programat";
+  const stare = stareRaw.includes("anul") ? "Anulat"
+    : (stareRaw.includes("neconf") || stareRaw.includes("pending")) ? "Programat & Neconfirmat"
+    : stareRaw.includes("confirm") ? "Confirmat"
+    : "Programat & Neconfirmat";
   const rampaNum = parseInt(get("rampa"));
   return {
     data, ora_inceput: ora,
