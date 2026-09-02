@@ -4837,8 +4837,22 @@ async function rzLoadAdaosuri() {
   (data || []).forEach(r => { rzAdaosuri[r.marca] = Number(r.procent) || 0; });
 }
 async function rzLoadPriceListFull() {
-  const { data } = await client.from("price_list").select("*");
-  rzPriceList = data || [];
+  // Supabase/PostgREST limitează implicit fiecare select() la un număr fix de rânduri
+  // (de obicei 1000), indiferent câte există în tabel — un select() simplu, fără paginare,
+  // se oprea tăcut la prima "pagină" (fără nicio eroare), motiv pentru care liste mari
+  // (ex. 36000+ coduri Triumph) nu se încărcau complet. Fix: citim în bucăți de 1000,
+  // cu .range(), până când o bucată vine mai mică decât cerută (semn că am ajuns la capăt).
+  const PAGE = 1000;
+  let all = [];
+  let from = 0;
+  while (true) {
+    const { data, error } = await client.from("price_list").select("*").order("marca", { ascending: true }).order("cod_piesa", { ascending: true }).range(from, from + PAGE - 1);
+    if (error) { console.error(error); break; }
+    all = all.concat(data || []);
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+  rzPriceList = all;
   const cnt = rzPriceList.length;
   const st = document.getElementById("rz-pl-status");
   if (st) { st.textContent = "Listă prețuri: " + cnt + " coduri"; st.className = "rz-badge " + (cnt ? "ok" : "no"); }
