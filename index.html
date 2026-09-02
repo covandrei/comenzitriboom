@@ -293,12 +293,9 @@
   .linie-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
   .linie-row input { padding: 9px 11px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13.5px; font-family: inherit; }
   .linie-row input:focus { outline: none; border-color: var(--accent); }
-  .linie-row .dp-cod { flex: 0 0 16%; }
-  .linie-row .dp-denumire, .linie-row .dm-denumire { flex: 1; }
-  .linie-row .dp-um, .linie-row .dm-um { flex: 0 0 8%; }
-  .linie-row .dp-cant, .linie-row .dm-ore { flex: 0 0 10%; }
-  .linie-row .dp-pret, .linie-row .dm-tarif { flex: 0 0 15%; }
-  .linie-row .dp-pret-fara, .linie-row .dm-tarif-fara { flex: 0 0 15%; background: #f5f5f7; color: var(--muted); }
+  /* NOTĂ: .dv-linie-row (rândurile <tr> de Piese/Manoperă din devizul-fișă D.R.I.S.P.) e
+     un nume de clasă diferit, intenționat — NU trebuie să moștenească regulile flex de mai sus,
+     care sunt gândite strict pentru rândurile div din modalul de preț piese (Recepție/Inventar). */
 
   /* ---------- RECEPTIE & INVENTAR ---------- */
   .rz-submodes { display: inline-flex; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
@@ -415,12 +412,18 @@
   .drisp-h1 { text-align: center; text-transform: uppercase; font-size: 19px; font-weight: 800; border-bottom: 2px solid #000; padding-bottom: 5px; margin: 0 0 10px; letter-spacing: .02em; }
   .drisp-meta-row { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 10px; font-size: 12.5px; border: 1px solid #ccc; padding: 6px 10px; }
   .drisp-section-title { font-weight: 800; background: #eaeaea; padding: 4px 8px; border: 1px solid #000; border-bottom: none; font-size: 12px; margin-top: 10px; }
-  .drisp-info-table { width: 100%; border-collapse: collapse; margin-bottom: 2px; }
-  .drisp-info-table td { border: 1px solid #000; padding: 4px 8px; font-size: 12px; }
+  /* min-width: 0 e necesar aici ca să anuleze regula generică „table { min-width: 1250px }” de mai
+     sus (gândită pt. tabelele mari de listare, cu scroll orizontal) — altfel fișa D.R.I.S.P. de mai
+     jos era împinsă mult mai lată decât pagina albă și „curgea” peste fundalul gri. */
+  .drisp-info-table { width: 100%; min-width: 0; table-layout: fixed; border-collapse: collapse; margin-bottom: 2px; }
+  .drisp-info-table td { border: 1px solid #000; padding: 4px 8px; font-size: 12px; overflow: hidden; }
   .drisp-info-table td.lbl { width: 22%; font-weight: 700; background: #f7f7f7; }
-  .drisp-table { width: 100%; border-collapse: collapse; margin-bottom: 2px; }
-  .drisp-table th, .drisp-table td { border: 1px solid #000; padding: 5px 7px; font-size: 11.5px; text-align: left; }
-  .drisp-table th { background: #eaeaea; text-align: center; font-weight: 700; }
+  .drisp-table { width: 100%; min-width: 0; table-layout: fixed; border-collapse: collapse; margin-bottom: 2px; }
+  .drisp-table th, .drisp-table td { border: 1px solid #000; padding: 5px 7px; font-size: 11.5px; text-align: left; overflow: hidden; }
+  .drisp-table th {
+    background: #eaeaea; text-align: center; font-weight: 700; white-space: normal; line-height: 1.25;
+    color: #000; text-transform: none; letter-spacing: normal; vertical-align: middle;
+  }
   .drisp-table td.num { text-align: right; white-space: nowrap; }
   .drisp-total-row td { font-weight: 800; background: #f4f4f4; }
   .drisp-grand-total { border: 2px solid #000; padding: 7px 12px; text-align: right; font-size: 15px; font-weight: 800; background: #eaeaea; margin-top: 10px; }
@@ -459,7 +462,8 @@
   .drisp-page-live .drisp-table input,
   .drisp-page-live .drisp-table select,
   .drisp-page-live .drisp-textbox textarea {
-    width: 100%; border: none; background: transparent; font-family: inherit; font-size: 12px;
+    width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;
+    border: none; background: transparent; font-family: inherit; font-size: 12px;
     outline: none; padding: 2px; text-align: center; color: #000;
   }
   .drisp-page-live .drisp-info-table input:focus,
@@ -1025,6 +1029,7 @@
 
             <div class="drisp-section-title">DATE MOTOCICLETA</div>
             <table class="drisp-info-table">
+              <colgroup><col style="width:15%"><col style="width:35%"><col style="width:15%"><col style="width:35%"></colgroup>
               <tr><td class="lbl">Motocicletă</td><td colspan="3">
                 <select id="d-moto-id" onchange="onDevizMotoChanged()" style="text-align:left"><option value="">— fără motocicletă —</option></select>
               </td></tr>
@@ -3688,7 +3693,7 @@ function onTarifChange() {
   const opt = sel.options[sel.selectedIndex];
   const rate = opt ? parseFloat(opt.getAttribute("data-rate")) : 0;
   document.querySelectorAll("#deviz-manopera-list .dm-tarif").forEach(inp => {
-    if (!inp.value) { inp.value = roFmtNum(rate); recalcDevizManoperaRow(inp.closest(".linie-row")); }
+    if (!inp.value) { inp.value = roFmtNum(rate); recalcDevizManoperaRow(inp.closest(".dv-linie-row")); }
   });
 }
 
@@ -3703,12 +3708,12 @@ function renumberDevizRows(containerId, nrSelector) {
 
 function recalcDevizTotalsLive() {
   let totalPiese = 0, totalManopera = 0;
-  document.querySelectorAll("#deviz-piese-list .linie-row").forEach(row => {
+  document.querySelectorAll("#deviz-piese-list .dv-linie-row").forEach(row => {
     const cant = parseFloat(row.querySelector(".dp-cant").value) || 0;
     const pret = roParseNum(row.querySelector(".dp-pret").value) || 0;
     totalPiese += cant * pret;
   });
-  document.querySelectorAll("#deviz-manopera-list .linie-row").forEach(row => {
+  document.querySelectorAll("#deviz-manopera-list .dv-linie-row").forEach(row => {
     const ore = parseFloat(row.querySelector(".dm-ore").value) || 0;
     const tarif = roParseNum(row.querySelector(".dm-tarif").value) || 0;
     totalManopera += ore * tarif;
@@ -3734,7 +3739,7 @@ function addDevizPiesaRowEl(l) {
   l = l || {};
   const tbody = document.getElementById("deviz-piese-list");
   const row = document.createElement("tr");
-  row.className = "linie-row";
+  row.className = "dv-linie-row";
   const val = l.cantitate && l.pret_unitar ? Number(l.cantitate) * Number(l.pret_unitar) : 0;
   row.innerHTML = `
     <td class="drisp-nr-cell"></td>
@@ -3760,7 +3765,7 @@ function addDevizPiesaRow() { addDevizPiesaRowEl({}); recalcDevizTotalsLive(); }
 function onDevizPiesaCodInput(input) {
   const match = (rzPriceList.length ? rzPriceList : currentPriceList).find(p => p.cod_piesa.toLowerCase() === input.value.trim().toLowerCase());
   if (!match) return;
-  const row = input.closest(".linie-row");
+  const row = input.closest(".dv-linie-row");
   const curs = parseFloat(document.getElementById("d-curs-bnr").value) || 0;
   row.querySelector(".dp-denumire").value = match.denumire || "";
   const adaos = (typeof rzAdaosuri !== "undefined" && rzAdaosuri[match.marca]) || 0;
@@ -3780,7 +3785,7 @@ function onDevizPiesaCodInput(input) {
 function onDevizPiesaDenumireInput(input) {
   const match = currentPreturiUzuale.find(p => p.tip === "piesa" && p.nume.toLowerCase() === input.value.trim().toLowerCase());
   if (!match) return;
-  const row = input.closest(".linie-row");
+  const row = input.closest(".dv-linie-row");
   if (match.cod) row.querySelector(".dp-cod").value = match.cod;
   row.querySelector(".dp-pret").value = roFmtNum(match.pret_cu_tva);
   recalcDevizPiesaRow(row);
@@ -3807,7 +3812,7 @@ function renderPieseUzualeChips() {
 }
 function adaugaPiesaUzuala(cod, denumire) {
   addDevizPiesaRowEl({ cod_piesa: cod, denumire });
-  const rows = document.querySelectorAll("#deviz-piese-list .linie-row");
+  const rows = document.querySelectorAll("#deviz-piese-list .dv-linie-row");
   const last = rows[rows.length - 1];
   if (last) onDevizPiesaCodInput(last.querySelector(".dp-cod"));
   recalcDevizTotalsLive();
@@ -3820,7 +3825,7 @@ function renderDevizPieseInputs(linii) {
 }
 
 function collectDevizPiese() {
-  return [...document.querySelectorAll("#deviz-piese-list .linie-row")].map(row => ({
+  return [...document.querySelectorAll("#deviz-piese-list .dv-linie-row")].map(row => ({
     tip: "piesa",
     cod_piesa: row.querySelector(".dp-cod").value.trim(),
     denumire: row.querySelector(".dp-denumire").value.trim(),
@@ -3948,7 +3953,7 @@ function addDevizManoperaRowEl(l) {
   l = l || {};
   const tbody = document.getElementById("deviz-manopera-list");
   const row = document.createElement("tr");
-  row.className = "linie-row";
+  row.className = "dv-linie-row";
   const val = l.cantitate && l.pret_unitar ? Number(l.cantitate) * Number(l.pret_unitar) : 0;
   row.innerHTML = `
     <td class="drisp-nr-cell"></td>
@@ -3973,7 +3978,7 @@ function addDevizManoperaRow() { addDevizManoperaRowEl({}); recalcDevizTotalsLiv
 function onDevizManoperaDenumireInput(input) {
   const match = currentPreturiUzuale.find(p => p.tip === "manopera" && p.nume.toLowerCase() === input.value.trim().toLowerCase());
   if (!match) return;
-  const row = input.closest(".linie-row");
+  const row = input.closest(".dv-linie-row");
   row.querySelector(".dm-tarif").value = roFmtNum(match.pret_cu_tva);
   recalcDevizManoperaRow(row);
 }
@@ -3985,7 +3990,7 @@ function renderDevizManoperaInputs(linii) {
 }
 
 function collectDevizManopera() {
-  return [...document.querySelectorAll("#deviz-manopera-list .linie-row")].map(row => ({
+  return [...document.querySelectorAll("#deviz-manopera-list .dv-linie-row")].map(row => ({
     tip: "manopera",
     denumire: row.querySelector(".dm-denumire").value.trim(),
     um: row.querySelector(".dm-um").value.trim() || "oră",
