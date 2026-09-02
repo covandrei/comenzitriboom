@@ -1838,7 +1838,11 @@ async function afterLogin() {
   populateStareComandaOptions();
   await loadMyPermissions();
   currentUserEmail = user.email || null;
-  await Promise.all([loadOrders(), rzLoadSetari(), rzLoadAdaosuri(), rzLoadPriceListFull(), loadAllProfiles(), loadProgramari(), loadPuncteLucru(), loadBranduriMoto(), loadFurnizori(), loadSarcini()]);
+  // allSettled, nu all: daca UNA din aceste incarcari esueaza sau ia mult (ex. o lista de preturi
+  // foarte mare), restul aplicatiei (inclusiv butoanele de admin de mai jos) tot trebuie sa apara —
+  // o singura incarcare stricata nu are voie sa blocheze tot ecranul dupa login.
+  const initResults = await Promise.allSettled([loadOrders(), rzLoadSetari(), rzLoadAdaosuri(), rzLoadPriceListFull(), loadAllProfiles(), loadProgramari(), loadPuncteLucru(), loadBranduriMoto(), loadFurnizori(), loadSarcini()]);
+  initResults.forEach(r => { if (r.status === "rejected") console.error("Eroare la încărcarea inițială:", r.reason); });
   applyPermissionsToUI();
   restoreLocationPrefsFromStorage();
   updatePunctLucruHeaderBtn();
@@ -4837,20 +4841,25 @@ async function rzLoadAdaosuri() {
   (data || []).forEach(r => { rzAdaosuri[r.marca] = Number(r.procent) || 0; });
 }
 async function rzLoadPriceListFull() {
-  // Supabase/PostgREST limitează implicit fiecare select() la un număr fix de rânduri
-  // (de obicei 1000), indiferent câte există în tabel — un select() simplu, fără paginare,
-  // se oprea tăcut la prima "pagină" (fără nicio eroare), motiv pentru care liste mari
-  // (ex. 36000+ coduri Triumph) nu se încărcau complet. Fix: citim în bucăți de 1000,
-  // cu .range(), până când o bucată vine mai mică decât cerută (semn că am ajuns la capăt).
-  const PAGE = 1000;
+  // Supabase/PostgREST limitează implicit fiecare select() la un număr fix de rânduri per cerere
+  // (setare de proiect — „Max Rows”, pe unele proiecte 1000, pe altele mai puțin), indiferent câte
+  // există în tabel — un select() simplu, fără paginare, se oprea tăcut la prima "pagină" (fără
+  // nicio eroare), motiv pentru care liste mari (ex. 36000+ coduri Triumph) nu se încărcau complet.
+  // Fix corect (nu presupunem CÂT anume limitează serverul per cerere): cerem câte 1000 din
+  // .range(), dar avansăm de fiecare dată exact cu câte au venit efectiv (nu cu 1000 fix) și ne
+  // oprim doar când o cerere întoarce 0 rânduri — asta merge indiferent de limita reală a
+  // proiectului, chiar dacă e sub 1000.
+  const REQUEST_SIZE = 1000;
+  const MAX_ITERATII = 2000; // gardă de siguranță (2.000.000 de rânduri) — nu ar trebui atinsă niciodată
   let all = [];
   let from = 0;
-  while (true) {
-    const { data, error } = await client.from("price_list").select("*").order("marca", { ascending: true }).order("cod_piesa", { ascending: true }).range(from, from + PAGE - 1);
+  for (let i = 0; i < MAX_ITERATII; i++) {
+    const { data, error } = await client.from("price_list").select("*").order("marca", { ascending: true }).order("cod_piesa", { ascending: true }).range(from, from + REQUEST_SIZE - 1);
     if (error) { console.error(error); break; }
-    all = all.concat(data || []);
-    if (!data || data.length < PAGE) break;
-    from += PAGE;
+    const primite = data || [];
+    if (!primite.length) break;
+    all = all.concat(primite);
+    from += primite.length;
   }
   rzPriceList = all;
   const cnt = rzPriceList.length;
@@ -5637,16 +5646,35 @@ async function rzHandlePriceFile(event) {
     });
     const entries = [...map.values()];
     if (!entries.length) throw new Error("Nu au fost găsite coduri valide în fișier.");
-    // upsert in loturi de 500 ca sa nu depasim limita request-ului
-    for (let i = 0; i < entries.length; i += 500) {
-      const chunk = entries.slice(i, i + 500);
-      const { error } = await client.from("price_list").upsert(chunk, { onConflict: "marca,cod_piesa", ignoreDuplicates: false });
-      if (error) throw error;
+    // upsert in loturi de 500 (limita request-ului) — la un fișier de zeci de mii de rânduri, sunt
+    // multe cereri la rând; nu mai oprim tot importul dacă UN singur lot eșuează (ex. un hop de rețea
+    // ratat) — reîncercăm acel lot de 3 ori, iar dacă tot nu merge, continuăm cu restul fișierului și
+    // raportăm clar la final câte coduri chiar au intrat și câte au eșuat, ca să nu se piardă tăcut
+    // restul unui fișier mare din cauza unei singure cereri picate. Afișăm și progresul live, ca să nu
+    // pară „blocat” cât timp lucrează la mii de rânduri.
+    const CHUNK = 500;
+    const st = document.getElementById("rz-pl-status");
+    const totalChunks = Math.ceil(entries.length / CHUNK);
+    let ok = 0, failed = 0;
+    for (let i = 0, chunkNo = 0; i < entries.length; i += CHUNK, chunkNo++) {
+      const chunk = entries.slice(i, i + CHUNK);
+      let saved = false, lastError = null;
+      for (let attempt = 0; attempt < 3 && !saved; attempt++) {
+        const { error } = await client.from("price_list").upsert(chunk, { onConflict: "marca,cod_piesa", ignoreDuplicates: false });
+        if (!error) saved = true; else lastError = error;
+      }
+      if (saved) ok += chunk.length;
+      else { failed += chunk.length; console.error("Lot eșuat la încărcarea prețurilor (marca " + marca + "):", lastError, chunk.map(c => c.cod_piesa)); }
+      if (st) st.textContent = "Se încarcă „" + marca + "”… " + (ok + failed) + " / " + entries.length + " (lot " + (chunkNo + 1) + "/" + totalChunks + ")";
     }
     if (!(marca in rzAdaosuri)) { await client.from("adaosuri_marca").upsert({ marca, procent: 0 }); }
     await rzLoadPriceListFull();
     await rzLoadAdaosuri();
-    rzToast("Listă prețuri „" + escapeHtml(marca) + "” încărcată: " + entries.length + " coduri", "ok");
+    if (failed > 0) {
+      rzToast("Listă prețuri „" + escapeHtml(marca) + "”: " + ok + " coduri încărcate, " + failed + " au eșuat — vezi consola browserului (F12) pentru codurile eșuate, sau reîncarcă din nou fișierul", "err");
+    } else {
+      rzToast("Listă prețuri „" + escapeHtml(marca) + "” încărcată: " + ok + " coduri", "ok");
+    }
   } catch (e) {
     rzToast("Eroare la citire listă prețuri: " + e.message, "err");
   }
