@@ -831,18 +831,19 @@
     <div id="catalog-view" style="display:none;">
       <div class="toolbar">
         <div class="filters">
-          <select id="catalog-marca-filter" onchange="renderCatalogTable()">
+          <select id="catalog-marca-filter" onchange="catalogPage=1;renderCatalogTable()">
             <option value="">Toate mărcile</option>
           </select>
-          <input type="text" id="catalog-search" placeholder="Caută cod / denumire..." oninput="renderCatalogTable()" style="min-width:220px" />
+          <input type="text" id="catalog-search" placeholder="Caută cod / denumire..." oninput="catalogPage=1;renderCatalogTable()" style="min-width:220px" />
         </div>
         <div class="toolbar-actions">
           <input type="file" id="rz-price-file" accept=".xlsx,.xls" style="display:none" onchange="rzHandlePriceFile(event)" />
           <button class="btn-primary" onclick="rzOpenPriceImportModal()">📈 Încarcă listă prețuri</button>
           <button class="btn-secondary" onclick="switchTab('receptie')">Adaugă/actualizează prețuri din Recepție &amp; Inventar</button>
+          <button class="btn-secondary" style="color:#b91c1c" onclick="rzDeletePriceListForBrand()">🗑 Șterge lista unei mărci</button>
         </div>
       </div>
-      <div class="muted" style="font-size:12.5px;margin-bottom:10px">Aici încarci sau actualizezi lista de prețuri pentru o marcă, dintr-un fișier Excel — vezi butonul „📈 Încarcă listă prețuri” de mai sus.</div>
+      <div class="muted" style="font-size:12.5px;margin-bottom:10px">Aici încarci sau actualizezi lista de prețuri pentru o marcă, dintr-un fișier Excel — vezi butonul „📈 Încarcă listă prețuri” de mai sus. „🗑 Șterge lista unei mărci” șterge definitiv toate codurile mărcii alese în filtrul de mai sus.</div>
       <div class="table-wrap">
         <table>
           <thead>
@@ -862,6 +863,7 @@
           </tbody>
         </table>
       </div>
+      <div class="rz-inline-row" id="catalog-pagination" style="justify-content:space-between;margin-top:10px;font-size:12.5px"></div>
     </div>
 
     <!-- ===== VIEW RECEPTIE & INVENTAR ===== -->
@@ -1484,6 +1486,8 @@ let pendingClientId = null;
 let pendingClientMotos = null;
 
 let currentProgramari = [];
+let catalogPage = 1;
+const CATALOG_PAGE_SIZE = 100; // catalogul de piese arată max 100 de coduri pe ecran, cu paginare — pe liste de zeci de mii de coduri, randarea într-un singur tabel uriaș era lentă
 let programatorMode = "zi";
 
 let selectedOrderIds = new Set();
@@ -6202,6 +6206,7 @@ function populateCatalogMarcaFilter() {
 function renderCatalogTable() {
   populateCatalogMarcaFilter();
   const tbody = document.getElementById("catalog-table-body");
+  const pagBox = document.getElementById("catalog-pagination");
   if (!tbody) return;
   const marcaFiltru = document.getElementById("catalog-marca-filter").value;
   const search = (document.getElementById("catalog-search").value || "").trim().toLowerCase();
@@ -6210,9 +6215,23 @@ function renderCatalogTable() {
   if (search) rows = rows.filter(r => (r.cod_piesa || "").toLowerCase().includes(search) || (r.denumire || "").toLowerCase().includes(search));
   rows.sort((a, b) => (a.marca || "").localeCompare(b.marca || "") || (a.cod_piesa || "").localeCompare(b.cod_piesa || ""));
 
-  if (!rows.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Niciun cod în listă. Încarcă prețuri din Recepție &amp; Inventar.</td></tr>'; return; }
+  if (!rows.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Niciun cod în listă. Încarcă prețuri din Recepție &amp; Inventar.</td></tr>';
+    if (pagBox) pagBox.innerHTML = "";
+    return;
+  }
 
-  tbody.innerHTML = rows.map(p => {
+  // Afișăm cel mult CATALOG_PAGE_SIZE coduri pe ecran deodată — pe liste de zeci de mii de coduri,
+  // randarea unui singur tabel cu toate rândurile deodată era vizibil lentă. Datele complete rămân
+  // oricum în memorie (rzPriceList), pentru căutare/autocomplete/prețuri în restul aplicației — doar
+  // AFIȘAREA din acest ecran e paginată.
+  const totalPages = Math.max(1, Math.ceil(rows.length / CATALOG_PAGE_SIZE));
+  if (catalogPage > totalPages) catalogPage = totalPages;
+  if (catalogPage < 1) catalogPage = 1;
+  const startIdx = (catalogPage - 1) * CATALOG_PAGE_SIZE;
+  const pageRows = rows.slice(startIdx, startIdx + CATALOG_PAGE_SIZE);
+
+  tbody.innerHTML = pageRows.map(p => {
     const cuTva = rzPretPiesa(p);
     const faraTva = cuTva ? rzPriceNoVat(cuTva) : null;
     // Preț EUR = prețul brut din lista de prețuri (așa cum a fost încărcat, „cu TVA”),
@@ -6230,6 +6249,45 @@ function renderCatalogTable() {
       <td class="muted" style="font-size:11px">${p.actualizat_la ? formatDate(p.actualizat_la) : "—"}</td>
     </tr>`;
   }).join("");
+
+  if (pagBox) {
+    const dela = rows.length ? startIdx + 1 : 0;
+    const panaLa = Math.min(startIdx + CATALOG_PAGE_SIZE, rows.length);
+    pagBox.innerHTML = `
+      <span class="muted">${dela}–${panaLa} din ${rows.length} coduri</span>
+      <span style="display:flex;gap:6px;align-items:center">
+        <button type="button" class="btn-secondary" style="padding:4px 10px" ${catalogPage <= 1 ? "disabled" : ""} onclick="catalogGoToPage(1)">« Prima</button>
+        <button type="button" class="btn-secondary" style="padding:4px 10px" ${catalogPage <= 1 ? "disabled" : ""} onclick="catalogGoToPage(${catalogPage - 1})">‹ Anterioară</button>
+        <span class="muted">Pagina ${catalogPage} din ${totalPages}</span>
+        <button type="button" class="btn-secondary" style="padding:4px 10px" ${catalogPage >= totalPages ? "disabled" : ""} onclick="catalogGoToPage(${catalogPage + 1})">Următoare ›</button>
+        <button type="button" class="btn-secondary" style="padding:4px 10px" ${catalogPage >= totalPages ? "disabled" : ""} onclick="catalogGoToPage(${totalPages})">Ultima »</button>
+      </span>`;
+  }
+}
+function catalogGoToPage(p) {
+  catalogPage = p;
+  renderCatalogTable();
+}
+async function rzDeletePriceListForBrand() {
+  if (!amAdmin()) { alert("Doar administratorul poate șterge o listă de prețuri întreagă."); return; }
+  const marca = (document.getElementById("catalog-marca-filter") || {}).value || "";
+  if (!marca) { alert("Alege mai întâi o marcă anume din filtrul de mai sus (nu poți șterge „Toate mărcile” deodată — alegi câte o marcă pe rând, ca să nu ștergi din greșeală alta)."); return; }
+  const count = rzPriceList.filter(p => p.marca === marca).length;
+  if (!count) { alert("Nu există niciun cod încărcat pentru „" + marca + "”."); return; }
+  const raspuns = prompt(
+    "Ești pe cale să ștergi DEFINITIV toate cele " + count + " coduri din lista de prețuri „" + marca + "”. Acțiunea nu poate fi anulată.\n\n" +
+    "Scrie exact numele mărcii (" + marca + ") ca să confirmi:"
+  );
+  if (raspuns === null) return;
+  if (raspuns.trim() !== marca) { alert("Numele nu se potrivește cu „" + marca + "” — nu s-a șters nimic."); return; }
+  const st = document.getElementById("rz-pl-status");
+  if (st) st.textContent = "Se șterge lista „" + marca + "”...";
+  const { error } = await client.from("price_list").delete().eq("marca", marca);
+  if (error) { alert("Eroare la ștergere: " + error.message); await rzLoadPriceListFull(); return; }
+  await rzLoadPriceListFull();
+  catalogPage = 1;
+  renderCatalogTable();
+  if (typeof rzToast === "function") rzToast("Lista de prețuri „" + escapeHtml(marca) + "” a fost ștearsă definitiv (" + count + " coduri).", "ok");
 }
 
 // ======================================================
