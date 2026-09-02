@@ -295,6 +295,7 @@
   .linie-row input:focus { outline: none; border-color: var(--accent); }
   .linie-row .dp-cod { flex: 0 0 16%; }
   .linie-row .dp-denumire, .linie-row .dm-denumire { flex: 1; }
+  .linie-row .dp-um, .linie-row .dm-um { flex: 0 0 8%; }
   .linie-row .dp-cant, .linie-row .dm-ore { flex: 0 0 10%; }
   .linie-row .dp-pret, .linie-row .dm-tarif { flex: 0 0 15%; }
   .linie-row .dp-pret-fara, .linie-row .dm-tarif-fara { flex: 0 0 15%; background: #f5f5f7; color: var(--muted); }
@@ -425,6 +426,26 @@
   .drisp-grand-total { border: 2px solid #000; padding: 7px 12px; text-align: right; font-size: 15px; font-weight: 800; background: #eaeaea; margin-top: 10px; }
   .drisp-sign-area { display: flex; justify-content: space-between; margin-top: 34px; gap: 16px; }
   .drisp-sign-box { flex: 1; border-top: 1px solid #000; padding-top: 6px; text-align: center; font-size: 11px; }
+  .drisp-company-details { text-align: center; font-size: 9.5px; line-height: 1.3; margin: 0 0 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+  .drisp-textbox { border: 1px solid #000; min-height: 46px; padding: 4px 6px; font-size: 11px; white-space: pre-wrap; margin-bottom: 2px; }
+  .drisp-checkbox-cell { text-align: center; width: 42px; }
+  .drisp-guarantee-title { text-align: center; margin-top: 8px; font-weight: 800; border-top: 1px dashed #999; padding-top: 4px; font-size: 11.5px; }
+  .drisp-guarantee-text { font-size: 8px; text-align: justify; margin-top: 3px; line-height: 1.25; color: #333; }
+  .drisp-footer-note { font-size: 8px; text-align: center; color: #555; border-top: 1px solid #ddd; padding-top: 3px; margin-top: 10px; }
+  .drisp-page-break { page-break-before: always; margin-top: 26px; padding-top: 20px; border-top: 3px double #999; }
+  @media print { .drisp-page-break { border-top: none; margin-top: 0; padding-top: 0; } }
+
+  /* ---------- DEVIZ — Fișă intrare service (identică cu fișierul DRISP) ---------- */
+  .fisa-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 12px; }
+  .fisa-grid .field-2 { grid-column: span 2; }
+  .fisa-grid .field-4 { grid-column: span 4; }
+  .constatari-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  .constatari-table th, .constatari-table td { border: 1px solid var(--border); padding: 5px 6px; font-size: 12.5px; }
+  .constatari-table th { background: var(--bg-soft, #f4f4f5); font-size: 10.5px; text-transform: uppercase; color: var(--muted); text-align: left; }
+  .constatari-table input[type="text"] { width: 100%; border: none; background: transparent; font-family: inherit; font-size: 12.5px; padding: 2px; }
+  .constatari-table input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+  .deviz-lock-banner { background: #fef3c7; color: #92400e; border: 1.5px solid #f59e0b; border-radius: 8px; padding: 8px 12px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .um-input { width: 60px !important; }
 
   /* ---------- ROLURI & PERMISIUNI (ecran admin) ---------- */
   .roluri-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 14px; }
@@ -902,6 +923,7 @@
       <div class="deviz-workspace" id="deviz-workspace" style="display:none;">
         <div class="deviz-workspace-title" id="deviz-workspace-title">Deviz nou</div>
         <input type="hidden" id="dv-id" />
+        <div class="deviz-lock-banner" id="deviz-lock-banner" style="display:none">🔒 Acest deviz e „Finalizat” — doar administratorul mai poate modifica.</div>
         <div class="modal-grid">
           <div class="field span-2"></div>
 
@@ -946,11 +968,49 @@
           </div>
           <div class="field">
             <label>Stare</label>
-            <select id="d-stare">
+            <select id="d-stare" onchange="onDevizStareChange()">
               <option>Draft</option>
               <option>Finalizat</option>
               <option>Anulat</option>
             </select>
+          </div>
+
+          <div class="field span-2" style="margin-top:6px">
+            <label style="font-weight:800">📋 Fișă intrare service</label>
+            <div class="fisa-grid">
+              <div class="field">
+                <label>Data intrare</label>
+                <input type="date" id="d-data-intrare" />
+              </div>
+              <div class="field">
+                <label>Ora intrare</label>
+                <input type="time" id="d-ora-intrare" />
+              </div>
+              <div class="field">
+                <label>Dosar daună</label>
+                <input type="text" id="d-dosar-dauna" placeholder="opțional" />
+              </div>
+              <div class="field">
+                <label>Data daună</label>
+                <input type="date" id="d-data-dauna" />
+              </div>
+              <div class="field field-4">
+                <label>Starea motocicletei la momentul intrării în service</label>
+                <textarea id="d-stare-vizuala" rows="2" placeholder="Descrierea stării vizuale (zgârieturi, lipsuri, nivel combustibil etc.)..."></textarea>
+              </div>
+              <div class="field field-4">
+                <label>Lucrări solicitate de client / Defecțiuni (declarație client)</label>
+                <textarea id="d-cerinte-client" rows="2" placeholder="Descrierea lucrărilor solicitate..."></textarea>
+              </div>
+              <div class="field field-4">
+                <label>Constatări preliminare (unitatea service)</label>
+                <table class="constatari-table" id="constatari-table">
+                  <thead><tr><th>Defect constatat</th><th>Recomandare</th><th class="drisp-checkbox-cell">Accept</th><th class="drisp-checkbox-cell">Refuz</th><th></th></tr></thead>
+                  <tbody id="constatari-rows"></tbody>
+                </table>
+                <button type="button" class="btn-secondary" style="margin-top:6px" onclick="addConstatareRow()">+ Adaugă rând</button>
+              </div>
+            </div>
           </div>
 
           <div class="piese-section">
@@ -3588,6 +3648,7 @@ function addDevizPiesaRowEl(l) {
   row.innerHTML = `
     <input class="dp-cod" list="pricelist-datalist" placeholder="Cod piesă" value="${escapeHtml(l.cod_piesa || "")}" />
     <input class="dp-denumire" list="piese-uzuale-denumire-datalist" placeholder="Denumire" value="${escapeHtml(l.denumire || "")}" />
+    <input class="dp-um" placeholder="U.M." value="${escapeHtml(l.um || "buc")}" />
     <input class="dp-cant" type="number" step="1" min="0" value="${l.cantitate || 1}" />
     <input class="dp-pret" type="text" value="${l.pret_unitar ? roFmtNum(l.pret_unitar) : ""}" placeholder="Preț cu TVA" />
     <input class="dp-pret-fara" type="text" readonly value="${l.pret_unitar ? roFmtNum(roPretFaraTva(l.pret_unitar)) : ""}" placeholder="Preț fără TVA" />
@@ -3667,6 +3728,7 @@ function collectDevizPiese() {
     tip: "piesa",
     cod_piesa: row.querySelector(".dp-cod").value.trim(),
     denumire: row.querySelector(".dp-denumire").value.trim(),
+    um: row.querySelector(".dp-um").value.trim() || "buc",
     cantitate: parseFloat(row.querySelector(".dp-cant").value) || 0,
     pret_unitar: roParseNum(row.querySelector(".dp-pret").value) || 0,
   })).filter(l => l.denumire || l.cod_piesa);
@@ -3782,6 +3844,7 @@ function addDevizManoperaRowEl(l) {
   row.className = "linie-row";
   row.innerHTML = `
     <input class="dm-denumire" list="manopera-uzuale-denumire-datalist" placeholder="Descriere operație" value="${escapeHtml(l.denumire || "")}" />
+    <input class="dm-um" placeholder="U.M." value="${escapeHtml(l.um || "oră")}" />
     <input class="dm-ore" type="number" step="0.5" min="0" value="${l.cantitate || 1}" />
     <input class="dm-tarif" type="text" value="${l.pret_unitar ? roFmtNum(l.pret_unitar) : ""}" placeholder="Tarif/oră cu TVA" />
     <input class="dm-tarif-fara" type="text" readonly value="${l.pret_unitar ? roFmtNum(roPretFaraTva(l.pret_unitar)) : ""}" placeholder="Tarif/oră fără TVA" />
@@ -3813,6 +3876,7 @@ function collectDevizManopera() {
   return [...document.querySelectorAll("#deviz-manopera-list .linie-row")].map(row => ({
     tip: "manopera",
     denumire: row.querySelector(".dm-denumire").value.trim(),
+    um: row.querySelector(".dm-um").value.trim() || "oră",
     cantitate: parseFloat(row.querySelector(".dm-ore").value) || 0,
     pret_unitar: roParseNum(row.querySelector(".dm-tarif").value) || 0,
   })).filter(l => l.denumire);
@@ -3829,6 +3893,9 @@ function collectDevizManopera() {
 // Tab-urile se pastreaza si la refresh de pagina (localStorage).
 
 function newDevizTabObj(overrides) {
+  const now = new Date();
+  const todayISO = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
+  const nowHHMM = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
   return Object.assign({
     tabKey: "dt" + Date.now() + Math.random().toString(36).slice(2, 7),
     devizId: null, numar: null,
@@ -3836,6 +3903,10 @@ function newDevizTabObj(overrides) {
     clientId: null, clientSearchText: "",
     motoId: null, motoManual: null, mecanicId: null, tarifRate: null, cursBnr: null,
     stare: "Draft", notite: "",
+    // ---- Fișă intrare service (v24, identică cu Deviz_Service.html) ----
+    dataIntrare: todayISO, oraIntrare: nowHHMM,
+    stareVizuala: "", cerinteClient: "", constatari: [],
+    dosarDauna: "", dataDauna: "",
     piese: [], manopera: [],
     pendingBooking: null, bookingInfo: null,
   }, overrides || {});
@@ -3915,6 +3986,10 @@ async function openDevizTab(id) {
     motoId: d.motocicleta_id || null, mecanicId: d.mecanic_id || null,
     tarifRate: (d.tarif_manopera !== null && d.tarif_manopera !== undefined) ? Number(d.tarif_manopera) : null,
     cursBnr: d.curs_bnr || null, stare: d.stare || "Draft", notite: d.notite || "",
+    dataIntrare: d.data_intrare || "", oraIntrare: d.ora_intrare || "",
+    stareVizuala: d.stare_vizuala || "", cerinteClient: d.cerinte_client || "",
+    constatari: Array.isArray(d.constatari) ? d.constatari : [],
+    dosarDauna: d.dosar_dauna || "", dataDauna: d.data_dauna || "",
     piese: (d.linii || []).filter(l => l.tip === "piesa"),
     manopera: (d.linii || []).filter(l => l.tip === "manopera"),
   });
@@ -3962,6 +4037,13 @@ async function renderDevizFormFromTab(tab) {
   document.getElementById("d-curs-bnr").value = cursVal;
   document.getElementById("d-stare").value = tab.stare || "Draft";
   document.getElementById("d-notite").value = tab.notite || "";
+  document.getElementById("d-data-intrare").value = tab.dataIntrare || "";
+  document.getElementById("d-ora-intrare").value = tab.oraIntrare || "";
+  document.getElementById("d-dosar-dauna").value = tab.dosarDauna || "";
+  document.getElementById("d-data-dauna").value = tab.dataDauna || "";
+  document.getElementById("d-stare-vizuala").value = tab.stareVizuala || "";
+  document.getElementById("d-cerinte-client").value = tab.cerinteClient || "";
+  renderConstatariRows(tab.constatari && tab.constatari.length ? tab.constatari : [{}, {}, {}]);
   renderDevizPieseInputs(tab.piese || []);
   renderPieseUzualeChips();
   renderPieseCatalogUzuale();
@@ -3971,6 +4053,7 @@ async function renderDevizFormFromTab(tab) {
   if (tab.bookingInfo) { bannerEl.style.display = "block"; bannerEl.textContent = tab.bookingInfo; }
   else { bannerEl.style.display = "none"; bannerEl.textContent = ""; }
   renderClientHistoryForTab(cli, tab);
+  applyDevizLockState(tab);
   showDevizWorkspace();
 }
 
@@ -3986,8 +4069,69 @@ function captureDevizFormToTab(tab) {
   tab.cursBnr = document.getElementById("d-curs-bnr").value;
   tab.stare = document.getElementById("d-stare").value;
   tab.notite = document.getElementById("d-notite").value;
+  tab.dataIntrare = document.getElementById("d-data-intrare").value;
+  tab.oraIntrare = document.getElementById("d-ora-intrare").value;
+  tab.dosarDauna = document.getElementById("d-dosar-dauna").value;
+  tab.dataDauna = document.getElementById("d-data-dauna").value;
+  tab.stareVizuala = document.getElementById("d-stare-vizuala").value;
+  tab.cerinteClient = document.getElementById("d-cerinte-client").value;
+  tab.constatari = collectConstatari();
   tab.piese = collectDevizPiese();
   tab.manopera = collectDevizManopera();
+}
+
+// blocheaza editarea in interfata cand devizul e "Finalizat" si userul nu e admin —
+// acelasi blocaj impus si de baza de date (trigger trg_devize_lock), dar aici e vizibil
+// din prima, nu doar dupa ce incerci sa salvezi si "nu se intampla nimic".
+function applyDevizLockState(tab) {
+  const locked = tab.stare === "Finalizat" && !amAdmin();
+  const banner = document.getElementById("deviz-lock-banner");
+  if (banner) banner.style.display = locked ? "block" : "none";
+  const ws = document.getElementById("deviz-workspace");
+  if (!ws) return;
+  ws.querySelectorAll("input, select, textarea, button").forEach(el => {
+    if (el.getAttribute("onclick") === "closeDevizTab()") return; // tab-ul tot trebuie sa poata fi inchis
+    el.disabled = locked;
+  });
+  const saveBtn = ws.querySelector('button[onclick="saveDevizFromTab()"]');
+  if (saveBtn) saveBtn.style.display = locked ? "none" : "";
+}
+
+function onDevizStareChange() {
+  const tab = getActiveDevizTab();
+  if (!tab) return;
+  tab.stare = document.getElementById("d-stare").value;
+  applyDevizLockState(tab);
+}
+
+// ---------- CONSTATĂRI PRELIMINARE (pagina „Fișă intrare service") ----------
+function renderConstatariRows(list) {
+  const body = document.getElementById("constatari-rows");
+  body.innerHTML = "";
+  (list && list.length ? list : [{}]).forEach(c => addConstatareRowEl(c || {}));
+}
+function addConstatareRowEl(c) {
+  c = c || {};
+  const body = document.getElementById("constatari-rows");
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input type="text" class="ct-defect" value="${escapeHtml(c.defect || "")}" /></td>
+    <td><input type="text" class="ct-recomandare" value="${escapeHtml(c.recomandare || "")}" /></td>
+    <td class="drisp-checkbox-cell"><input type="checkbox" class="ct-accept" ${c.accept ? "checked" : ""} /></td>
+    <td class="drisp-checkbox-cell"><input type="checkbox" class="ct-refuz" ${c.refuz ? "checked" : ""} /></td>
+    <td><button type="button" class="icon-btn danger">${ICON_CLOSE}</button></td>
+  `;
+  tr.querySelector(".icon-btn.danger").onclick = () => tr.remove();
+  body.appendChild(tr);
+}
+function addConstatareRow() { addConstatareRowEl({}); }
+function collectConstatari() {
+  return [...document.querySelectorAll("#constatari-rows tr")].map(tr => ({
+    defect: tr.querySelector(".ct-defect").value.trim(),
+    recomandare: tr.querySelector(".ct-recomandare").value.trim(),
+    accept: tr.querySelector(".ct-accept").checked,
+    refuz: tr.querySelector(".ct-refuz").checked,
+  })).filter(c => c.defect || c.recomandare || c.accept || c.refuz);
 }
 
 // ---------- ISTORIC VIZITE CLIENT (din baza de date proprie CRM) ----------
@@ -4053,13 +4197,28 @@ async function saveDevizFromTab() {
     stare: tab.stare,
     notite: (tab.notite || "").trim(),
     tarif_manopera: (tab.tarifRate !== null && tab.tarifRate !== undefined && !isNaN(tab.tarifRate)) ? tab.tarifRate : null,
+    data_intrare: tab.dataIntrare || null,
+    ora_intrare: tab.oraIntrare || null,
+    stare_vizuala: (tab.stareVizuala || "").trim() || null,
+    cerinte_client: (tab.cerinteClient || "").trim() || null,
+    constatari: tab.constatari || [],
+    dosar_dauna: (tab.dosarDauna || "").trim() || null,
+    data_dauna: tab.dataDauna || null,
   };
 
   const linii = [...tab.piese, ...tab.manopera];
 
   let error, devizId = id;
   if (id) {
-    ({ error } = await client.from("devize").update(payload).eq("id", id));
+    // folosim .select() ca sa detectam sigur daca update-ul a modificat 0 randuri —
+    // RLS blocheaza silentios (fara eroare) daca devizul nu mai apartine punctului tau
+    // de lucru; trigger-ul de blocaj pe "Finalizat" arunca eroare explicita, separat.
+    const { data: updData, error: updErr } = await client.from("devize").update(payload).eq("id", id).select();
+    error = updErr;
+    if (!error && (!updData || !updData.length)) {
+      alert("Devizul nu a fost actualizat — fie e „Finalizat” (doar administratorul mai poate modifica), fie nu mai aparține punctului tău de lucru.");
+      return;
+    }
     if (!error) {
       await client.from("deviz_linii").delete().eq("deviz_id", id);
       if (linii.length) ({ error } = await client.from("deviz_linii").insert(linii.map(l => ({ ...l, deviz_id: id }))));
@@ -5952,70 +6111,144 @@ function doDevizExport(fmt) {
 }
 
 // ---------- PRINTARE DEVIZ ----------
+// Antetul de firmă e identic pe ambele pagini și pentru ambele branduri
+// (Triumph și Motoboom) — exact textul din fișierul Deviz_Service.html
+// trimis de Andrei, confirmat ca atare.
+function drispCompanyDetailsHtml() {
+  return `<div class="drisp-company-details">
+    <strong>MOTOBOOM S.R.L.</strong> CIF: RO18684947 Reg. Com.: J01/509/2006<br>
+    Adresa: Str. Crinului nr. 3, Sebes, ALBA<br>
+    Punct lucru: Sos. Pipera nr. 48, Sector 2, BUCURESTI<br>
+    Contact: 0744 313 982 - info@motocicletetriumph.ro - www.motocicletetriumph.ro
+  </div>`;
+}
+function drispSemnaturiHtml() {
+  return `<div class="drisp-sign-area">
+    <div class="drisp-sign-box">Semnatura Client</div>
+    <div class="drisp-sign-box">Semnatura Mecanic</div>
+    <div class="drisp-sign-box">Semnatura Sef Unitate<br><strong>Radu Constantinescu</strong></div>
+  </div>`;
+}
+function drispDataScurta(v) {
+  if (!v) return "";
+  // acceptă atât "YYYY-MM-DD" (din <input type="date">), cât și un timestamp complet
+  const dt = /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(v + "T00:00:00") : new Date(v);
+  return isNaN(dt) ? escapeHtml(String(v)) : dt.toLocaleDateString("ro-RO");
+}
+
+// Tipărește devizul EXACT ca fișierul Deviz_Service.html (D.R.I.S.P.) trimis de Andrei:
+// pagina 1 „FISA INTRARE SERVICE” (recepție motocicletă) + pagina 2 „DEVIZ REPARATIE”
+// (piese și manoperă), cu aceleași titluri de secțiune, coloane și zonă de semnături.
 function printDeviz(id) {
   const d = currentDevize.find(x => x.id === id);
   if (!d) return;
   const cli = d.clienti || null;
   const moto = d.motociclete || null;
-  const numeClient = cli ? (cli.nume + " " + (cli.prenume || "")).trim() : "—";
+  const numeClient = cli ? (cli.tip_client === "juridica" ? cli.nume : (cli.nume + " " + (cli.prenume || "")).trim()) : "—";
   const piese = (d.linii || []).filter(l => l.tip === "piesa");
   const manopera = (d.linii || []).filter(l => l.tip === "manopera");
   const totalPiese = piese.reduce((s, l) => s + Number(l.cantitate) * Number(l.pret_unitar), 0);
   const totalManopera = manopera.reduce((s, l) => s + Number(l.cantitate) * Number(l.pret_unitar), 0);
+  const constatari = Array.isArray(d.constatari) ? d.constatari.filter(c => c && (c.defect || c.recomandare || c.accept || c.refuz)) : [];
 
+  // ---------------- PAGINA 1: FISA INTRARE SERVICE ----------------
   let html = `
     <div class="drisp-page">
-      <h1 class="drisp-h1">Deviz reparație</h1>
+      <h1 class="drisp-h1">Fisa intrare service</h1>
+      ${drispCompanyDetailsHtml()}
       <div class="drisp-meta-row">
-        <div><b>Deviz nr:</b> ${escapeHtml(String(d.numar))}${d.brand ? " · " + escapeHtml(d.brand) : ""}</div>
+        <div><b>Nr:</b> ${escapeHtml(String(d.numar))}</div>
         <div><b>Data:</b> ${formatDate(d.creat_la)}</div>
-        <div><b>Stare:</b> ${escapeHtml(d.stare || "")}</div>
       </div>
 
       <div class="drisp-section-title">DATE CLIENT</div>
       <table class="drisp-info-table">
-        <tr><td class="lbl">${cli && cli.tip_client === "juridica" ? "Firmă" : "Nume/Prenume"}</td><td>${escapeHtml(numeClient)}</td></tr>
-        <tr><td class="lbl">Adresă</td><td>${escapeHtml((cli && cli.adresa) || "—")}</td></tr>
-        <tr><td class="lbl">Telefon / Email</td><td>${escapeHtml([cli && cli.telefon, cli && cli.email].filter(Boolean).join(" · ") || "—")}</td></tr>
-        ${cli && cli.tip_client === "juridica" ? `<tr><td class="lbl">CUI</td><td>${escapeHtml(cli.cui || "—")}</td></tr>` : ""}
+        <tr><td class="lbl">Nume/Firma</td><td>${escapeHtml(numeClient)}</td></tr>
+        <tr><td class="lbl">Adresa</td><td>${escapeHtml((cli && cli.adresa) || "")}</td></tr>
+        <tr><td class="lbl">Telefon / Email</td><td>${escapeHtml([cli && cli.telefon, cli && cli.email].filter(Boolean).join(" · "))}</td></tr>
+        <tr><td class="lbl">CUI</td><td>${escapeHtml((cli && cli.cui) || "")}</td></tr>
       </table>
 
-      <div class="drisp-section-title">DATE MOTOCICLETĂ</div>
+      <div class="drisp-section-title">DATE MOTOCICLETA</div>
       <table class="drisp-info-table">
-        <tr><td class="lbl">Marcă / Model</td><td>${escapeHtml([moto && moto.marca, moto && moto.model].filter(Boolean).join(" ") || "—")}</td></tr>
-        <tr><td class="lbl">Serie șasiu (VIN)</td><td>${escapeHtml((moto && moto.serie_sasiu) || "—")}</td></tr>
-        <tr><td class="lbl">An fabricație / Km</td><td>${escapeHtml([moto && moto.an_fabricatie, moto && moto.km ? moto.km + " km" : ""].filter(Boolean).join(" · ") || "—")}</td></tr>
-        <tr><td class="lbl">Nr. înmatriculare</td><td>${escapeHtml((moto && moto.numar_inmatriculare) || "—")}</td></tr>
-        <tr><td class="lbl">Mecanic</td><td>${escapeHtml(d.mecanici ? d.mecanici.nume : "—")}</td></tr>
+        <tr><td class="lbl">Marca</td><td>${escapeHtml((moto && moto.marca) || "")}</td><td class="lbl">Model</td><td>${escapeHtml((moto && moto.model) || "")}</td></tr>
+        <tr><td class="lbl">Serie Sasiu</td><td>${escapeHtml((moto && moto.serie_sasiu) || "")}</td><td class="lbl">An fabr.</td><td>${escapeHtml((moto && moto.an_fabricatie) || "")}</td></tr>
+        <tr><td class="lbl">Nr. Inmatr.</td><td>${escapeHtml((moto && moto.numar_inmatriculare) || "")}</td><td class="lbl">Km</td><td>${escapeHtml((moto && moto.km) || "")}</td></tr>
+        <tr><td class="lbl">Data intrare</td><td>${drispDataScurta(d.data_intrare)}</td><td class="lbl">Ora</td><td>${escapeHtml(d.ora_intrare || "")}</td></tr>
       </table>
+
+      <div class="drisp-section-title">STAREA MOTOCICLETEI LA MOMENTUL INTRARII IN SERVICE</div>
+      <div class="drisp-textbox">${escapeHtml(d.stare_vizuala || "")}</div>
+
+      <div class="drisp-section-title">Lucrari solicitate de client / Defectiuni (declaratie client)</div>
+      <div class="drisp-textbox">${escapeHtml(d.cerinte_client || "")}</div>
+
+      <div class="drisp-section-title">Constatari preliminare (unitatea service)</div>
+      <table class="drisp-table">
+        <thead><tr><th>Defect constatat</th><th>Recomandare</th><th style="width:50px">Accept</th><th style="width:50px">Refuz</th></tr></thead>
+        <tbody>
+          ${(constatari.length ? constatari : [{}, {}, {}]).map(c => `<tr>
+            <td>${escapeHtml(c.defect || "")}</td>
+            <td>${escapeHtml(c.recomandare || "")}</td>
+            <td class="drisp-checkbox-cell">${c.accept ? "☑" : "☐"}</td>
+            <td class="drisp-checkbox-cell">${c.refuz ? "☑" : "☐"}</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+
+      ${drispSemnaturiHtml()}
+      <div class="drisp-footer-note">Sunt de acord cu prelucrarea datelor personale conform Legii 677/2001</div>
+    </div>
   `;
 
-  if (piese.length) {
-    html += `<div class="drisp-section-title">I. PIESE ȘI CONSUMABILE</div>
-      <table class="drisp-table"><thead><tr><th style="width:32px">Nr.</th><th style="width:90px">Cod piesă</th><th>Denumire produs</th><th style="width:50px">Cant.</th><th style="width:90px">Preț unitar</th><th style="width:100px">Valoare</th></tr></thead><tbody>`;
-    piese.forEach((l, i) => {
-      html += `<tr><td style="text-align:center">${i + 1}</td><td>${escapeHtml(l.cod_piesa || "")}</td><td>${escapeHtml(l.denumire)}</td><td style="text-align:center">${l.cantitate}</td><td class="num">${Number(l.pret_unitar).toFixed(2)} RON</td><td class="num">${(l.cantitate * l.pret_unitar).toFixed(2)} RON</td></tr>`;
-    });
-    html += `<tr class="drisp-total-row"><td colspan="5" style="text-align:right">Total piese</td><td class="num">${totalPiese.toFixed(2)} RON</td></tr></tbody></table>`;
-  }
-  if (manopera.length) {
-    html += `<div class="drisp-section-title">II. OPERAȚIUNI EFECTUATE (MANOPERĂ)</div>
-      <table class="drisp-table"><thead><tr><th style="width:32px">Nr.</th><th>Denumire operațiune</th><th style="width:50px">Ore</th><th style="width:90px">Tarif/oră</th><th style="width:100px">Valoare</th></tr></thead><tbody>`;
-    manopera.forEach((l, i) => {
-      html += `<tr><td style="text-align:center">${i + 1}</td><td>${escapeHtml(l.denumire)}</td><td style="text-align:center">${l.cantitate}</td><td class="num">${Number(l.pret_unitar).toFixed(2)} RON</td><td class="num">${(l.cantitate * l.pret_unitar).toFixed(2)} RON</td></tr>`;
-    });
-    html += `<tr class="drisp-total-row"><td colspan="4" style="text-align:right">Total manoperă</td><td class="num">${totalManopera.toFixed(2)} RON</td></tr></tbody></table>`;
-  }
+  // ---------------- PAGINA 2: DEVIZ REPARATIE ----------------
+  html += `
+    <div class="drisp-page drisp-page-break">
+      <h1 class="drisp-h1">Deviz reparatie</h1>
+      ${drispCompanyDetailsHtml()}
+      <div class="drisp-meta-row">
+        <div><b>Deviz Nr:</b> ${escapeHtml(String(d.numar))}</div>
+        <div><b>Data:</b> ${formatDate(d.creat_la)}</div>
+        <div><b>Dosar dauna:</b> ${escapeHtml(d.dosar_dauna || "—")}</div>
+        <div><b>Data Dauna:</b> ${d.data_dauna ? drispDataScurta(d.data_dauna) : "—"}</div>
+      </div>
+  `;
 
-  html += `<div class="drisp-grand-total">TOTAL GENERAL DE PLATĂ: ${(totalPiese + totalManopera).toFixed(2)} RON</div>`;
+  html += `<div class="drisp-section-title">I. PIESE SI CONSUMABILE</div>
+    <table class="drisp-table"><thead><tr><th style="width:28px">Nr.</th><th style="width:80px">Cod produs</th><th>Denumire produs</th><th style="width:40px">U.M.</th><th style="width:40px">Cant.</th><th style="width:80px">Pret (fără TVA)</th><th style="width:80px">Pret</th><th style="width:90px">Valoare</th></tr></thead><tbody>`;
+  if (piese.length) {
+    piese.forEach((l, i) => {
+      html += `<tr><td style="text-align:center">${i + 1}</td><td>${escapeHtml(l.cod_piesa || "")}</td><td>${escapeHtml(l.denumire)}</td><td style="text-align:center">${escapeHtml(l.um || "buc")}</td><td style="text-align:center">${l.cantitate}</td><td class="num">${roPretFaraTva(l.pret_unitar).toFixed(2)}</td><td class="num">${Number(l.pret_unitar).toFixed(2)}</td><td class="num">${(l.cantitate * l.pret_unitar).toFixed(2)}</td></tr>`;
+    });
+  } else {
+    html += `<tr><td colspan="8" style="text-align:center;color:#999">—</td></tr>`;
+  }
+  html += `<tr class="drisp-total-row"><td colspan="7" style="text-align:right">Total Piese</td><td class="num">${totalPiese.toFixed(2)}</td></tr></tbody></table>`;
+
+  html += `<div class="drisp-section-title">II. OPERATIUNI EFECTUATE (MANOPERA)</div>
+    <table class="drisp-table"><thead><tr><th style="width:28px">Nr.</th><th>Denumire operatiune</th><th style="width:40px">U.M.</th><th style="width:40px">Ore</th><th style="width:80px">Tarif/Ora (fără TVA)</th><th style="width:80px">Tarif/Ora</th><th style="width:90px">Valoare</th></tr></thead><tbody>`;
+  if (manopera.length) {
+    manopera.forEach((l, i) => {
+      html += `<tr><td style="text-align:center">${i + 1}</td><td>${escapeHtml(l.denumire)}</td><td style="text-align:center">${escapeHtml(l.um || "ora")}</td><td style="text-align:center">${l.cantitate}</td><td class="num">${roPretFaraTva(l.pret_unitar).toFixed(2)}</td><td class="num">${Number(l.pret_unitar).toFixed(2)}</td><td class="num">${(l.cantitate * l.pret_unitar).toFixed(2)}</td></tr>`;
+    });
+  } else {
+    html += `<tr><td colspan="7" style="text-align:center;color:#999">—</td></tr>`;
+  }
+  html += `<tr class="drisp-total-row"><td colspan="6" style="text-align:right">Total Manopera</td><td class="num">${totalManopera.toFixed(2)}</td></tr></tbody></table>`;
+
+  html += `<div class="drisp-grand-total">TOTAL GENERAL DE PLATA: ${(totalPiese + totalManopera).toFixed(2)} RON</div>`;
   if (d.notite) html += `<div style="margin-top:8px"><b>Notițe:</b> ${escapeHtml(d.notite)}</div>`;
 
   html += `
-      <div class="drisp-sign-area">
-        <div class="drisp-sign-box">Semnătura Client</div>
-        <div class="drisp-sign-box">Semnătura Mecanic</div>
-        <div class="drisp-sign-box">Semnătura Șef Unitate</div>
+      <div class="drisp-guarantee-title">CERTIFICAT DE CALITATE SI GARANTIE</div>
+      <div class="drisp-guarantee-text">
+        Perioada de garantie pentru piesele inlocuite si lucrarile executate<br>
+        Unitatea service garanteaza lucrarea executata*) si conformitatea acesteia**), potrivit OUG 140/2021 si Legii 296/2004,<br>
+        *3 luni de la data receptiei autovehiculului/motocicletei/scuterului/atv-ului, daca lucrarea nu a necesitat inlocuiri de piese sau daca s-a executat cu piesa de schimb a clientului.<br>
+        **Garantia pieselor furnizate de unitate, in baza OUG 140/2021 - conf. declaratiei producatorului/prin conventie intre parti, conditionat de respectarea indicatiilor de exploatare prevazute de producatorul motocicletei/scuterului/atv-ului este de 12 luni.
       </div>
+      ${drispSemnaturiHtml()}
+      <div class="drisp-footer-note">Sunt de acord cu prelucrarea datelor personale conform Legii 677/2001</div>
     </div>
   `;
 
