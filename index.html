@@ -469,7 +469,7 @@
   .slot-grid-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted); margin-bottom: 8px; align-items: center; }
   .slot-legend-dot { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
   .slot-legend-dot.free { background: #dcfce7; border: 1px solid #86efac; }
-  .slot-legend-dot.busy { background: #dbeafe; border: 1px solid #93c5fd; }
+  .slot-legend-dot.busy { background: #fee2e2; border: 1px solid #fca5a5; }
   .slot-legend-dot.pauza { background: #fef3c7; border: 1px solid #fcd34d; }
   .slot-grid-wrap { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 20px; }
   .slot-rampa-col { flex: 1 1 320px; min-width: 300px; }
@@ -481,9 +481,14 @@
   }
   .slot-cell.free { background: #dcfce7; color: #166534; cursor: pointer; }
   .slot-cell.free:hover { background: #bbf7d0; border-color: #16a34a; }
+  .slot-cell.free.selected { border-color: #16a34a; box-shadow: 0 0 0 2px #16a34a inset; font-weight: 800; }
   .slot-cell.pauza { background: #fef3c7; color: #92400e; font-weight: 700; cursor: default; }
-  .slot-cell.busy { background: #dbeafe; color: #1e3a8a; cursor: pointer; font-weight: 600; }
-  .slot-cell.busy:hover { background: #bfdbfe; border-color: #2563eb; }
+  /* v38: ocupat = roșu (era albastru) — cerut de Andrei, ca sloturile libere (verde) și cele
+     ocupate (roșu) să se distingă dintr-o privire, fără să mai fie nevoie să citești numele
+     clientului direct pe celulă (numele rămâne disponibil la hover, în title, și în modalul de
+     editare deschis la click). */
+  .slot-cell.busy { background: #fee2e2; color: #991b1b; cursor: pointer; font-weight: 600; }
+  .slot-cell.busy:hover { background: #fecaca; border-color: #dc2626; }
   .slot-cell.busy.neconfirmat { background: #fed7aa; color: #9a3412; }
   .slot-cell.busy.neconfirmat:hover { background: #fdba74; }
   .ramp-col-header { font-weight: 800; font-size: 13.5px; margin-bottom: 10px; color: var(--accent); display: flex; align-items: center; justify-content: space-between; }
@@ -501,6 +506,10 @@
   .appt-card .appt-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .appt-card .appt-actions button { padding: 4px 9px; font-size: 11px; border-radius: 6px; }
   .sarcina-card-clickable { border-radius: 6px; transition: background-color .12s ease; }
+  /* v38: aceeași idee ca la sarcini (v31/v34) — click/hover pe corpul unei programări din listă
+     deschide editarea, fără să mai fie nevoie să apeși explicit pe "🔄 Reprogramează". */
+  .prog-card-clickable { border-radius: 6px; transition: background-color .12s ease; }
+  .prog-card-clickable:hover { background: color-mix(in srgb, var(--accent) 9%, transparent); }
   .sarcina-card-clickable:hover { background: color-mix(in srgb, var(--accent) 9%, transparent); }
   .appt-empty { color: var(--muted); font-size: 12.5px; padding: 10px 0; text-align: center; }
   .month-daygroup { margin-bottom: 18px; }
@@ -1534,7 +1543,7 @@
     <div class="modal-grid">
       <div class="field">
         <label>Rampă *</label>
-        <select id="pr-rampa"><option value="1">Rampa 1</option><option value="2">Rampa 2</option></select>
+        <select id="pr-rampa" onchange="renderPrSlotGrid()"><option value="1">Rampa 1</option><option value="2">Rampa 2</option></select>
       </div>
       <div class="field">
         <label>Stare</label>
@@ -1542,11 +1551,11 @@
       </div>
       <div class="field">
         <label>Data *</label>
-        <input type="date" id="pr-data" />
+        <input type="date" id="pr-data" onchange="renderPrSlotGrid()" />
       </div>
       <div class="field">
         <label>Ora început *</label>
-        <select id="pr-ora-inceput" onchange="syncOraSfarsitOptions()"></select>
+        <select id="pr-ora-inceput" onchange="syncOraSfarsitOptions(); renderPrSlotGrid()"></select>
       </div>
       <div class="field">
         <label>Ora sfârșit *</label>
@@ -1554,6 +1563,10 @@
       </div>
       <div class="field span-2 muted" style="font-size:11.5px;margin-top:-6px">
         🍽️ Sloturile sunt din 15 în 15 minute, între 10:00 și 18:00. Intervalul 13:00–13:30 este <b>pauza de masă</b>.
+      </div>
+      <div class="field span-2" style="margin-top:-4px">
+        <label>Ore disponibile pe rampa aleasă — click pe un slot verde ca să-l alegi</label>
+        <div id="pr-slot-grid"></div>
       </div>
       <div class="field">
         <label>Nume client *</label>
@@ -3625,12 +3638,17 @@ function renderApptCard(p) {
     actions += `<button type="button" class="btn-secondary" onclick="anuleazaProgramare('${p.id}')">✕ Anulează</button>`;
   }
   if (amAdmin()) actions += `<button type="button" class="btn-secondary" style="color:#b91c1c" onclick="stergeProgramare('${p.id}')">🗑 Șterge definitiv</button>`;
+  // v38: click/hover oriunde pe corpul cardului (in afara butoanelor de mai jos) deschide direct
+  // editarea — acelasi tipar ca la Sarcini (v31/v34), doar ca zona clickabila se numeste distinct
+  // (.prog-card-clickable) ca sa nu se amestece cu hover-ul de la Sarcini (.sarcina-card-clickable).
   return `<div class="appt-card ${stCls}">
-    <div class="appt-time">${fmtOra(p.ora_inceput)}–${programareEndLabel(p)} <span class="badge" style="background:#eef0f4;color:var(--muted);font-size:10px">Rampa ${p.rampa}</span> <span class="badge" style="background:#eef0f4;color:var(--muted);font-size:10px">${escapeHtml(p.stare)}</span></div>
-    <div class="appt-client">${escapeHtml(p.nume_client)}${p.contact ? " — " + escapeHtml(p.contact) : ""}</div>
-    ${moto.trim() ? `<div class="appt-moto">${escapeHtml(moto)}${p.vin ? " · VIN: " + escapeHtml(p.vin) : ""}</div>` : ""}
-    ${p.servicii ? `<div class="appt-servicii">${escapeHtml(p.servicii)}</div>` : ""}
-    ${p.observatii ? `<div class="appt-obs">Obs: ${escapeHtml(p.observatii)}</div>` : ""}
+    <div class="prog-card-clickable" style="cursor:pointer" onclick="openProgramareModal('${p.id}')" title="Click pentru a edita programarea">
+      <div class="appt-time">${fmtOra(p.ora_inceput)}–${programareEndLabel(p)} <span class="badge" style="background:#eef0f4;color:var(--muted);font-size:10px">Rampa ${p.rampa}</span> <span class="badge" style="background:#eef0f4;color:var(--muted);font-size:10px">${escapeHtml(p.stare)}</span></div>
+      <div class="appt-client">${escapeHtml(p.nume_client)}${p.contact ? " — " + escapeHtml(p.contact) : ""}</div>
+      ${moto.trim() ? `<div class="appt-moto">${escapeHtml(moto)}${p.vin ? " · VIN: " + escapeHtml(p.vin) : ""}</div>` : ""}
+      ${p.servicii ? `<div class="appt-servicii">${escapeHtml(p.servicii)}</div>` : ""}
+      ${p.observatii ? `<div class="appt-obs">Obs: ${escapeHtml(p.observatii)}</div>` : ""}
+    </div>
     <div class="appt-actions">${actions}</div>
   </div>`;
 }
@@ -3696,7 +3714,9 @@ function renderProgramatorSlotGrid(list) {
         const pStart = progHHMMToMin(fmtOra(occ.ora_inceput));
         const isFirst = t === pStart;
         const cls = occ.stare === "Confirmat" ? "slot-cell busy" : "slot-cell busy neconfirmat";
-        const label = isFirst ? `${fmtOra(occ.ora_inceput)}–${programareEndLabel(occ)}<br>${escapeHtml(occ.nume_client)}` : "";
+        // v38: pe celulă arătăm doar ora (roșu = ocupat, dintr-o privire) — numele clientului
+        // rămâne disponibil la hover (title) și, complet, în modalul deschis la click.
+        const label = isFirst ? `${fmtOra(occ.ora_inceput)}–${programareEndLabel(occ)}` : "";
         cellsHtml += `<div class="${cls}" title="${escapeHtml(occ.nume_client)} — ${fmtOra(occ.ora_inceput)}–${programareEndLabel(occ)}" onclick="openProgramareModal('${occ.id}')">${label}</div>`;
         i++;
         continue;
@@ -3762,6 +3782,56 @@ function openProgramareModalFromSlot(rampa, hhmm) {
   document.getElementById("pr-rampa").value = String(rampa);
   populateOraInceputSelect(hhmm);
   populateOraSfarsitSelect(hhmm, null);
+  renderPrSlotGrid();
+}
+
+// v38: grila vizuală de ore, în interiorul modalului de programare/reprogramare — Andrei a cerut
+// să vadă ce ore sunt libere înainte să aleagă, nu doar un select simplu cu toate orele posibile,
+// fără nicio informație despre ce e deja ocupat. Reutilizează exact aceeași logică de sloturi
+// (progSlotStarts/PROG_PAUZA_*) ca grila mare de pe ecranul Programator, dar scopată la o singură
+// rampă (cea aleasă în modal) și excluzând, la editare, programarea curentă (altfel s-ar arăta
+// mereu ca "ocupat" propriul ei interval).
+function renderPrSlotGrid() {
+  const wrap = document.getElementById("pr-slot-grid");
+  if (!wrap) return;
+  const rampa = parseInt(document.getElementById("pr-rampa").value, 10);
+  const data = document.getElementById("pr-data").value;
+  const editId = document.getElementById("pr-id").value;
+  if (!data) { wrap.innerHTML = '<div class="muted" style="font-size:12px">Alege data, ca să vezi orele disponibile.</div>'; return; }
+
+  const items = currentProgramari.filter(p =>
+    p.data === data && p.rampa === rampa && p.stare !== "Anulat" && p.id !== editId
+  ).filter(matchesLocationFilter);
+
+  const selectedStart = document.getElementById("pr-ora-inceput").value;
+  const slots = progSlotStarts();
+  let cellsHtml = "";
+  for (const t of slots) {
+    if (t >= PROG_PAUZA_START_MIN && t < PROG_PAUZA_END_MIN) {
+      cellsHtml += `<div class="slot-cell pauza" title="Pauză de masă">🍽️<br>${progMinToHHMM(t)}</div>`;
+      continue;
+    }
+    const hhmm = progMinToHHMM(t);
+    const occ = items.find(p => {
+      const pStart = progHHMMToMin(fmtOra(p.ora_inceput));
+      const pEnd = pStart + (p.durata_minute || 90);
+      return t >= pStart && t < pEnd;
+    });
+    if (occ) {
+      const cls = occ.stare === "Confirmat" ? "slot-cell busy" : "slot-cell busy neconfirmat";
+      cellsHtml += `<div class="${cls}" title="Ocupat: ${escapeHtml(occ.nume_client)} — ${fmtOra(occ.ora_inceput)}–${programareEndLabel(occ)}">${hhmm}</div>`;
+      continue;
+    }
+    const isSel = hhmm === selectedStart;
+    cellsHtml += `<div class="slot-cell free${isSel ? " selected" : ""}" title="Alege ora ${hhmm}" onclick="prPickSlot('${hhmm}')">${hhmm}</div>`;
+  }
+  wrap.innerHTML = `<div class="slot-strip">${cellsHtml}</div>`;
+}
+
+function prPickSlot(hhmm) {
+  document.getElementById("pr-ora-inceput").value = hhmm;
+  syncOraSfarsitOptions();
+  renderPrSlotGrid();
 }
 
 function renderProgramatorLuna() {
@@ -3869,6 +3939,7 @@ function openProgramareModal(id) {
     document.getElementById("pr-servicii").value = "";
     document.getElementById("pr-obs").value = "";
   }
+  renderPrSlotGrid();
   document.getElementById("programare-modal-overlay").classList.add("open");
 }
 function closeProgramareModal() { document.getElementById("programare-modal-overlay").classList.remove("open"); }
