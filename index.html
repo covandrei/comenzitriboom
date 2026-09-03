@@ -526,11 +526,12 @@
     background: white; width: 210mm; min-height: 297mm; padding: 10mm 15mm; margin: 0 auto 20px auto;
     box-sizing: border-box; box-shadow: 0 0 15px rgba(0,0,0,0.5); position: relative;
     display: flex; flex-direction: column; gap: 2px; color: #000; font-family: Arial, sans-serif; font-size: 11px;
+    overflow: hidden;
   }
   .dvz-page-header { position: relative; min-height: 40px; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 2px; }
   .dvz-page h1 { margin: 0; text-align: center; width: 100%; text-transform: uppercase; font-size: 18px; font-weight: bold; border-bottom: 2px solid black; padding-bottom: 2px; margin-bottom: 2px; }
   .dvz-company-details { text-align: center; font-size: 9px; line-height: 1.2; margin-top: 0; margin-bottom: 5px; border-bottom: 1px solid #ccc; padding-bottom: 3px; color: #000; }
-  .dvz-page table { width: 100%; border-collapse: collapse; margin-bottom: 2px; }
+  .dvz-page table { width: 100%; min-width: 0; border-collapse: collapse; margin-bottom: 2px; }
   .dvz-page th, .dvz-page td { border: 1px solid #000; padding: 1px 2px; vertical-align: middle; text-align: center; height: 18px; color: #000; font-size: 11px; }
   .dvz-page input, .dvz-page select { width: 100%; border: none; background: transparent; font-family: inherit; font-size: 10px; box-sizing: border-box; outline: none; padding: 0; text-align: center; text-align-last: center; color: #000; border-bottom: 1px dotted #ccc; }
   .dvz-page textarea { resize: none; height: 100%; box-sizing: border-box; overflow: hidden; font-family: Arial, sans-serif; width: 100%; border: none; background: transparent; outline: none; color: #000; font-size: 11px; }
@@ -947,14 +948,11 @@
       <div id="devize-editor-section" style="display:none;">
         <div class="dvz-editor-toolbar">
           <button class="btn-secondary" onclick="closeDevizEditor()">← Înapoi la listă</button>
-          <div class="subtabs open" style="margin:0;">
-            <button class="subtab-btn active" id="dvz-subtab-fisa" onclick="dvzSwitchSubtab('fisa')">📋 Fișă Intrare Service</button>
-            <button class="subtab-btn" id="dvz-subtab-deviz" onclick="dvzSwitchSubtab('deviz')">🧾 Deviz Reparație</button>
-          </div>
           <div class="toolbar-actions">
             <button class="btn-secondary" onclick="dvzPrintSave()">🖨️ Print / Save</button>
             <button class="btn-secondary" onclick="dvzExportPDF()">📄 Export PDF</button>
             <button class="btn-primary" onclick="saveDevize()">💾 Salvează</button>
+            <button class="btn-primary" onclick="openDevizEditor(null)" title="Deschide direct un deviz nou, gol">＋ Deviz nou</button>
           </div>
         </div>
 
@@ -998,12 +996,6 @@
             </table>
             <div id="dvz-moto-picker-wrap" class="dvz-hidden" style="margin:4px 0 6px;font-size:11px;background:#fffbe6;border:1px solid #ddd;padding:4px 6px;border-radius:4px;">
               Client cu mai multe motociclete — alege una: <select id="dvz-moto-picker" onchange="dvzApplyMotoPick(this.value)" style="width:auto;display:inline-block;border:1px solid #aaa;padding:1px 4px;"></select>
-            </div>
-            <div style="margin:2px 0 6px;font-size:11px;">
-              🔗 Atașează la o comandă existentă (opțional):
-              <select id="dvz-comandaSelect" style="width:auto;display:inline-block;border:1px solid #aaa;padding:1px 4px;min-width:220px;">
-                <option value="">— fără legătură —</option>
-              </select>
             </div>
 
             <div class="dvz-section-title">DATE MOTOCICLETA</div>
@@ -1072,6 +1064,11 @@
               </tbody>
             </table>
 
+            <div class="dvz-section-title">Observații Service / Notă Service:</div>
+            <div class="dvz-full-border" style="height:44px;">
+              <textarea id="dvz-notiteService" placeholder="Note interne ale service-ului..."></textarea>
+            </div>
+
             <div style="flex-grow:1;"></div>
 
             <div class="dvz-signature-area">
@@ -1085,7 +1082,7 @@
               </div>
               <div class="dvz-signature-box">
                 Semnatura Sef Unitate<br>
-                <strong>Radu Constantinescu</strong>
+                <strong style="text-transform:uppercase;">Radu Constantinescu</strong>
               </div>
             </div>
 
@@ -1095,7 +1092,7 @@
           </div>
 
           <!-- ================= PAGINA 2: DEVIZ REPARATIE ================= -->
-          <div class="dvz-page dvz-page-hidden" id="dvz-page2">
+          <div class="dvz-page" id="dvz-page2">
             <div class="dvz-page-header">
               <h1>DEVIZ REPARATIE</h1>
             </div>
@@ -1206,7 +1203,7 @@
               </div>
               <div class="dvz-signature-box">
                 Semnatura Sef Unitate<br>
-                <strong>Radu Constantinescu</strong>
+                <strong style="text-transform:uppercase;">Radu Constantinescu</strong>
               </div>
             </div>
 
@@ -7393,20 +7390,7 @@ function confirmDeleteDeviz(id) {
   document.getElementById("confirm-overlay").classList.add("open");
 }
 
-// ---------- EDITOR: deschidere / inchidere / subtaburi ----------
-function dvzSwitchSubtab(tab) {
-  document.getElementById("dvz-subtab-fisa").classList.toggle("active", tab === "fisa");
-  document.getElementById("dvz-subtab-deviz").classList.toggle("active", tab === "deviz");
-  document.getElementById("dvz-page1").classList.toggle("dvz-page-hidden", tab !== "fisa");
-  document.getElementById("dvz-page2").classList.toggle("dvz-page-hidden", tab !== "deviz");
-}
-function dvzPopulateComenzi() {
-  const sel = document.getElementById("dvz-comandaSelect");
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">— fără legătură —</option>' +
-    (currentOrders || []).map(c => `<option value="${c.id}">${escapeHtml([c.client_nume, c.client_prenume].filter(Boolean).join(" "))} — ${escapeHtml(c.brand || "")} ${escapeHtml(c.model || "")}${c.numar_inmatriculare ? " · " + escapeHtml(c.numar_inmatriculare) : ""}</option>`).join("");
-  sel.value = cur || "";
-}
+// ---------- EDITOR: deschidere / inchidere ----------
 function dvzGenerateTables() {
   let partsHTML = "";
   for (let i = 1; i <= 20; i++) {
@@ -7448,14 +7432,14 @@ function dvzGenerateTables() {
 function dvzResetForm() {
   ["dvz-clientNameInput", "dvz-clientAdresaInput", "dvz-clientTelInput", "dvz-clientCUIInput",
    "dvz-vinInput", "dvz-anFabInput", "dvz-plateInput", "dvz-kmInput", "dvz-oraIntrare",
-   "dvz-stareVizuala", "dvz-cerinteClient", "dvz-dosarDauna", "dvz-dataDauna", "dvz-modelInputManual"]
+   "dvz-stareVizuala", "dvz-cerinteClient", "dvz-dosarDauna", "dvz-dataDauna", "dvz-modelInputManual",
+   "dvz-notiteService"]
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
   document.getElementById("dvz-dataIntrare").value = todayISODate();
   document.getElementById("dvz-brandSelect").value = "";
   document.getElementById("dvz-modelSelect").innerHTML = "";
   document.getElementById("dvz-modelSelect").classList.add("dvz-hidden");
   document.getElementById("dvz-modelInputManual").classList.add("dvz-hidden");
-  document.getElementById("dvz-comandaSelect").value = "";
   document.getElementById("dvz-moto-picker-wrap").classList.add("dvz-hidden");
   document.getElementById("dvz-moto-picker").innerHTML = "";
   document.querySelectorAll("#dvz-constatari-body input[type=text]").forEach(i => i.value = "");
@@ -7469,7 +7453,6 @@ function dvzResetForm() {
   dvzSelectedMecanicId = null;
 }
 async function openDevizEditor(id) {
-  dvzPopulateComenzi();
   document.getElementById("devize-list-section").style.display = "none";
   document.getElementById("devize-editor-section").style.display = "block";
 
@@ -7496,7 +7479,7 @@ async function openDevizEditor(id) {
     document.getElementById("dvz-cerinteClient").value = d.cerinte_client || "";
     document.getElementById("dvz-dosarDauna").value = d.dosar_dauna || "";
     document.getElementById("dvz-dataDauna").value = d.data_dauna || "";
-    document.getElementById("dvz-comandaSelect").value = d.comanda_id || "";
+    document.getElementById("dvz-notiteService").value = d.notite || "";
     dvzSelectedClientId = d.client_id || null;
     dvzSelectedMotoId = d.motocicleta_id || null;
 
@@ -7545,7 +7528,6 @@ async function openDevizEditor(id) {
     dvzCalculateAllTotals();
   }
   dvzAttachAllAutocomplete();
-  dvzSwitchSubtab("fisa");
 }
 function closeDevizEditor() {
   document.getElementById("devize-editor-section").style.display = "none";
@@ -7920,7 +7902,7 @@ async function saveDevize() {
     moto_an: document.getElementById("dvz-anFabInput").value.trim() || null,
     moto_plate: document.getElementById("dvz-plateInput").value.trim() || null,
     moto_km: document.getElementById("dvz-kmInput").value.trim() || null,
-    comanda_id: document.getElementById("dvz-comandaSelect").value || null,
+    notite: document.getElementById("dvz-notiteService").value.trim() || null,
     total_piese: totalPiese,
     total_manopera: totalManopera,
     total_general: totalPiese + totalManopera,
