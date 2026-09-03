@@ -8216,6 +8216,19 @@ function dvzParseDisplayDate(txt) {
   const [, d, mo, y] = m;
   return y + "-" + mo.padStart(2, "0") + "-" + d.padStart(2, "0");
 }
+// v41: "data_intrare"/"data_dauna" sunt coloane de tip `date` în Supabase — trebuie ISO
+// ("YYYY-MM-DD") la insert, altfel Postgres respinge cu "date/time field value out of range".
+// Fișierele format NOU au deja ISO acolo (provin din <input type="date">, al cărui atribut HTML
+// e setat explicit la export — vezi dvzSnapshotNode). Fișierele format VECHI au text simplu, în
+// format românesc "DD.MM.YYYY" — de aici eroarea raportată de Andrei. Această funcție acceptă
+// ambele: dacă textul e deja ISO, îl lasă neschis; altfel încearcă să-l convertească; dacă nu
+// reușește nici așa, întoarce null (mai bine gol decât o dată invalidă care blochează salvarea).
+function dvzNormalizeDateForDB(txt) {
+  const t = (txt || "").trim();
+  if (!t) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+  return dvzParseDisplayDate(t);
+}
 
 // Format nou: fișier exportat de modulul "Devize" al CRM-ului curent (dvzPrintSave) — aceeași
 // structură/id-uri ("dvz-...") ca formularul live.
@@ -8405,9 +8418,11 @@ function dvzExtractFormatVechi(doc) {
     if (!den && !qty && !pret) return;
     linii.push({ tip: "manopera", nr: i + 1, cod_piesa: null, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
   });
-  if (linii.some(l => l.tip === "manopera" && l.nr === 1 && /^[A-Z]{2,4}\d{1,3}$/i.test(l.denumire))) {
-    avertismente.push("Rândul de manoperă „efectuat de” conținea un cod de mecanic (nu un nume) în fișierul original — de verificat după import.");
-  }
+  // v41: în formatul vechi, rândul de manoperă "efectuat de" ține doar un cod de mecanic (ex.
+  // "MAN04"), nu un nume — se importă oricum (mai bine codul decât nimic), dar NU mai punem un
+  // avertisment separat pentru asta la fiecare fișier: aproape toate fișierele vechi au acest
+  // cod, iar avertismentele "blânde" ajungeau să acopere erorile reale (ex. dată invalidă) în
+  // lista de rezultate (limitată la primele 15 rânduri afișate din alertă).
 
   return {
     clientNume, clientAdresa, clientTel, clientCUI,
@@ -8425,13 +8440,16 @@ async function dvzImportHistoricFiles(fileList) {
   if (!files.length) return;
   if (!confirm(`Imporți ${files.length} fișier(e) .html ca devize noi în sistem? Fiecare fișier devine un deviz separat.`)) return;
 
-  const rezultat = { ok: 0, esuat: 0, avertismente: [] };
+  // v41: erorile reale (fișier sărit / nesalvat) și avertismentele "blânde" (devizul tot s-a
+  // creat, dar cu ceva de verificat manual) se țin acum separat, ca la fișiere multe erorile
+  // reale să nu mai fie acoperite de avertismente în lista de rezultate (limitată la 15 rânduri).
+  const rezultat = { ok: 0, esuat: 0, erori: [], avertismente: [] };
   for (const file of files) {
     try {
       const text = await file.text();
       const doc = new DOMParser().parseFromString(text, "text/html");
       const ex = dvzExtractNouFormat(doc) || dvzExtractFormatVechi(doc);
-      if (!ex) { rezultat.esuat++; rezultat.avertismente.push(`${file.name}: nu am găsit numele clientului — pare că nu e un fișier de deviz valid, sărit.`); continue; }
+      if (!ex) { rezultat.esuat++; rezultat.erori.push(`${file.name}: nu am găsit numele clientului — pare că nu e un fișier de deviz valid, sărit.`); continue; }
 
       ex.avertismente.forEach(a => rezultat.avertismente.push(`${file.name}: ${a}`));
 
@@ -8442,13 +8460,13 @@ async function dvzImportHistoricFiles(fileList) {
         stare: "Draft",
         data: ex.dataISO,
         nr_zi: ex.nrZi,
-        data_intrare: ex.dataIntrare || null,
+        data_intrare: dvzNormalizeDateForDB(ex.dataIntrare),
         ora_intrare: ex.oraIntrare || null,
         stare_vizuala: ex.stareVizuala || null,
         cerinte_client: ex.cerinteClient || null,
         constatari: ex.constatari,
         dosar_dauna: ex.dosarDauna || null,
-        data_dauna: ex.dataDauna || null,
+        data_dauna: dvzNormalizeDateForDB(ex.dataDauna),
         client_nume: ex.clientNume,
         client_adresa: ex.clientAdresa || null,
         client_contact: ex.clientTel || null,
@@ -8469,7 +8487,7 @@ async function dvzImportHistoricFiles(fileList) {
       };
 
       const { data: inserted, error: insErr } = await client.from("devize").insert(payload).select().single();
-      if (insErr) { rezultat.esuat++; rezultat.avertismente.push(`${file.name}: eroare la salvare — ${insErr.message}`); continue; }
+      if (insErr) { rezultat.esuat++; rezultat.erori.push(`${file.name}: eroare la salvare — ${insErr.message}`); continue; }
       if (ex.linii.length) {
         const liniiPayload = ex.linii.map(l => ({ ...l, deviz_id: inserted.id }));
         const { error: linErr } = await client.from("deviz_linii").insert(liniiPayload);
@@ -8478,16 +8496,17 @@ async function dvzImportHistoricFiles(fileList) {
       rezultat.ok++;
     } catch (e) {
       rezultat.esuat++;
-      rezultat.avertismente.push(`${file.name}: eroare la citire/parsare — ${e.message}`);
+      rezultat.erori.push(`${file.name}: eroare la citire/parsare — ${e.message}`);
     }
   }
 
   await loadDevize();
   let mesaj = `Import terminat: ${rezultat.ok} devize create` + (rezultat.esuat ? `, ${rezultat.esuat} eșuate` : "") + ".";
-  if (rezultat.avertismente.length) {
-    const primele = rezultat.avertismente.slice(0, 15);
-    mesaj += "\n\nDetalii:\n" + primele.join("\n") + (rezultat.avertismente.length > primele.length ? `\n… și încă ${rezultat.avertismente.length - primele.length} avertismente (vezi consola).` : "");
-    console.warn("Import istoric devize — avertismente:", rezultat.avertismente);
+  const toate = [...rezultat.erori, ...rezultat.avertismente];
+  if (toate.length) {
+    const primele = toate.slice(0, 15);
+    mesaj += "\n\nDetalii:\n" + primele.join("\n") + (toate.length > primele.length ? `\n… și încă ${toate.length - primele.length} avertismente (vezi consola).` : "");
+    console.warn("Import istoric devize — erori:", rezultat.erori, "avertismente:", rezultat.avertismente);
   }
   alert(mesaj);
 }
