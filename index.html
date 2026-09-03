@@ -193,6 +193,9 @@
   .piesa-line-cod { line-height: 1.6; font-weight: 700; color: var(--accent); white-space: nowrap; }
   .piesa-line-denumire { line-height: 1.6; }
   .muted { color: var(--muted); }
+  .comanda-grup-prima td { border-top: 2px solid var(--border); }
+  .comanda-grup-linie td { border-top: 1px dashed var(--border); background: color-mix(in srgb, var(--text) 2.5%, transparent); }
+  td[rowspan] { vertical-align: middle; }
 
   .badge { padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 700; display: inline-block; white-space: nowrap; }
   .badge-plata-neachitat { background: #fee2e2; color: #991b1b; }
@@ -242,6 +245,7 @@
   .modal.wide { max-width: 720px; }
   .modal.xwide { max-width: 900px; }
   .modal.xxwide { max-width: 1180px; }
+  .modal.full { max-width: 1500px; width: 96vw; }
   .modal h2 { margin-top: 0; font-size: 18px; font-weight: 700; }
   .modal > .muted { font-size: 13px; margin-top: -8px; margin-bottom: 16px; }
   .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -406,11 +410,16 @@
   .print-total-row td { font-weight: 800; border-top: 2px solid #1e3a8a; }
 
   /* ---------- ROLURI & PERMISIUNI (ecran admin) ---------- */
-  .roluri-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 14px; }
-  .roluri-table th, .roluri-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); text-align: left; }
-  .roluri-table th { font-size: 10.5px; text-transform: uppercase; color: var(--muted); }
+  /* v31: tabelul ".roluri-table" e un <table> obișnuit, deci moștenea din greșeală regula
+     generală "table { min-width: 1250px }" gândită pentru listele mari (Comenzi etc.) — asta
+     îl obliga mereu la scroll orizontal, oricât de lat era modalul. Aici o anulăm explicit, iar
+     antetele (etichete lungi ca "Comenzi clienți (creare/editare)") se lasă acum pe mai multe
+     rânduri în loc să forțeze coloana la lățime completă pe un singur rând. */
+  .roluri-table { width: 100%; min-width: 0; border-collapse: collapse; font-size: 12.5px; margin-bottom: 14px; table-layout: fixed; }
+  .roluri-table th, .roluri-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); text-align: left; overflow-wrap: break-word; }
+  .roluri-table th { font-size: 10.5px; text-transform: uppercase; color: var(--muted); white-space: normal; line-height: 1.35; vertical-align: bottom; }
   .roluri-table input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
-  .roluri-table input[type="text"] { padding: 5px 7px; border: 1.5px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 12.5px; width: 100%; }
+  .roluri-table input[type="text"] { padding: 5px 7px; border: 1.5px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 12.5px; width: 100%; box-sizing: border-box; }
   .perm-summary { font-size: 10.5px; color: var(--muted); }
 
   /* ---------- MOBIL ---------- */
@@ -767,7 +776,8 @@
               <th>Client</th>
               <th>Telefon</th>
               <th>Email</th>
-              <th>Data</th>
+              <th>AWB</th>
+              <th>Data primire colet</th>
               <th>Nr. factură</th>
               <th>Status</th>
               <th>Observații</th>
@@ -776,7 +786,7 @@
             </tr>
           </thead>
           <tbody id="garantii-table-body">
-            <tr class="empty-row"><td colspan="11">Se încarcă...</td></tr>
+            <tr class="empty-row"><td colspan="12">Se încarcă...</td></tr>
           </tbody>
         </table>
       </div>
@@ -1100,7 +1110,7 @@
     <div class="modal-grid">
       <div class="field"><label id="lbl-c-nume">Nume *</label><input id="c-nume" /></div>
       <div class="field" id="wrap-c-prenume"><label>Prenume *</label><input id="c-prenume" /></div>
-      <div class="field"><label>Telefon</label><input id="c-telefon" /></div>
+      <div class="field"><label>Telefon *</label><input id="c-telefon" /></div>
       <div class="field"><label>Email</label><input id="c-email" /></div>
       <div class="field span-2" id="wrap-cui" style="display:none"><label>CUI firmă</label><input id="c-cui" placeholder="ex: RO12345678" /></div>
       <div class="field span-2"><label>Adresă</label><input id="c-adresa" placeholder="ex: București, Sector 3" /></div>
@@ -1290,7 +1300,11 @@
         <input type="email" id="g-email" />
       </div>
       <div class="field">
-        <label>Data sosirii coletului</label>
+        <label>AWB</label>
+        <input id="g-awb" placeholder="Număr AWB curier" />
+      </div>
+      <div class="field">
+        <label>Data primire colet</label>
         <input type="date" id="g-data" />
       </div>
       <div class="field">
@@ -2171,27 +2185,53 @@ function renderTable() {
       rowStyle = `style="background:${getStareStyle(o.stare_comanda).row}"`;
     }
 
-    return `
-      <tr ${rowStyle}>
-        <td><input type="checkbox" class="order-select-cb" value="${o.id}" onchange="updateTrimiteColegButton()" ${selectedOrderIds.has(o.id) ? "checked" : ""} /></td>
-        <td>${renderBrandBadge(o.brand)}</td>
-        <td class="wrap-cell">${renderCodCell(o.piese)}</td>
-        <td class="wrap-cell">${renderDenumireCell(o.piese)}</td>
-        <td class="wrap-cell">${renderCantitateCell(o.piese)}</td>
-        <td class="wrap-cell">${renderPretCell(o)}</td>
-        <td>${formatDate(o.termen_livrare)}</td>
-        <td>${escapeHtml(o.client_nume)} ${escapeHtml(o.client_prenume || "")}${o.atribuit_catre_nume ? `<span class="atribuit-badge">→ ${escapeHtml(o.atribuit_catre_nume)}</span>` : ""}</td>
-        <td>${escapeHtml(o.client_telefon || "")}</td>
-        <td>${escapeHtml(o.client_email || "")}</td>
-        <td>${renderFurnizorCell(o)}</td>
-        <td>${renderFacturaInput(o)}</td>
-        <td>${renderStareSelect(o)}</td>
-        <td>${badgePlata(o.stare_plata)}</td>
-        <td>${escapeHtml(o.creat_de_nume || "")}</td>
-        <td>${renderActions(o)}</td>
-      </tr>
-    `;
+    // v31: fiecare piesă din comandă apare pe rândul ei, ca într-un Excel — celulele
+    // specifice comenzii (nu piesei) se întind pe toate rândurile ei cu rowspan, ca referință.
+    const piese = (o.piese && o.piese.length) ? o.piese : [null];
+    const n = piese.length;
+    const rs = n > 1 ? ` rowspan="${n}"` : "";
+
+    const checkboxCell = `<td${rs}><input type="checkbox" class="order-select-cb" value="${o.id}" onchange="toggleOrderCheckbox('${o.id}', this.checked)" ${selectedOrderIds.has(o.id) ? "checked" : ""} /></td>`;
+    const brandCell = `<td${rs}>${renderBrandBadge(o.brand)}</td>`;
+    const termenCell = `<td${rs}>${formatDate(o.termen_livrare)}</td>`;
+    const clientCell = `<td${rs}>${escapeHtml(o.client_nume)} ${escapeHtml(o.client_prenume || "")}${o.atribuit_catre_nume ? `<span class="atribuit-badge">→ ${escapeHtml(o.atribuit_catre_nume)}</span>` : ""}</td>`;
+    const telefonCell = `<td${rs}>${escapeHtml(o.client_telefon || "")}</td>`;
+    const emailCell = `<td${rs}>${escapeHtml(o.client_email || "")}</td>`;
+    const furnizorCell = `<td${rs}>${renderFurnizorCell(o)}</td>`;
+    const facturaCell = `<td${rs}>${renderFacturaInput(o)}</td>`;
+    const stareCell = `<td${rs}>${renderStareSelect(o)}</td>`;
+    const plataCell = `<td${rs}>${badgePlata(o.stare_plata)}</td>`;
+    const creatDeCell = `<td${rs}>${escapeHtml(o.creat_de_nume || "")}</td>`;
+    const actionsCell = `<td${rs}>${renderActions(o)}</td>`;
+    const editBtn = (canDo("perm_comenzi") || canDo("perm_piese_comandat"))
+      ? `<button type="button" class="rz-mini-edit pret-edit-btn" onclick="openPiesaPretModal('${o.id}')">✎ Preț</button>`
+      : "";
+
+    return piese.map((p, idx) => {
+      const codCell = `<td class="wrap-cell">${p ? `<div class="piesa-line-cod">${escapeHtml(p.cod_piesa)}</div>` : '<span class="muted">—</span>'}</td>`;
+      const denCell = `<td class="wrap-cell">${p ? `<div class="piesa-line-denumire">${escapeHtml(p.denumire_piesa)}</div>` : '<span class="muted">—</span>'}</td>`;
+      const cantCell = `<td class="wrap-cell">${p ? `<div class="piesa-line-denumire">${p.cantitate || 1}</div>` : '<span class="muted">—</span>'}</td>`;
+      let pretInner = '<span class="muted">—</span>';
+      if (p) {
+        pretInner = (p.pret_cu_tva === null || p.pret_cu_tva === undefined || p.pret_cu_tva === "")
+          ? '<div class="muted">—</div>'
+          : `<div>${roFmtNum(p.pret_cu_tva)} ${escapeHtml(p.moneda || "RON")} <span class="muted">(cu TVA)</span></div>`;
+      }
+      const pretCell = `<td class="wrap-cell"><div class="pret-cell">${pretInner}${idx === 0 ? editBtn : ""}</div></td>`;
+
+      if (idx === 0) {
+        return `<tr ${rowStyle} class="${n > 1 ? "comanda-grup-prima" : ""}">${checkboxCell}${brandCell}${codCell}${denCell}${cantCell}${pretCell}${termenCell}${clientCell}${telefonCell}${emailCell}${furnizorCell}${facturaCell}${stareCell}${plataCell}${creatDeCell}${actionsCell}</tr>`;
+      }
+      return `<tr ${rowStyle} class="comanda-grup-linie">${codCell}${denCell}${cantCell}${pretCell}</tr>`;
+    }).join("");
   }).join("");
+  updateTrimiteColegButton();
+}
+
+// v31: bifa unei comenzi cu mai multe piese apare pe mai multe rânduri (rowspan) —
+// dar dacă vreodată apar bife multiple pentru aceeași comandă, le ținem sincronizate.
+function toggleOrderCheckbox(id, checked) {
+  document.querySelectorAll(`.order-select-cb[value="${id}"]`).forEach(cb => { cb.checked = checked; });
   updateTrimiteColegButton();
 }
 
@@ -2946,10 +2986,12 @@ async function saveClient() {
   const prenume = document.getElementById("c-prenume").value.trim();
   if (!nume) { alert(selectedClientTip === "juridica" ? "Completează Denumirea firmei." : "Completează Nume și Prenume."); return; }
   if (selectedClientTip === "fizica" && !prenume) { alert("Completează Nume și Prenume."); return; }
+  const telefonRaw = document.getElementById("c-telefon").value.trim();
+  if (!telefonRaw) { alert("Completează numărul de telefon — este obligatoriu."); return; }
 
   const payload = {
     nume, prenume,
-    telefon: formatTelefon(document.getElementById("c-telefon").value),
+    telefon: formatTelefon(telefonRaw),
     email: document.getElementById("c-email").value.trim(),
     adresa: document.getElementById("c-adresa").value.trim(),
     tip_client: selectedClientTip,
@@ -3670,19 +3712,23 @@ function renderSarcinaCard(t, opts) {
   } else if (t.stare === "Rezolvat") {
     actions += `<button type="button" class="btn-secondary" onclick="redeschideSarcina('${t.id}')">↩️ Redeschide</button>`;
   }
-  actions += `<button type="button" class="btn-secondary" onclick="openObservatiiModal('${t.id}')">💬 Observații${nObs ? " (" + nObs + ")" : ""}</button>`;
+  actions += `<button type="button" class="btn-secondary" onclick="openSarcinaDetaliuModal('${t.id}')">💬 Observații${nObs ? " (" + nObs + ")" : ""}</button>`;
   if (amAdmin()) actions += `<button type="button" class="btn-secondary" style="color:#b91c1c" onclick="stergeSarcina('${t.id}')">🗑 Șterge definitiv</button>`;
+  // v31: click oriunde pe corpul cardului (in afara butoanelor de mai jos) deschide un
+  // pop-up mărit, cu toate datele sarcinii lizibil afișate + observațiile (vechi + adăugare).
   return `<div class="appt-card sarcina-card ${stCls}">
-    <div class="appt-time">${escapeHtml(t.nume)}
-      <span class="badge" style="background:${pr.bg};color:${pr.color};font-size:10px">${pr.icon} ${escapeHtml(t.prioritate || "Normală")}</span>
-      <span class="badge" style="background:#eef0f4;color:var(--muted);font-size:10px">${escapeHtml(t.stare)}</span>
-      ${t.termen_limita ? `<span class="badge" style="background:${termenDepasit ? "#fee2e2" : "#eef0f4"};color:${termenDepasit ? "#991b1b" : "var(--muted)"};font-size:10px">Termen: ${formatDate(t.termen_limita)}</span>` : ""}
+    <div class="sarcina-card-clickable" style="cursor:pointer" onclick="openSarcinaDetaliuModal('${t.id}')" title="Click pentru detalii și observații">
+      <div class="appt-time">${escapeHtml(t.nume)}
+        <span class="badge" style="background:${pr.bg};color:${pr.color};font-size:10px">${pr.icon} ${escapeHtml(t.prioritate || "Normală")}</span>
+        <span class="badge" style="background:#eef0f4;color:var(--muted);font-size:10px">${escapeHtml(t.stare)}</span>
+        ${t.termen_limita ? `<span class="badge" style="background:${termenDepasit ? "#fee2e2" : "#eef0f4"};color:${termenDepasit ? "#991b1b" : "var(--muted)"};font-size:10px">Termen: ${formatDate(t.termen_limita)}</span>` : ""}
+      </div>
+      ${t.descriere ? `<div class="appt-servicii">${escapeHtml(t.descriere)}</div>` : ""}
+      ${mutata ? `<div class="appt-obs">⏳ Restantă din ${formatDate(t.data)}</div>` : ""}
+      <div class="appt-moto">Creat de ${escapeHtml(t.creat_de_nume || "—")} pe ${formatDate(t.creat_la)}${t.atribuit_catre_nume ? " · Atribuit: " + escapeHtml(t.atribuit_catre_nume) : ""}${t.notifica_la_rezolvare_nume ? " · Anunță la rezolvare: " + escapeHtml(t.notifica_la_rezolvare_nume) : ""}</div>
+      ${ajutorNume.length ? `<div class="appt-obs" style="color:#1e40af">🤝 Ajutor cerut: ${escapeHtml(ajutorNume.join(", "))}</div>` : ""}
+      ${t.stare === "Rezolvat" ? `<div class="appt-obs" style="color:#166534">✓ Rezolvată de ${escapeHtml(t.rezolvat_de_nume || "—")} pe ${formatDate(t.rezolvat_la)}</div>` : ""}
     </div>
-    ${t.descriere ? `<div class="appt-servicii">${escapeHtml(t.descriere)}</div>` : ""}
-    ${mutata ? `<div class="appt-obs">⏳ Restantă din ${formatDate(t.data)}</div>` : ""}
-    <div class="appt-moto">Creat de ${escapeHtml(t.creat_de_nume || "—")} pe ${formatDate(t.creat_la)}${t.atribuit_catre_nume ? " · Atribuit: " + escapeHtml(t.atribuit_catre_nume) : ""}${t.notifica_la_rezolvare_nume ? " · Anunță la rezolvare: " + escapeHtml(t.notifica_la_rezolvare_nume) : ""}</div>
-    ${ajutorNume.length ? `<div class="appt-obs" style="color:#1e40af">🤝 Ajutor cerut: ${escapeHtml(ajutorNume.join(", "))}</div>` : ""}
-    ${t.stare === "Rezolvat" ? `<div class="appt-obs" style="color:#166534">✓ Rezolvată de ${escapeHtml(t.rezolvat_de_nume || "—")} pe ${formatDate(t.rezolvat_la)}</div>` : ""}
     <div class="appt-actions">${actions}</div>
   </div>`;
 }
@@ -3987,21 +4033,44 @@ async function trimiteCereriAjutor(sarcinaId) {
   if (typeof rzToast === "function") rzToast("Cerere de ajutor trimisă.", "ok");
 }
 
-// ---------- OBSERVATII (jurnal de notite pe sarcina) ----------
-function openObservatiiModal(id) {
+// ---------- DETALIU SARCINĂ (pop-up mărit: toate datele + observații) ----------
+// v31: la cererea lui Andrei — click pe o sarcină "s-o mareasca" ca sa vada mai clar
+// datele introduse, in acelasi pop-up cu observatiile (vechi + posibilitate de a nota altele noi).
+function openSarcinaDetaliuModal(id) {
   const t = currentSarcini.find(x => x.id === id);
   if (!t) return;
-  renderObservatiiModalContent(t);
+  renderSarcinaDetaliuModalContent(t);
 }
-function renderObservatiiModalContent(t) {
+// alias pastrat pentru compatibilitate — orice cod vechi care mai apeleaza numele anterior tot functioneaza
+function openObservatiiModal(id) { openSarcinaDetaliuModal(id); }
+
+function renderSarcinaDetaliuModalContent(t) {
+  const pr = PRIORITATE_BADGE[t.prioritate] || PRIORITATE_BADGE["Normală"];
+  const ajutorNume = sarciniAjutorNume(t);
   const obs = (t.observatii || []).slice().sort((a, b) => (a.creat_la || "").localeCompare(b.creat_la || ""));
-  const html = `<h3>💬 Observații — ${escapeHtml(t.nume)}</h3>
-    <div style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin:14px 0 10px">
+  const html = `
+    <h3 style="margin-bottom:8px">${escapeHtml(t.nume)}</h3>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      <span class="badge" style="background:${pr.bg};color:${pr.color}">${pr.icon} ${escapeHtml(t.prioritate || "Normală")}</span>
+      <span class="badge" style="background:#eef0f4;color:var(--muted)">${escapeHtml(t.stare)}</span>
+      ${t.termen_limita ? `<span class="badge" style="background:#eef0f4;color:var(--muted)">Termen: ${formatDate(t.termen_limita)}</span>` : ""}
+    </div>
+    <div style="font-size:13.5px;line-height:1.9;background:#fafbfd;border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px">
+      ${t.descriere ? `<div style="white-space:pre-wrap;margin-bottom:10px">${escapeHtml(t.descriere)}</div>` : '<div class="muted" style="margin-bottom:10px">Fără descriere.</div>'}
+      <div><b>Data:</b> ${formatDate(t.data)}</div>
+      <div><b>Creat de:</b> ${escapeHtml(t.creat_de_nume || "—")} pe ${formatDate(t.creat_la)}</div>
+      ${t.atribuit_catre_nume ? `<div><b>Atribuit:</b> ${escapeHtml(t.atribuit_catre_nume)}</div>` : ""}
+      ${t.notifica_la_rezolvare_nume ? `<div><b>Anunță la rezolvare:</b> ${escapeHtml(t.notifica_la_rezolvare_nume)}</div>` : ""}
+      ${ajutorNume.length ? `<div><b>🤝 Ajutor cerut:</b> ${escapeHtml(ajutorNume.join(", "))}</div>` : ""}
+      ${t.stare === "Rezolvat" ? `<div style="color:#166534"><b>✓ Rezolvată de</b> ${escapeHtml(t.rezolvat_de_nume || "—")} pe ${formatDate(t.rezolvat_la)}</div>` : ""}
+    </div>
+    <div style="font-weight:700;font-size:13px;margin-bottom:8px">💬 Observații</div>
+    <div style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
       ${obs.length ? obs.map(o => `
         <div class="rz-hist-item" style="flex-direction:column;align-items:flex-start;gap:2px">
           <div style="font-size:13px">${escapeHtml(o.text)}</div>
           <div class="hist-meta">${escapeHtml(o.autor_nume || "—")} · ${formatDate(o.creat_la)}</div>
-        </div>`).join("") : '<div class="muted" style="font-size:12.5px;margin-top:6px;padding:6px 0 2px">Nicio observație încă.</div>'}
+        </div>`).join("") : '<div class="muted" style="font-size:12.5px;padding:2px 0">Nicio observație încă.</div>'}
     </div>
     <div class="field">
       <label>Adaugă observație</label>
@@ -4009,7 +4078,8 @@ function renderObservatiiModalContent(t) {
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="rzCloseModal()">Închide</button>
-      <button class="btn-primary" onclick="adaugaObservatieSarcina('${t.id}')">Adaugă</button>
+      <button class="btn-secondary" onclick="rzCloseModal(); openSarcinaModal('${t.id}')">✎ Editează sarcina</button>
+      <button class="btn-primary" onclick="adaugaObservatieSarcina('${t.id}')">Adaugă observație</button>
     </div>`;
   rzOpenModal(html);
 }
@@ -4023,7 +4093,7 @@ async function adaugaObservatieSarcina(id) {
   if (error) { alert("Eroare: " + error.message); return; }
   await loadSarcini();
   const t = currentSarcini.find(x => x.id === id);
-  if (t) renderObservatiiModalContent(t);
+  if (t) renderSarcinaDetaliuModalContent(t);
   if (typeof rzToast === "function") rzToast("Observație adăugată.", "ok");
 }
 
@@ -4055,11 +4125,11 @@ function renderGarantiiTable() {
   const rows = currentGarantii.filter(matchesLocationFilter).filter(g => {
     if (filtruStatus && g.status !== filtruStatus) return false;
     if (!cautare) return true;
-    const hay = [g.cod, g.vin, g.client_nume, g.client_prenume, g.client_telefon].map(v => (v || "").toLowerCase()).join(" ");
+    const hay = [g.cod, g.vin, g.client_nume, g.client_prenume, g.client_telefon, g.awb].map(v => (v || "").toLowerCase()).join(" ");
     return hay.includes(cautare);
   });
   if (rows.length === 0) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="11">Niciun dosar de garanție înregistrat încă.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="12">Niciun dosar de garanție înregistrat încă.</td></tr>';
     return;
   }
   tbody.innerHTML = rows.map(g => `
@@ -4069,6 +4139,9 @@ function renderGarantiiTable() {
       <td>${escapeHtml(g.client_nume || "")} ${escapeHtml(g.client_prenume || "")}</td>
       <td>${escapeHtml(g.client_telefon || "—")}</td>
       <td>${escapeHtml(g.client_email || "—")}</td>
+      <td>${(amAdmin() || canDo("perm_garantii"))
+        ? `<input type="text" class="factura-input" value="${escapeHtml(g.awb || "")}" placeholder="— notează aici —" onchange="updateGarantieField('${g.id}','awb',this.value)" />`
+        : escapeHtml(g.awb || "—")}</td>
       <td>${g.data ? formatDate(g.data) : "—"}</td>
       <td>${(amAdmin() || canDo("perm_garantii"))
         ? `<input type="text" class="factura-input" value="${escapeHtml(g.numar_factura || "")}" placeholder="— notează aici —" onchange="updateGarantieField('${g.id}','numar_factura',this.value)" />`
@@ -4129,6 +4202,7 @@ function openGarantieModal(id) {
     document.getElementById("g-prenume").value = g.client_prenume || "";
     document.getElementById("g-telefon").value = g.client_telefon || "";
     document.getElementById("g-email").value = g.client_email || "";
+    document.getElementById("g-awb").value = g.awb || "";
     document.getElementById("g-data").value = g.data || "";
     document.getElementById("g-factura").value = g.numar_factura || "";
     document.getElementById("g-status").value = g.status || "Colet Sosit";
@@ -4136,7 +4210,7 @@ function openGarantieModal(id) {
     document.getElementById("g-observatii").value = g.observatii || "";
   } else {
     document.getElementById("garantie-modal-title").textContent = "Garanție nouă";
-    ["g-cod", "g-vin", "g-nume", "g-prenume", "g-telefon", "g-email", "g-factura", "g-status-alt", "g-observatii"].forEach(fid => document.getElementById(fid).value = "");
+    ["g-cod", "g-vin", "g-nume", "g-prenume", "g-telefon", "g-email", "g-awb", "g-factura", "g-status-alt", "g-observatii"].forEach(fid => document.getElementById(fid).value = "");
     document.getElementById("g-data").value = todayISODate();
     document.getElementById("g-status").value = "Colet Sosit";
   }
@@ -4157,6 +4231,7 @@ async function saveGarantie() {
     client_prenume: document.getElementById("g-prenume").value.trim() || null,
     client_telefon: formatTelefon(document.getElementById("g-telefon").value),
     client_email: document.getElementById("g-email").value.trim() || null,
+    awb: document.getElementById("g-awb").value.trim() || null,
     data: document.getElementById("g-data").value || todayISODate(),
     numar_factura: document.getElementById("g-factura").value.trim() || null,
     status,
@@ -4189,7 +4264,7 @@ function exportGarantiiExcel() {
   if (currentGarantii.length === 0) { alert("Nu există garanții de exportat."); return; }
   const rows = currentGarantii.filter(matchesLocationFilter).map(g => ({
     "Cod": g.cod || "", "VIN": g.vin || "", "Nume client": g.client_nume || "", "Prenume client": g.client_prenume || "",
-    "Telefon": g.client_telefon || "", "Email": g.client_email || "", "Data": g.data ? formatDate(g.data) : "",
+    "Telefon": g.client_telefon || "", "Email": g.client_email || "", "AWB": g.awb || "", "Data primire colet": g.data ? formatDate(g.data) : "",
     "Nr. factură": g.numar_factura || "", "Status": garantieStatusLabel(g), "Observații": g.observatii || "",
     "Adăugat de": g.creat_de_nume || "", "Data adăugării": formatDate(g.creat_la),
   }));
@@ -6559,7 +6634,7 @@ function renderUseriRoluriModal() {
     <button class="btn-primary" onclick="creeazaAngajatNou()">+ Creează cont</button>
 
     <div class="modal-actions"><button class="btn-secondary" onclick="rzCloseModal()">Închide</button></div>`;
-  rzOpenModal(html, "modal xxwide");
+  rzOpenModal(html, "modal full");
 }
 
 // Trimite explicit tokenul de sesiune curent la Edge Function — nu ne bazăm doar
