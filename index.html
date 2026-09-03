@@ -13,6 +13,7 @@
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
   :root {
     --bg: #f3f4f7;
@@ -506,6 +507,65 @@
   .month-day-header { background: #1e293b; color: #fff; padding: 8px 12px; border-radius: 8px 8px 0 0; font-size: 12.5px; font-weight: 700; }
   .month-day-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 10px 12px; background: var(--card); }
 </style>
+<style id="dvz-style">
+  /* ============================================================
+     DEVIZE — Fișă Intrare Service + Deviz Reparație
+     Portat identic din Deviz_Service.html (UI/UX pixel cu pixel),
+     toate clasele/id-urile prefixate "dvz-" ca sa nu se atinga de
+     restul aplicatiei. Acest <style> e citit si separat (textContent)
+     la exportul PDF/HTML standalone al devizului.
+     ============================================================ */
+  .dvz-page input[type=number]::-webkit-inner-spin-button,
+  .dvz-page input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .dvz-page input[type=number] { -moz-appearance: textfield; }
+  .dvz-hidden { display: none !important; }
+  .dvz-page-hidden { display: none !important; }
+  #devize-editor-section { background: #555; margin: 0 -20px -20px -20px; padding: 20px; border-radius: 0 0 12px 12px; }
+  .dvz-editor-toolbar { background: var(--card); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .dvz-page {
+    background: white; width: 210mm; min-height: 297mm; padding: 10mm 15mm; margin: 0 auto 20px auto;
+    box-sizing: border-box; box-shadow: 0 0 15px rgba(0,0,0,0.5); position: relative;
+    display: flex; flex-direction: column; gap: 2px; color: #000; font-family: Arial, sans-serif; font-size: 11px;
+  }
+  .dvz-page-header { position: relative; min-height: 40px; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 2px; }
+  .dvz-page h1 { margin: 0; text-align: center; width: 100%; text-transform: uppercase; font-size: 18px; font-weight: bold; border-bottom: 2px solid black; padding-bottom: 2px; margin-bottom: 2px; }
+  .dvz-company-details { text-align: center; font-size: 9px; line-height: 1.2; margin-top: 0; margin-bottom: 5px; border-bottom: 1px solid #ccc; padding-bottom: 3px; color: #000; }
+  .dvz-page table { width: 100%; border-collapse: collapse; margin-bottom: 2px; }
+  .dvz-page th, .dvz-page td { border: 1px solid #000; padding: 1px 2px; vertical-align: middle; text-align: center; height: 18px; color: #000; font-size: 11px; }
+  .dvz-page input, .dvz-page select { width: 100%; border: none; background: transparent; font-family: inherit; font-size: 10px; box-sizing: border-box; outline: none; padding: 0; text-align: center; text-align-last: center; color: #000; border-bottom: 1px dotted #ccc; }
+  .dvz-page textarea { resize: none; height: 100%; box-sizing: border-box; overflow: hidden; font-family: Arial, sans-serif; width: 100%; border: none; background: transparent; outline: none; color: #000; font-size: 11px; }
+  .dvz-page input:focus, .dvz-page textarea:focus, .dvz-page select:focus { background-color: #eef; }
+  .dvz-page input[readonly] { color: #333; }
+  .dvz-model-manual-input { border-bottom: 1px dashed #999 !important; margin-top: 2px; background-color: #fff8dc !important; font-weight: bold; }
+  .dvz-header-row { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 5px; gap: 20px; }
+  .dvz-box-input { border: 1px solid black; display: inline-block; padding: 2px; text-align: center; }
+  .dvz-section-title { font-weight: bold; background-color: #eee; padding: 2px 3px; border: 1px solid black; border-bottom: none; margin-top: 3px; font-size: 11px; text-align: left; color: #000; }
+  .dvz-full-border { border: 1px solid black; }
+  .dvz-sel-mecanic, .dvz-sel-tarif { width: 100%; border: 1px solid #aaa !important; background: #fffbe6; font-family: inherit; font-size: 10px; box-sizing: border-box; outline: none; padding: 1px 2px; text-align: center; border-radius: 2px; cursor: pointer; }
+  .dvz-sel-mecanic:focus, .dvz-sel-tarif:focus { border-color: #1a6b1a !important; background: #eef; }
+  .dvz-w-number { width: 25px; text-align: center; }
+  .dvz-w-code { width: 70px; text-align: center; }
+  .dvz-w-um { width: 35px; text-align: center; }
+  .dvz-w-money { width: 65px; text-align: center; }
+  .dvz-w-money-calc { width: 80px; text-align: center; font-size: 9px; }
+  .dvz-signature-area { display: flex; justify-content: space-between; margin-top: auto; padding-top: 5px; text-align: center; }
+  .dvz-signature-box { width: 30%; border-top: 1px solid black; padding-top: 5px; min-height: 50px; color: #000; font-size: 11px; }
+  .dvz-client-signature-text { display: block; margin-top: 5px; font-weight: bold; font-size: 10px; text-transform: uppercase; }
+  .dvz-footer-note { font-size: 8px; text-align: center; color: #555; border-top: 1px solid #ddd; padding-top: 2px; }
+  .dvz-preset-dropdown { position: fixed; background: white; border: 1px solid #555; box-shadow: 0 6px 18px rgba(0,0,0,0.3); z-index: 99999; max-height: 240px; overflow-y: auto; min-width: 300px; font-size: 11px; }
+  .dvz-preset-item { padding: 6px 10px; cursor: pointer; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .dvz-preset-item:hover { background: #fffbe6; }
+  .dvz-preset-item .dvz-preset-sub { font-size: 9px; color: #999; }
+  .dvz-preset-item .dvz-preset-pret { color: #a00; font-weight: bold; white-space: nowrap; }
+  #print-area.dvz-print-area { padding: 0; }
+  @page { size: A4 portrait; margin: 0; }
+  @media print {
+    #print-area.dvz-print-area .dvz-page { box-shadow: none; margin: 0 auto; page-break-after: always; page-break-inside: avoid; }
+    #print-area.dvz-print-area .dvz-page:last-child { page-break-after: auto; }
+    #print-area.dvz-print-area .dvz-page-hidden { display: flex !important; }
+    #print-area.dvz-print-area select { border: none; appearance: none; -webkit-appearance: none; background: transparent; text-align-last: center; }
+  }
+</style>
 </head>
 <body>
 
@@ -567,6 +627,7 @@
       <button class="tab-btn" id="tab-sarcini" onclick="switchTab('sarcini')">🗒️ Sarcini</button>
       <button class="tab-btn" id="tab-garantii" onclick="switchTab('garantii')">🛡️ Garanții</button>
       <button class="tab-btn" id="tab-daune" onclick="switchTab('daune')">🚗 Daune</button>
+      <button class="tab-btn" id="tab-devize" onclick="switchTab('devize')">🧾 Devize</button>
     </div>
 
     <div class="subtabs open" id="subtabs-comenzi">
@@ -683,6 +744,7 @@
           <input type="date" id="prog-data" onchange="onProgramatorDataChanged()" />
           <button class="btn-secondary" onclick="progGoToday()">Azi</button>
           <button class="btn-primary" onclick="openProgramareModal()">+ Programare nouă</button>
+          <button class="btn-secondary" id="btn-dvz-import-zi" style="display:none" onclick="dvzOpenImportFromProgramari()">🧾→ Creează devize</button>
         </div>
         <div class="slot-grid-legend">
           <span><span class="slot-legend-dot free"></span> Liber (click pentru programare nouă)</span>
@@ -846,6 +908,315 @@
             <tr class="empty-row"><td colspan="10">Se încarcă...</td></tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- ===== VIEW DEVIZE (Fișă Intrare Service + Deviz Reparație) ===== -->
+    <div id="devize-view" style="display:none;">
+
+      <!-- ---- LISTA DEVIZE ---- -->
+      <div id="devize-list-section">
+        <div class="toolbar">
+          <div class="filters">
+            <input type="text" id="dvz-cautare" placeholder="Caută după client, VIN sau nr. înmatriculare..." oninput="renderDevizeTable()" style="min-width:260px" />
+          </div>
+          <div class="toolbar-actions">
+            <button class="btn-primary" onclick="openDevizEditor(null)">+ Deviz nou</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nr.</th>
+                <th>Dată</th>
+                <th>Client</th>
+                <th>Motocicletă</th>
+                <th>Total</th>
+                <th>Acțiuni</th>
+              </tr>
+            </thead>
+            <tbody id="devize-table-body">
+              <tr class="empty-row"><td colspan="6">Se încarcă...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ---- EDITOR DEVIZ (Fisa + Deviz, A4, identic Deviz_Service.html) ---- -->
+      <div id="devize-editor-section" style="display:none;">
+        <div class="dvz-editor-toolbar">
+          <button class="btn-secondary" onclick="closeDevizEditor()">← Înapoi la listă</button>
+          <div class="subtabs open" style="margin:0;">
+            <button class="subtab-btn active" id="dvz-subtab-fisa" onclick="dvzSwitchSubtab('fisa')">📋 Fișă Intrare Service</button>
+            <button class="subtab-btn" id="dvz-subtab-deviz" onclick="dvzSwitchSubtab('deviz')">🧾 Deviz Reparație</button>
+          </div>
+          <div class="toolbar-actions">
+            <button class="btn-secondary" onclick="dvzPrintSave()">🖨️ Print / Save</button>
+            <button class="btn-secondary" onclick="dvzExportPDF()">📄 Export PDF</button>
+            <button class="btn-primary" onclick="saveDevize()">💾 Salvează</button>
+          </div>
+        </div>
+
+        <div id="dvz-pages">
+          <!-- ================= PAGINA 1: FISA INTRARE ================= -->
+          <div class="dvz-page" id="dvz-page1">
+            <div class="dvz-page-header">
+              <h1>FISA INTRARE SERVICE</h1>
+            </div>
+
+            <div class="dvz-company-details">
+              <strong>MOTOBOOM S.R.L.</strong> CIF: RO18684947 Reg. Com.: J01/509/2006<br>
+              Adresa: Str. Crinului nr. 3, Sebes, ALBA<br>
+              Punct lucru: Sos. Pipera nr. 48, Sector 2, BUCURESTI<br>
+              Contact: 0744 313 982 - info@motocicletetriumph.ro - www.motocicletetriumph.ro
+            </div>
+
+            <div class="dvz-header-row">
+              <div><strong>Nr:</strong> <input type="text" class="dvz-box-input" style="width:100px;" id="dvz-nrFisaInput" readonly></div>
+              <div><strong>Data:</strong> <input type="text" class="dvz-box-input" style="width:120px;" id="dvz-currentDate1" readonly></div>
+            </div>
+
+            <div class="dvz-section-title">DATE CLIENT</div>
+            <table style="margin-top:0;position:relative;">
+              <tr>
+                <td width="20%">Nume/Firma:</td>
+                <td><input type="text" id="dvz-clientNameInput" style="font-weight:bold;" autocomplete="off" oninput="dvzClientACInput(this)" onfocus="dvzClientACInput(this)" onblur="setTimeout(dvzCloseClientAC, 150)"></td>
+              </tr>
+              <tr>
+                <td>Adresa:</td>
+                <td><input type="text" id="dvz-clientAdresaInput"></td>
+              </tr>
+              <tr>
+                <td>Telefon / Email:</td>
+                <td><input type="text" id="dvz-clientTelInput"></td>
+              </tr>
+              <tr>
+                <td>CUI:</td>
+                <td><input type="text" id="dvz-clientCUIInput"></td>
+              </tr>
+            </table>
+            <div id="dvz-moto-picker-wrap" class="dvz-hidden" style="margin:4px 0 6px;font-size:11px;background:#fffbe6;border:1px solid #ddd;padding:4px 6px;border-radius:4px;">
+              Client cu mai multe motociclete — alege una: <select id="dvz-moto-picker" onchange="dvzApplyMotoPick(this.value)" style="width:auto;display:inline-block;border:1px solid #aaa;padding:1px 4px;"></select>
+            </div>
+            <div style="margin:2px 0 6px;font-size:11px;">
+              🔗 Atașează la o comandă existentă (opțional):
+              <select id="dvz-comandaSelect" style="width:auto;display:inline-block;border:1px solid #aaa;padding:1px 4px;min-width:220px;">
+                <option value="">— fără legătură —</option>
+              </select>
+            </div>
+
+            <div class="dvz-section-title">DATE MOTOCICLETA</div>
+            <table style="margin-top:0;">
+              <tr>
+                <td width="15%">Marca:</td>
+                <td width="35%">
+                  <select id="dvz-brandSelect" onchange="dvzHandleBrandChange()" style="font-weight:bold;">
+                    <option value="">- Selecteaza -</option>
+                    <option value="Triumph">Triumph</option>
+                    <option value="Alta marca">Alta marca</option>
+                  </select>
+                </td>
+                <td width="15%">Model:</td>
+                <td width="35%">
+                  <div id="dvz-modelContainer">
+                    <select id="dvz-modelSelect" onchange="dvzHandleModelChange()"></select>
+                    <input type="text" id="dvz-modelInputManual" class="dvz-model-manual-input dvz-hidden" placeholder="Scrie modelul...">
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>Serie Sasiu:</td>
+                <td><input type="text" id="dvz-vinInput"></td>
+                <td>An fabr.</td>
+                <td><input type="text" id="dvz-anFabInput"></td>
+              </tr>
+              <tr>
+                <td>Nr. Inmatr.:</td>
+                <td><input type="text" id="dvz-plateInput" placeholder="ex: B-12-ABC" oninput="this.value=this.value.toUpperCase()"></td>
+                <td>Km:</td>
+                <td><input type="text" id="dvz-kmInput"></td>
+              </tr>
+              <tr>
+                <td>Data intrare:</td>
+                <td><input type="date" id="dvz-dataIntrare"></td>
+                <td>Ora:</td>
+                <td><input type="text" id="dvz-oraIntrare" placeholder="ex: 10:30"></td>
+              </tr>
+            </table>
+
+            <div class="dvz-section-title">STAREA MOTOCICLETEI LA MOMENTUL INTRARII IN SERVICE</div>
+            <div class="dvz-full-border" style="height:70px;">
+              <textarea id="dvz-stareVizuala" placeholder="Descrierea starii vizuale (zgarieturi, lipsuri, nivel combustibil etc.)..."></textarea>
+            </div>
+
+            <div class="dvz-section-title">Lucrari solicitate de client / Defectiuni (declaratie client):</div>
+            <div class="dvz-full-border" style="height:70px;">
+              <textarea id="dvz-cerinteClient" placeholder="Descrierea lucrarilor solicitate..."></textarea>
+            </div>
+
+            <div class="dvz-section-title">Constatari preliminare (unitatea service):</div>
+            <table style="margin-bottom:10px;">
+              <thead>
+                <tr>
+                  <th>Defect constatat</th>
+                  <th>Recomandare</th>
+                  <th width="40">Accept</th>
+                  <th width="40">Refuz</th>
+                </tr>
+              </thead>
+              <tbody id="dvz-constatari-body">
+                <tr><td><input type="text" class="dvz-cst-defect"></td><td><input type="text" class="dvz-cst-recomandare"></td><td><input type="checkbox" class="dvz-cst-accept"></td><td><input type="checkbox" class="dvz-cst-refuz"></td></tr>
+                <tr><td><input type="text" class="dvz-cst-defect"></td><td><input type="text" class="dvz-cst-recomandare"></td><td><input type="checkbox" class="dvz-cst-accept"></td><td><input type="checkbox" class="dvz-cst-refuz"></td></tr>
+                <tr><td><input type="text" class="dvz-cst-defect"></td><td><input type="text" class="dvz-cst-recomandare"></td><td><input type="checkbox" class="dvz-cst-accept"></td><td><input type="checkbox" class="dvz-cst-refuz"></td></tr>
+              </tbody>
+            </table>
+
+            <div style="flex-grow:1;"></div>
+
+            <div class="dvz-signature-area">
+              <div class="dvz-signature-box">
+                Semnatura Client<br>
+                <span class="dvz-client-signature-text" id="dvz-clientSig1"></span>
+              </div>
+              <div class="dvz-signature-box">
+                Semnatura Mecanic<br>
+                <span class="dvz-client-signature-text" id="dvz-mechSig1"></span>
+              </div>
+              <div class="dvz-signature-box">
+                Semnatura Sef Unitate<br>
+                <strong>Radu Constantinescu</strong>
+              </div>
+            </div>
+
+            <div class="dvz-footer-note">
+              Sunt de acord cu prelucrarea datelor personale conform Legii 677/2001
+            </div>
+          </div>
+
+          <!-- ================= PAGINA 2: DEVIZ REPARATIE ================= -->
+          <div class="dvz-page dvz-page-hidden" id="dvz-page2">
+            <div class="dvz-page-header">
+              <h1>DEVIZ REPARATIE</h1>
+            </div>
+
+            <div class="dvz-company-details">
+              <strong>MOTOBOOM S.R.L.</strong> CIF: RO18684947 Reg. Com.: J01/509/2006<br>
+              Adresa: Str. Crinului nr. 3, Sebes, ALBA<br>
+              Punct lucru: Sos. Pipera nr. 48, Sector 2, BUCURESTI<br>
+              Contact: 0744 313 982 - info@motocicletetriumph.ro - www.motocicletetriumph.ro
+            </div>
+
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;border:1px solid #ccc;padding:5px;">
+              <div style="width:48%;display:flex;gap:5px;align-items:center;">
+                <div style="flex:1;display:flex;align-items:center;">
+                  <strong style="white-space:nowrap;margin-right:5px;">Deviz Nr:</strong>
+                  <input type="text" class="dvz-box-input" style="flex:1;" id="dvz-nrDevizInput" readonly>
+                </div>
+                <div style="flex:1;display:flex;align-items:center;">
+                  <strong style="white-space:nowrap;margin-right:5px;">Data:</strong>
+                  <input type="text" class="dvz-box-input" style="flex:1;" id="dvz-currentDate2" readonly>
+                </div>
+              </div>
+              <div style="width:48%;display:flex;gap:5px;align-items:center;">
+                <div style="flex:1;display:flex;align-items:center;">
+                  <strong style="white-space:nowrap;margin-right:5px;">Dosar dauna:</strong>
+                  <input type="text" class="dvz-box-input" style="flex:1;" id="dvz-dosarDauna">
+                </div>
+                <div style="flex:1;display:flex;align-items:center;">
+                  <strong style="white-space:nowrap;margin-right:5px;">Data Dauna:</strong>
+                  <input type="date" class="dvz-box-input" style="flex:1;" id="dvz-dataDauna">
+                </div>
+              </div>
+            </div>
+
+            <div class="dvz-section-title">I. PIESE SI CONSUMABILE</div>
+            <table id="dvz-partsTable">
+              <thead>
+                <tr>
+                  <th class="dvz-w-number">Nr.</th>
+                  <th class="dvz-w-code">Cod produs</th>
+                  <th>Denumire produs</th>
+                  <th class="dvz-w-um">U.M.</th>
+                  <th style="width:40px;">Cant.</th>
+                  <th class="dvz-w-money-calc">Pret (Fara TVA)</th>
+                  <th class="dvz-w-money">Pret</th>
+                  <th class="dvz-w-money">Valoare</th>
+                </tr>
+              </thead>
+              <tbody id="dvz-partsTableBody"></tbody>
+            </table>
+            <table style="margin-top:0;border-top:none;">
+              <tfoot>
+                <tr>
+                  <td colspan="7" style="text-align:right;font-weight:bold;border-top:none;">Total Piese</td>
+                  <td style="border-top:none;"><input type="text" id="dvz-totalParts" readonly style="text-align:center;font-weight:bold;"></td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div class="dvz-section-title">II. OPERATIUNI EFECTUATE (MANOPERA)</div>
+            <table id="dvz-opsTable">
+              <thead>
+                <tr>
+                  <th class="dvz-w-number">Nr.</th>
+                  <th>Denumire operatiune</th>
+                  <th class="dvz-w-um">U.M.</th>
+                  <th style="width:40px;">Ore</th>
+                  <th class="dvz-w-money-calc">Tarif/Ora (Fara TVA)</th>
+                  <th class="dvz-w-money">Tarif/Ora</th>
+                  <th class="dvz-w-money">Valoare</th>
+                </tr>
+              </thead>
+              <tbody id="dvz-opsTableBody"></tbody>
+            </table>
+            <table style="margin-top:0;border-top:none;">
+              <tfoot>
+                <tr>
+                  <td colspan="6" style="text-align:right;font-weight:bold;border-top:none;">Total Manopera</td>
+                  <td style="border-top:none;"><input type="text" id="dvz-totalOps" readonly style="text-align:center;font-weight:bold;"></td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div style="margin-top:5px;border:2px solid black;padding:3px;text-align:right;font-size:14px;background:#eee;color:#000;">
+              <strong>TOTAL GENERAL DE PLATA: </strong> <span id="dvz-grandTotal">0.00</span> RON
+            </div>
+
+            <div style="flex-grow:1;"></div>
+
+            <div style="text-align:center;margin-top:5px;font-weight:bold;border-top:1px dashed #999;padding-top:2px;color:#000;">
+              CERTIFICAT DE CALITATE SI GARANTIE
+            </div>
+            <div style="font-size:8px;text-align:justify;margin-top:2px;line-height:1.1;color:#444;">
+              Perioada de garantie pentru piesele inlocuite si lucrarile executate<br>
+              Unitatea service garanteaza lucrarea executata*) si conformitatea acesteia**), potrivit OUG 140/2021 si Legii 296/2004,<br>
+              *3 luni de la data receptiei autovehiculului/motocicletei/scuterului/atv-ului, daca lucrarea nu a necesitat inlocuiri de piese sau daca s-a executat cu piesa de schimb a clientului.<br>
+              **Garantia pieselor furnizate de unitate, in baza OUG 140/2021 - conf. declaratiei producatorului/prin conventie intre parti, conditionat de respectarea indicatiilor de exploatare prevazute de producatorul motocicletei/scuterului/atv-ului este de 12 luni.
+            </div>
+
+            <div class="dvz-signature-area">
+              <div class="dvz-signature-box">
+                Semnatura Client<br>
+                <span class="dvz-client-signature-text" id="dvz-clientSig2"></span>
+              </div>
+              <div class="dvz-signature-box">
+                Semnatura Mecanic<br>
+                <span class="dvz-client-signature-text" id="dvz-mechSig2"></span>
+              </div>
+              <div class="dvz-signature-box">
+                Semnatura Sef Unitate<br>
+                <strong>Radu Constantinescu</strong>
+              </div>
+            </div>
+
+            <div style="height:30px;"></div>
+
+            <div class="dvz-footer-note">
+              Sunt de acord cu prelucrarea datelor personale conform Legii 677/2001
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1533,7 +1904,7 @@ let selectedClientTip = "fizica";
 let allProfiles = [];
 let currentNotifications = [];
 
-let currentPermissions = { perm_comenzi: true, perm_devize: true, perm_receptie: true, perm_piese_comandat: true, perm_clienti: true, perm_programator: true, perm_sarcini: true };
+let currentPermissions = { perm_comenzi: true, perm_devize: true, perm_receptie: true, perm_piese_comandat: true, perm_clienti: true, perm_programator: true, perm_sarcini: true, perm_devize_service: true };
 let currentRoluri = [];
 let pieseComandatTab = "toate";
 
@@ -1616,16 +1987,16 @@ function canDo(perm) {
 }
 async function loadMyPermissions() {
   if (currentProfile.rol === "admin") {
-    currentPermissions = { perm_comenzi: true, perm_devize: true, perm_receptie: true, perm_piese_comandat: true, perm_clienti: true, perm_programator: true, perm_sarcini: true, perm_garantii: true, perm_daune: true };
+    currentPermissions = { perm_comenzi: true, perm_devize: true, perm_receptie: true, perm_piese_comandat: true, perm_clienti: true, perm_programator: true, perm_sarcini: true, perm_garantii: true, perm_daune: true, perm_devize_service: true };
     return;
   }
   if (!currentProfile.rol_id) {
-    currentPermissions = { perm_comenzi: false, perm_devize: false, perm_receptie: false, perm_piese_comandat: false, perm_clienti: false, perm_programator: false, perm_sarcini: false, perm_garantii: false, perm_daune: false };
+    currentPermissions = { perm_comenzi: false, perm_devize: false, perm_receptie: false, perm_piese_comandat: false, perm_clienti: false, perm_programator: false, perm_sarcini: false, perm_garantii: false, perm_daune: false, perm_devize_service: false };
     return;
   }
   const { data, error } = await client.from("roluri").select("*").eq("id", currentProfile.rol_id).single();
   if (error || !data) {
-    currentPermissions = { perm_comenzi: false, perm_devize: false, perm_receptie: false, perm_piese_comandat: false, perm_clienti: false, perm_programator: false, perm_sarcini: false, perm_garantii: false, perm_daune: false };
+    currentPermissions = { perm_comenzi: false, perm_devize: false, perm_receptie: false, perm_piese_comandat: false, perm_clienti: false, perm_programator: false, perm_sarcini: false, perm_garantii: false, perm_daune: false, perm_devize_service: false };
     return;
   }
   currentPermissions = data;
@@ -1642,6 +2013,9 @@ function applyPermissionsToUI() {
   document.getElementById("tab-sarcini").style.display = canDo("perm_sarcini") ? "" : "none";
   document.getElementById("tab-garantii").style.display = canDo("perm_garantii") ? "" : "none";
   document.getElementById("tab-daune").style.display = canDo("perm_daune") ? "" : "none";
+  document.getElementById("tab-devize").style.display = canDo("perm_devize_service") ? "" : "none";
+  const btnDvzImport = document.getElementById("btn-dvz-import-zi");
+  if (btnDvzImport) btnDvzImport.style.display = canDo("perm_devize_service") ? "inline-flex" : "none";
   // daca tabul activ nu mai e permis, mergem pe primul tab disponibil
   const tabDisponibil =
     canDo("perm_comenzi") ? "toate" :
@@ -1652,6 +2026,7 @@ function applyPermissionsToUI() {
     canDo("perm_sarcini") ? "sarcini" :
     canDo("perm_garantii") ? "garantii" :
     canDo("perm_daune") ? "daune" :
+    canDo("perm_devize_service") ? "devize" :
     (canDo("perm_comenzi") || canDo("perm_piese_comandat")) ? "piese-comandat" : "clienti";
   if ((activeTab === "toate" || activeTab === "termene") && !canDo("perm_comenzi")) switchTab(tabDisponibil);
   else if (activeTab === "programator" && !canDo("perm_programator")) switchTab(tabDisponibil);
@@ -1661,6 +2036,7 @@ function applyPermissionsToUI() {
   else if (activeTab === "sarcini" && !canDo("perm_sarcini")) switchTab(tabDisponibil);
   else if (activeTab === "garantii" && !canDo("perm_garantii")) switchTab(tabDisponibil);
   else if (activeTab === "daune" && !canDo("perm_daune")) switchTab(tabDisponibil);
+  else if (activeTab === "devize" && !canDo("perm_devize_service")) switchTab(tabDisponibil);
 }
 
 // ---------- PUNCTE DE LUCRU (locații firmă, mai multe orașe) ----------
@@ -1917,6 +2293,7 @@ function switchTab(tab) {
   document.getElementById("tab-sarcini").classList.toggle("active", tab === "sarcini");
   document.getElementById("tab-garantii").classList.toggle("active", tab === "garantii");
   document.getElementById("tab-daune").classList.toggle("active", tab === "daune");
+  document.getElementById("tab-devize").classList.toggle("active", tab === "devize");
 
   document.getElementById("tab-toate").classList.toggle("active", tab === "toate");
   document.getElementById("tab-termene").classList.toggle("active", tab === "termene");
@@ -1936,11 +2313,13 @@ function switchTab(tab) {
   document.getElementById("sarcini-view").style.display = (tab === "sarcini") ? "block" : "none";
   document.getElementById("garantii-view").style.display = (tab === "garantii") ? "block" : "none";
   document.getElementById("daune-view").style.display = (tab === "daune") ? "block" : "none";
+  document.getElementById("devize-view").style.display = (tab === "devize") ? "block" : "none";
   document.getElementById("filter-creat-de").style.display = (tab === "termene") ? "inline-block" : "none";
 
   if (tab === "clienti") loadClients();
   else if (tab === "programator") initProgramatorViewIfNeeded();
   else if (tab === "catalog") renderCatalogTable();
+  else if (tab === "devize") initDevizeTabIfNeeded();
   else if (tab === "receptie") rzInitIfNeeded();
   else if (tab === "piese-comandat") renderPieseComandat();
   else if (tab === "sarcini") initSarciniViewIfNeeded();
@@ -2299,7 +2678,7 @@ function closeConfirm() {
   document.getElementById("confirm-overlay").classList.remove("open");
 }
 const PENDING_DELETE_TABLES = {
-  client: "clienti", comanda: "comenzi", garantie: "garantii",
+  client: "clienti", comanda: "comenzi", garantie: "garantii", devize: "devize",
   "receptie-item": "receptie_articole", "inventar-item": "inventar_articole", "receptie-sesiune": "receptie_sesiuni",
 };
 async function executeDelete() {
@@ -2323,6 +2702,7 @@ async function executeDelete() {
   else if (table === "inventar_articole") { await rzLoadInvItems(); rzUpdateStats(); rzRender(); }
   else if (table === "receptie_sesiuni") { rzOpenHistory(); }
   else if (table === "garantii") await loadGarantii();
+  else if (table === "devize") await loadDevize();
   else await loadOrders();
 }
 
@@ -6618,6 +6998,7 @@ const PERMISIUNI_DEF = [
   { key: "perm_sarcini", label: "Sarcini (task-uri)" },
   { key: "perm_garantii", label: "Garanții" },
   { key: "perm_daune", label: "Daune" },
+  { key: "perm_devize_service", label: "Devize (fișă service)" },
 ];
 
 async function loadRoluriList() {
@@ -6908,6 +7289,833 @@ async function assignUserPunctLucru(userId, punctLucruId) {
     updatePunctLucruHeaderBtn();
     rerenderAllForLocationFilter();
   }
+}
+
+// ======================================================
+// DEVIZE — Fișă Intrare Service + Deviz Reparație
+// Portat identic din Deviz_Service.html, integrat cu date centralizate
+// (clienti/motociclete/comenzi/mecanici/tarife_manopera/preturi_uzuale).
+// ======================================================
+let currentDevize = [];
+let dvzEditingId = null;
+let dvzMecanici = [];
+let dvzTarife = [];
+let dvzPreturiUzuale = [];
+let dvzInited = false;
+let dvzActiveDropdown = null;
+let dvzActiveInput = null;
+let dvzSelectedClientId = null;
+let dvzSelectedMotoId = null;
+let dvzSelectedMecanicId = null;
+
+const dvzTriumphModels = {
+  "Modern Classics": [
+    "Bonneville T100", "Bonneville T120", "Bonneville T120 Black", "Bonneville Bobber",
+    "Bonneville Speedmaster", "Speed Twin 900", "Speed Twin 1200", "Scrambler 400 X",
+    "Scrambler 400 XC", "Scrambler 900", "Scrambler 1200 X", "Scrambler 1200 XE",
+    "Thruxton Final Edition"
+  ],
+  "Roadsters": [
+    "Trident 660", "Street Triple 765 R", "Street Triple 765 RS", "Street Triple 765 RX",
+    "Street Triple Moto2 Edition", "Speed Triple 1200 RS", "Speed Triple 1200 RR",
+    "Speed Triple 1200 RX", "Daytona 660"
+  ],
+  "Adventure": [
+    "Tiger Sport 660", "Tiger 850 Sport", "Tiger 900 GT", "Tiger 900 GT Pro",
+    "Tiger 900 Rally Pro", "Tiger 1200 GT Pro", "Tiger 1200 GT Explorer",
+    "Tiger 1200 Rally Pro", "Tiger 1200 Rally Explorer"
+  ],
+  "Rocket 3": ["Rocket 3 Storm R", "Rocket 3 Storm GT"],
+  "Off-Road": ["TF 250-X", "TF 450-X", "TF 250-C", "TF 450-C"],
+};
+
+async function initDevizeTabIfNeeded() {
+  if (!dvzInited) {
+    dvzInited = true;
+    await Promise.allSettled([dvzLoadMecanici(), dvzLoadTarife(), dvzLoadPreturiUzuale()]);
+  }
+  if (!currentClients.length) await loadClients();
+  await loadDevize();
+}
+async function dvzLoadMecanici() {
+  const { data, error } = await client.from("mecanici").select("*").order("nume");
+  if (!error) dvzMecanici = data || [];
+}
+async function dvzLoadTarife() {
+  const { data, error } = await client.from("tarife_manopera").select("*").order("tarif_ora", { ascending: false });
+  if (!error) dvzTarife = data || [];
+}
+async function dvzLoadPreturiUzuale() {
+  const { data, error } = await client.from("preturi_uzuale").select("*").order("nume");
+  if (!error) dvzPreturiUzuale = data || [];
+}
+
+// ---------- LISTA DEVIZE ----------
+async function loadDevize() {
+  const { data, error } = await client.from("devize").select("*").order("data", { ascending: false }).order("nr_zi", { ascending: false });
+  if (error) { alert("Eroare la încărcarea devizelor: " + error.message); return; }
+  currentDevize = data || [];
+  renderDevizeTable();
+}
+function renderDevizeTable() {
+  const tbody = document.getElementById("devize-table-body");
+  if (!tbody) return;
+  const cautareEl = document.getElementById("dvz-cautare");
+  const cautare = (cautareEl ? cautareEl.value : "").trim().toLowerCase();
+  const rows = currentDevize.filter(matchesLocationFilter).filter(d => {
+    if (!cautare) return true;
+    const hay = [d.client_nume, d.moto_vin, d.moto_plate, d.moto_model].map(v => (v || "").toLowerCase()).join(" ");
+    return hay.includes(cautare);
+  });
+  if (!rows.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Niciun deviz înregistrat încă.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(d => `
+    <tr>
+      <td>${d.nr_zi != null ? escapeHtml(String(d.nr_zi)) : "—"}</td>
+      <td>${d.data ? formatDate(d.data) : "—"}</td>
+      <td>${escapeHtml(d.client_nume || "—")}</td>
+      <td>${escapeHtml([d.moto_brand_categorie || "", d.moto_model || ""].filter(Boolean).join(" ")) || "—"}${d.moto_plate ? " · " + escapeHtml(d.moto_plate) : ""}</td>
+      <td>${d.total_general != null ? roFmtNum(d.total_general) + " RON" : "—"}</td>
+      <td>
+        <div class="actions-cell">
+          <button class="icon-btn" title="Deschide" onclick="openDevizEditor('${d.id}')">${ICON_EDIT}</button>
+          ${amAdmin() ? `<button class="icon-btn danger" title="Șterge" onclick="confirmDeleteDeviz('${d.id}')">${ICON_TRASH}</button>` : ""}
+        </div>
+      </td>
+    </tr>
+  `).join("");
+}
+function confirmDeleteDeviz(id) {
+  pendingDelete = { type: "devize", id };
+  document.getElementById("confirm-title").textContent = "Ștergi acest deviz?";
+  document.getElementById("confirm-overlay").classList.add("open");
+}
+
+// ---------- EDITOR: deschidere / inchidere / subtaburi ----------
+function dvzSwitchSubtab(tab) {
+  document.getElementById("dvz-subtab-fisa").classList.toggle("active", tab === "fisa");
+  document.getElementById("dvz-subtab-deviz").classList.toggle("active", tab === "deviz");
+  document.getElementById("dvz-page1").classList.toggle("dvz-page-hidden", tab !== "fisa");
+  document.getElementById("dvz-page2").classList.toggle("dvz-page-hidden", tab !== "deviz");
+}
+function dvzPopulateComenzi() {
+  const sel = document.getElementById("dvz-comandaSelect");
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— fără legătură —</option>' +
+    (currentOrders || []).map(c => `<option value="${c.id}">${escapeHtml([c.client_nume, c.client_prenume].filter(Boolean).join(" "))} — ${escapeHtml(c.brand || "")} ${escapeHtml(c.model || "")}${c.numar_inmatriculare ? " · " + escapeHtml(c.numar_inmatriculare) : ""}</option>`).join("");
+  sel.value = cur || "";
+}
+function dvzGenerateTables() {
+  let partsHTML = "";
+  for (let i = 1; i <= 20; i++) {
+    partsHTML += `<tr>
+      <td class="dvz-w-number">${i}</td>
+      <td><input type="text" class="dvz-cod"></td>
+      <td><input type="text" class="dvz-denumire"></td>
+      <td class="dvz-w-um"><input type="text" class="dvz-um" value="buc"></td>
+      <td><input type="number" class="dvz-qty" oninput="dvzCalculateRow(this)"></td>
+      <td><input type="text" class="dvz-price-no-vat" readonly></td>
+      <td><input type="number" class="dvz-price" oninput="dvzCalculateRow(this)"></td>
+      <td><input type="number" class="dvz-val" oninput="dvzCalculateAllTotals()"></td>
+    </tr>`;
+  }
+  document.getElementById("dvz-partsTableBody").innerHTML = partsHTML;
+
+  let opsHTML = "";
+  for (let i = 1; i <= 5; i++) {
+    const isFirst = i === 1;
+    const descCell = isFirst
+      ? `<input type="text" id="dvz-mechInput" class="dvz-sel-mecanic" placeholder="Mecanic..." autocomplete="off" oninput="dvzCheckMechanicDropdown(this)" onfocus="dvzCheckMechanicDropdown(this)" onblur="dvzScheduleCloseDropdown()">`
+      : `<input type="text" class="dvz-denumire">`;
+    const tarifCell = isFirst
+      ? `<input type="text" id="dvz-tarifInput" class="dvz-sel-tarif" placeholder="Tarif..." readonly onfocus="dvzShowTarifDropdown(this)">
+         <input type="hidden" class="dvz-price" id="dvz-tarifValue">`
+      : `<input type="number" class="dvz-price" oninput="dvzCalculateRow(this)">`;
+    opsHTML += `<tr>
+      <td class="dvz-w-number">${i}</td>
+      <td>${descCell}</td>
+      <td class="dvz-w-um"><input type="text" class="dvz-um" value="ora"></td>
+      <td><input type="number" class="dvz-qty" oninput="${isFirst ? "dvzCalculateRowManopera(this)" : "dvzCalculateRow(this)"}"></td>
+      <td><input type="text" class="dvz-price-no-vat" readonly></td>
+      <td>${tarifCell}</td>
+      <td><input type="number" class="dvz-val" oninput="dvzCalculateAllTotals()"></td>
+    </tr>`;
+  }
+  document.getElementById("dvz-opsTableBody").innerHTML = opsHTML;
+}
+function dvzResetForm() {
+  ["dvz-clientNameInput", "dvz-clientAdresaInput", "dvz-clientTelInput", "dvz-clientCUIInput",
+   "dvz-vinInput", "dvz-anFabInput", "dvz-plateInput", "dvz-kmInput", "dvz-oraIntrare",
+   "dvz-stareVizuala", "dvz-cerinteClient", "dvz-dosarDauna", "dvz-dataDauna", "dvz-modelInputManual"]
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  document.getElementById("dvz-dataIntrare").value = todayISODate();
+  document.getElementById("dvz-brandSelect").value = "";
+  document.getElementById("dvz-modelSelect").innerHTML = "";
+  document.getElementById("dvz-modelSelect").classList.add("dvz-hidden");
+  document.getElementById("dvz-modelInputManual").classList.add("dvz-hidden");
+  document.getElementById("dvz-comandaSelect").value = "";
+  document.getElementById("dvz-moto-picker-wrap").classList.add("dvz-hidden");
+  document.getElementById("dvz-moto-picker").innerHTML = "";
+  document.querySelectorAll("#dvz-constatari-body input[type=text]").forEach(i => i.value = "");
+  document.querySelectorAll("#dvz-constatari-body input[type=checkbox]").forEach(i => i.checked = false);
+  document.getElementById("dvz-clientSig1").innerText = "";
+  document.getElementById("dvz-clientSig2").innerText = "";
+  document.getElementById("dvz-mechSig1").innerText = "";
+  document.getElementById("dvz-mechSig2").innerText = "";
+  dvzSelectedClientId = null;
+  dvzSelectedMotoId = null;
+  dvzSelectedMecanicId = null;
+}
+async function openDevizEditor(id) {
+  dvzPopulateComenzi();
+  document.getElementById("devize-list-section").style.display = "none";
+  document.getElementById("devize-editor-section").style.display = "block";
+
+  if (id) {
+    const d = currentDevize.find(x => x.id === id);
+    if (!d) return;
+    dvzEditingId = id;
+    dvzResetForm();
+    document.getElementById("dvz-nrFisaInput").value = d.nr_zi != null ? d.nr_zi : "";
+    document.getElementById("dvz-nrDevizInput").value = d.nr_zi != null ? d.nr_zi : "";
+    document.getElementById("dvz-currentDate1").value = d.data ? formatDate(d.data) : "";
+    document.getElementById("dvz-currentDate2").value = d.data ? formatDate(d.data) : "";
+    document.getElementById("dvz-clientNameInput").value = d.client_nume || "";
+    document.getElementById("dvz-clientAdresaInput").value = d.client_adresa || "";
+    document.getElementById("dvz-clientTelInput").value = d.client_contact || "";
+    document.getElementById("dvz-clientCUIInput").value = d.client_cui || "";
+    document.getElementById("dvz-vinInput").value = d.moto_vin || "";
+    document.getElementById("dvz-anFabInput").value = d.moto_an || "";
+    document.getElementById("dvz-plateInput").value = d.moto_plate || "";
+    document.getElementById("dvz-kmInput").value = d.moto_km || "";
+    document.getElementById("dvz-dataIntrare").value = d.data_intrare || "";
+    document.getElementById("dvz-oraIntrare").value = d.ora_intrare || "";
+    document.getElementById("dvz-stareVizuala").value = d.stare_vizuala || "";
+    document.getElementById("dvz-cerinteClient").value = d.cerinte_client || "";
+    document.getElementById("dvz-dosarDauna").value = d.dosar_dauna || "";
+    document.getElementById("dvz-dataDauna").value = d.data_dauna || "";
+    document.getElementById("dvz-comandaSelect").value = d.comanda_id || "";
+    dvzSelectedClientId = d.client_id || null;
+    dvzSelectedMotoId = d.motocicleta_id || null;
+
+    document.getElementById("dvz-brandSelect").value = d.moto_brand_categorie || "";
+    dvzHandleBrandChange(d.moto_model || null);
+
+    const constatari = Array.isArray(d.constatari) ? d.constatari : [];
+    document.querySelectorAll("#dvz-constatari-body tr").forEach((tr, i) => {
+      const c = constatari[i] || {};
+      tr.querySelector(".dvz-cst-defect").value = c.defect || "";
+      tr.querySelector(".dvz-cst-recomandare").value = c.recomandare || "";
+      tr.querySelector(".dvz-cst-accept").checked = !!c.accept;
+      tr.querySelector(".dvz-cst-refuz").checked = !!c.refuz;
+    });
+
+    document.getElementById("dvz-clientSig1").innerText = d.client_nume || "";
+    document.getElementById("dvz-clientSig2").innerText = d.client_nume || "";
+
+    await dvzLoadLinii(id);
+
+    if (d.mecanic_id) {
+      const m = dvzMecanici.find(x => x.id === d.mecanic_id);
+      if (m) {
+        document.getElementById("dvz-mechInput").value = m.cod || m.nume || "";
+        document.getElementById("dvz-mechSig1").innerText = m.nume || "";
+        document.getElementById("dvz-mechSig2").innerText = m.nume || "";
+        dvzSelectedMecanicId = m.id;
+      }
+    }
+    if (d.tarif_manopera != null) {
+      document.getElementById("dvz-tarifInput").value = d.tarif_manopera;
+      document.getElementById("dvz-tarifValue").value = d.tarif_manopera;
+    }
+    dvzCalculateAllTotals();
+  } else {
+    dvzEditingId = null;
+    dvzResetForm();
+    dvzGenerateTables();
+    document.getElementById("dvz-nrFisaInput").value = "";
+    document.getElementById("dvz-nrFisaInput").placeholder = "(se generează la salvare)";
+    document.getElementById("dvz-nrDevizInput").value = "";
+    document.getElementById("dvz-nrDevizInput").placeholder = "(se generează la salvare)";
+    const azi = formatDate(todayISODate());
+    document.getElementById("dvz-currentDate1").value = azi;
+    document.getElementById("dvz-currentDate2").value = azi;
+    dvzCalculateAllTotals();
+  }
+  dvzAttachAllAutocomplete();
+  dvzSwitchSubtab("fisa");
+}
+function closeDevizEditor() {
+  document.getElementById("devize-editor-section").style.display = "none";
+  document.getElementById("devize-list-section").style.display = "block";
+  dvzEditingId = null;
+}
+
+// ---------- Marca / Model ----------
+function dvzHandleBrandChange(preselectModel) {
+  const brandSelect = document.getElementById("dvz-brandSelect");
+  const modelSelect = document.getElementById("dvz-modelSelect");
+  const modelManual = document.getElementById("dvz-modelInputManual");
+  modelSelect.innerHTML = "";
+  modelSelect.classList.add("dvz-hidden");
+  modelManual.classList.add("dvz-hidden");
+  if (!preselectModel) modelManual.value = "";
+
+  if (brandSelect.value === "Triumph") {
+    modelSelect.classList.remove("dvz-hidden");
+    let opt = document.createElement("option"); opt.value = ""; opt.textContent = "- Alege Model -"; modelSelect.appendChild(opt);
+    let otherOpt = document.createElement("option"); otherOpt.value = "Alt model"; otherOpt.textContent = "* Alt model *"; modelSelect.appendChild(otherOpt);
+    for (const [categorie, models] of Object.entries(dvzTriumphModels)) {
+      const group = document.createElement("optgroup"); group.label = categorie;
+      models.forEach(m => { const o = document.createElement("option"); o.value = m; o.textContent = m; group.appendChild(o); });
+      modelSelect.appendChild(group);
+    }
+    if (preselectModel) {
+      const exists = Array.from(modelSelect.options).some(o => o.value === preselectModel);
+      modelSelect.value = exists ? preselectModel : "Alt model";
+      if (!exists) { modelManual.classList.remove("dvz-hidden"); modelManual.value = preselectModel; }
+    }
+  } else if (brandSelect.value === "Alta marca") {
+    modelManual.classList.remove("dvz-hidden");
+    if (preselectModel) modelManual.value = preselectModel;
+  }
+  dvzUpdateSignatures();
+}
+function dvzHandleModelChange() {
+  const modelSelect = document.getElementById("dvz-modelSelect");
+  const modelManual = document.getElementById("dvz-modelInputManual");
+  if (modelSelect.value === "Alt model") modelManual.classList.remove("dvz-hidden");
+  else { modelManual.classList.add("dvz-hidden"); modelManual.value = ""; }
+  dvzUpdateSignatures();
+}
+function dvzGetModelValue() {
+  const brand = document.getElementById("dvz-brandSelect").value;
+  const modelSel = document.getElementById("dvz-modelSelect").value;
+  const modelManual = document.getElementById("dvz-modelInputManual").value;
+  if (brand === "Alta marca") return modelManual;
+  if (modelSel === "Alt model") return modelManual;
+  return modelSel;
+}
+function dvzUpdateSignatures() {
+  const name = document.getElementById("dvz-clientNameInput").value;
+  document.getElementById("dvz-clientSig1").innerText = name;
+  document.getElementById("dvz-clientSig2").innerText = name;
+}
+
+// ---------- Autocomplete client (Nume/Firma) ----------
+function dvzClientACInput(inputEl) {
+  dvzUpdateSignatures();
+  const q = (inputEl.value || "").trim().toLowerCase();
+  dvzCloseClientAC();
+  if (!q) return;
+  const matches = (currentClients || []).filter(matchesLocationFilter).filter(c => {
+    const motos = c.motociclete || [];
+    const hay = [c.nume, c.prenume, c.telefon, c.email, ...motos.map(m => m.numar_inmatriculare), ...motos.map(m => m.serie_sasiu)]
+      .map(v => (v || "").toLowerCase()).join(" ");
+    return hay.includes(q);
+  }).slice(0, 20);
+  if (!matches.length) return;
+  const box = document.createElement("div");
+  box.className = "client-autocomplete";
+  box.id = "dvz-client-ac-box";
+  matches.forEach(c => {
+    const item = document.createElement("div");
+    item.className = "client-ac-item";
+    const moto0 = (c.motociclete && c.motociclete[0]) || null;
+    const motoSub = moto0 ? [moto0.marca, moto0.model].filter(Boolean).join(" ") : "";
+    item.innerHTML = `<div class="client-ac-name">${escapeHtml([c.nume, c.prenume].filter(Boolean).join(" "))}</div><div class="client-ac-sub">${escapeHtml([c.telefon, motoSub].filter(Boolean).join(" · "))}</div>`;
+    item.addEventListener("pointerdown", (e) => { e.preventDefault(); dvzApplyClient(c); dvzCloseClientAC(); });
+    box.appendChild(item);
+  });
+  const rect = inputEl.getBoundingClientRect();
+  box.style.top = (rect.bottom + 2) + "px";
+  box.style.left = rect.left + "px";
+  box.style.minWidth = rect.width + "px";
+  document.body.appendChild(box);
+}
+function dvzCloseClientAC() {
+  const box = document.getElementById("dvz-client-ac-box");
+  if (box) box.remove();
+}
+function dvzApplyClient(c) {
+  dvzSelectedClientId = c.id;
+  document.getElementById("dvz-clientNameInput").value = [c.nume, c.prenume].filter(Boolean).join(" ");
+  document.getElementById("dvz-clientAdresaInput").value = c.adresa || "";
+  document.getElementById("dvz-clientTelInput").value = [c.telefon, c.email].filter(Boolean).join(" / ");
+  document.getElementById("dvz-clientCUIInput").value = c.cui || "";
+  dvzUpdateSignatures();
+
+  const motos = c.motociclete || [];
+  const pickerWrap = document.getElementById("dvz-moto-picker-wrap");
+  const picker = document.getElementById("dvz-moto-picker");
+  if (motos.length > 1) {
+    picker.innerHTML = motos.map(m => `<option value="${m.id}">${escapeHtml([m.marca, m.model].filter(Boolean).join(" "))}${m.numar_inmatriculare ? " · " + escapeHtml(m.numar_inmatriculare) : ""}</option>`).join("");
+    pickerWrap.classList.remove("dvz-hidden");
+    dvzApplyMotoPick(motos[0].id);
+  } else {
+    pickerWrap.classList.add("dvz-hidden");
+    picker.innerHTML = "";
+    if (motos.length === 1) dvzApplyMoto(motos[0]); else dvzSelectedMotoId = null;
+  }
+}
+function dvzApplyMotoPick(motoId) {
+  const c = currentClients.find(x => x.id === dvzSelectedClientId);
+  if (!c) return;
+  const m = (c.motociclete || []).find(x => x.id === motoId);
+  if (m) dvzApplyMoto(m);
+}
+function dvzApplyMoto(m) {
+  dvzSelectedMotoId = m.id;
+  const isTriumph = (m.marca || "").toLowerCase() === "triumph";
+  const brand = m.marca ? (isTriumph ? "Triumph" : "Alta marca") : "";
+  document.getElementById("dvz-brandSelect").value = brand;
+  const modelText = isTriumph ? (m.model || "") : [m.marca, m.model].filter(Boolean).join(" ");
+  dvzHandleBrandChange(modelText || null);
+  document.getElementById("dvz-vinInput").value = m.serie_sasiu || "";
+  document.getElementById("dvz-anFabInput").value = m.an_fabricatie || "";
+  document.getElementById("dvz-plateInput").value = m.numar_inmatriculare || "";
+  document.getElementById("dvz-kmInput").value = m.km || "";
+}
+
+// ---------- Dropdown generic (piese/manopera preturi uzuale + mecanic + tarif) ----------
+function dvzFilterDataset(dataset, val) {
+  if (!val) return dataset;
+  const q = val.toLowerCase();
+  return dataset.filter(x => (x.nume || "").toLowerCase().includes(q) || (x.cod && x.cod.toLowerCase().includes(q)));
+}
+function dvzBuildDropdown(items, inputEl, customCallback) {
+  if (dvzActiveDropdown) { dvzActiveDropdown.remove(); dvzActiveDropdown = null; }
+  if (!items.length) return;
+  const dd = document.createElement("div");
+  dd.className = "dvz-preset-dropdown";
+  items.forEach(item => {
+    const row = document.createElement("div");
+    row.className = "dvz-preset-item";
+    const pretStr = item.pret != null ? `<span class="dvz-preset-pret">${Number(item.pret).toFixed(2)} RON</span>` : "";
+    row.innerHTML = `<span style="display:flex;flex-direction:column;gap:1px;">
+        <span>${escapeHtml(item.nume || "")}</span>
+        ${item.cod ? `<span class="dvz-preset-sub">Cod: ${escapeHtml(item.cod)}</span>` : ""}
+      </span>${pretStr}`;
+    row.addEventListener("pointerdown", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      if (customCallback) customCallback(item); else dvzDoSelect(item, inputEl);
+    });
+    dd.appendChild(row);
+  });
+  const rect = inputEl.getBoundingClientRect();
+  dd.style.top = (rect.bottom + 2) + "px";
+  dd.style.left = rect.left + "px";
+  document.body.appendChild(dd);
+  dvzActiveDropdown = dd;
+  dvzActiveInput = inputEl;
+}
+function dvzCloseDropdown() {
+  if (dvzActiveDropdown) { dvzActiveDropdown.remove(); dvzActiveDropdown = null; }
+  dvzActiveInput = null;
+}
+function dvzScheduleCloseDropdown() {
+  setTimeout(() => { if (dvzActiveDropdown && document.activeElement !== dvzActiveInput) dvzCloseDropdown(); }, 100);
+}
+document.addEventListener("pointerdown", (e) => {
+  if (dvzActiveDropdown && !dvzActiveDropdown.contains(e.target) && e.target !== dvzActiveInput) dvzCloseDropdown();
+});
+function dvzDoSelect(item, inputEl) {
+  inputEl.value = item.nume;
+  const tr = inputEl.closest("tr");
+  if (tr) {
+    if (item.cod) {
+      const codInput = tr.querySelector(".dvz-cod");
+      if (codInput && !codInput.value) codInput.value = item.cod;
+    }
+    const priceInput = tr.querySelector(".dvz-price");
+    if (priceInput) { priceInput.value = Number(item.pret).toFixed(2); dvzCalculateRow(priceInput); }
+  }
+  dvzCloseDropdown();
+  inputEl.focus();
+}
+function dvzAttachAutocomplete(inputEl, isOp) {
+  const dataset = dvzPreturiUzuale.filter(p => p.tip === (isOp ? "manopera" : "piesa")).map(p => ({ cod: p.cod, nume: p.nume, pret: p.pret_cu_tva }));
+  inputEl.addEventListener("focus", () => dvzBuildDropdown(dvzFilterDataset(dataset, inputEl.value), inputEl));
+  inputEl.addEventListener("input", () => dvzBuildDropdown(dvzFilterDataset(dataset, inputEl.value), inputEl));
+  inputEl.addEventListener("blur", () => dvzScheduleCloseDropdown());
+}
+function dvzAttachAllAutocomplete() {
+  document.querySelectorAll("#dvz-partsTableBody tr").forEach(row => {
+    const inp = row.querySelector(".dvz-denumire");
+    if (inp) dvzAttachAutocomplete(inp, false);
+  });
+  document.querySelectorAll("#dvz-opsTableBody tr").forEach(row => {
+    const inp = row.querySelector(".dvz-denumire");
+    if (inp) dvzAttachAutocomplete(inp, true);
+  });
+}
+function dvzCheckMechanicDropdown(inputEl) {
+  const q = (inputEl.value || "").toLowerCase();
+  const filtered = q ? dvzMecanici.filter(m => (m.cod || "").toLowerCase().includes(q) || (m.nume || "").toLowerCase().includes(q)) : dvzMecanici;
+  dvzBuildDropdown(filtered.map(m => ({ cod: m.cod, nume: (m.cod ? m.cod + " — " : "") + m.nume, pret: null, _mecanic: m })), inputEl, (item) => {
+    inputEl.value = item._mecanic.cod || item._mecanic.nume;
+    dvzSelectedMecanicId = item._mecanic.id;
+    document.getElementById("dvz-mechSig1").innerText = item._mecanic.nume;
+    document.getElementById("dvz-mechSig2").innerText = item._mecanic.nume;
+    dvzCloseDropdown();
+    inputEl.focus();
+  });
+}
+function dvzShowTarifDropdown(inputEl) {
+  dvzBuildDropdown(dvzTarife.map(t => ({ cod: "", nume: t.denumire, pret: t.tarif_ora, _tarif: t })), inputEl, (item) => {
+    const t = item._tarif;
+    inputEl.value = t.tarif_ora;
+    const hidden = document.getElementById("dvz-tarifValue");
+    if (hidden) hidden.value = t.tarif_ora;
+    const row = inputEl.closest("tr");
+    if (row) {
+      const noVat = row.querySelector(".dvz-price-no-vat");
+      if (noVat) noVat.value = (t.tarif_ora / 1.21).toFixed(4).replace(".", ",");
+      const qty = parseFloat(row.querySelector(".dvz-qty")?.value) || 0;
+      const valInput = row.querySelector(".dvz-val");
+      if (valInput) valInput.value = qty * t.tarif_ora > 0 ? (qty * t.tarif_ora).toFixed(2) : "";
+    }
+    dvzCalculateAllTotals();
+    dvzCloseDropdown();
+    inputEl.focus();
+  });
+}
+
+// ---------- Calcule ----------
+function dvzCalculateRow(inputElement) {
+  const row = inputElement.closest("tr");
+  if (!row) return;
+  const qty = parseFloat(row.querySelector(".dvz-qty").value) || 0;
+  const priceWithVat = parseFloat(row.querySelector(".dvz-price").value) || 0;
+  const noVatInput = row.querySelector(".dvz-price-no-vat");
+  if (noVatInput) noVatInput.value = priceWithVat > 0 ? (priceWithVat / 1.21).toFixed(4).replace(".", ",") : "";
+  const valInput = row.querySelector(".dvz-val");
+  const value = qty * priceWithVat;
+  if (valInput) valInput.value = value > 0 ? value.toFixed(2) : "";
+  dvzCalculateAllTotals();
+}
+function dvzCalculateRowManopera(qtyInput) {
+  const row = qtyInput.closest("tr");
+  if (!row) return;
+  const qty = parseFloat(qtyInput.value) || 0;
+  const hiddenPrice = document.getElementById("dvz-tarifValue");
+  const pret = parseFloat(hiddenPrice ? hiddenPrice.value : 0) || 0;
+  const noVat = row.querySelector(".dvz-price-no-vat");
+  if (noVat) noVat.value = pret > 0 ? (pret / 1.21).toFixed(4).replace(".", ",") : "";
+  const valInput = row.querySelector(".dvz-val");
+  if (valInput) valInput.value = qty * pret > 0 ? (qty * pret).toFixed(2) : "";
+  dvzCalculateAllTotals();
+}
+function dvzCalculateAllTotals() {
+  let partsSum = 0, opsSum = 0;
+  document.querySelectorAll("#dvz-partsTable .dvz-val").forEach(i => partsSum += parseFloat(i.value) || 0);
+  const totalPartsEl = document.getElementById("dvz-totalParts"); if (totalPartsEl) totalPartsEl.value = partsSum.toFixed(2);
+  document.querySelectorAll("#dvz-opsTable .dvz-val").forEach(i => opsSum += parseFloat(i.value) || 0);
+  const totalOpsEl = document.getElementById("dvz-totalOps"); if (totalOpsEl) totalOpsEl.value = opsSum.toFixed(2);
+  const grandEl = document.getElementById("dvz-grandTotal"); if (grandEl) grandEl.innerText = (partsSum + opsSum).toFixed(2);
+}
+
+// ---------- Liniile (piese + manoperă) — încărcare / colectare ----------
+async function dvzLoadLinii(devizId) {
+  const { data, error } = await client.from("deviz_linii").select("*").eq("deviz_id", devizId).order("nr");
+  if (error) { alert("Eroare la încărcarea liniilor: " + error.message); return; }
+  dvzGenerateTables();
+  (data || []).forEach(l => {
+    if (l.tip === "piesa") {
+      const tr = document.querySelectorAll("#dvz-partsTableBody tr")[l.nr - 1];
+      if (!tr) return;
+      tr.querySelector(".dvz-cod").value = l.cod_piesa || "";
+      tr.querySelector(".dvz-denumire").value = l.denumire || "";
+      tr.querySelector(".dvz-um").value = l.um || "buc";
+      tr.querySelector(".dvz-qty").value = l.cantitate || "";
+      tr.querySelector(".dvz-price").value = l.pret_unitar || "";
+      dvzCalculateRow(tr.querySelector(".dvz-price"));
+    } else {
+      const tr = document.querySelectorAll("#dvz-opsTableBody tr")[l.nr - 1];
+      if (!tr) return;
+      if (l.nr === 1) {
+        document.getElementById("dvz-mechInput").value = l.denumire || "";
+        document.getElementById("dvz-tarifInput").value = l.pret_unitar || "";
+        document.getElementById("dvz-tarifValue").value = l.pret_unitar || "";
+        tr.querySelector(".dvz-qty").value = l.cantitate || "";
+        dvzCalculateRowManopera(tr.querySelector(".dvz-qty"));
+      } else {
+        tr.querySelector(".dvz-denumire").value = l.denumire || "";
+        tr.querySelector(".dvz-um").value = l.um || "ora";
+        tr.querySelector(".dvz-qty").value = l.cantitate || "";
+        tr.querySelector(".dvz-price").value = l.pret_unitar || "";
+        dvzCalculateRow(tr.querySelector(".dvz-price"));
+      }
+    }
+  });
+  dvzCalculateAllTotals();
+}
+function dvzCollectConstatari() {
+  const out = [];
+  document.querySelectorAll("#dvz-constatari-body tr").forEach(tr => {
+    const defect = tr.querySelector(".dvz-cst-defect").value.trim();
+    const recomandare = tr.querySelector(".dvz-cst-recomandare").value.trim();
+    const accept = tr.querySelector(".dvz-cst-accept").checked;
+    const refuz = tr.querySelector(".dvz-cst-refuz").checked;
+    if (defect || recomandare || accept || refuz) out.push({ defect, recomandare, accept, refuz });
+  });
+  return out;
+}
+function dvzCollectLinii() {
+  const linii = [];
+  document.querySelectorAll("#dvz-partsTableBody tr").forEach((tr, i) => {
+    const cod = (tr.querySelector(".dvz-cod")?.value || "").trim() || null;
+    const den = (tr.querySelector(".dvz-denumire")?.value || "").trim();
+    const um = (tr.querySelector(".dvz-um")?.value || "").trim() || "buc";
+    const qty = parseFloat(tr.querySelector(".dvz-qty")?.value) || 0;
+    const pret = parseFloat(tr.querySelector(".dvz-price")?.value) || 0;
+    if (!den && !qty && !pret) return;
+    linii.push({ tip: "piesa", nr: i + 1, cod_piesa: cod, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
+  });
+  document.querySelectorAll("#dvz-opsTableBody tr").forEach((tr, i) => {
+    const isFirst = i === 0;
+    const den = isFirst ? document.getElementById("dvz-mechInput").value.trim() : (tr.querySelector(".dvz-denumire")?.value || "").trim();
+    const um = (tr.querySelector(".dvz-um")?.value || "").trim() || "ora";
+    const qty = parseFloat(tr.querySelector(".dvz-qty")?.value) || 0;
+    const pretEl = isFirst ? document.getElementById("dvz-tarifValue") : tr.querySelector(".dvz-price");
+    const pret = parseFloat(pretEl?.value) || 0;
+    if (!den && !qty && !pret) return;
+    linii.push({ tip: "manopera", nr: i + 1, cod_piesa: null, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
+  });
+  return linii;
+}
+
+// ---------- Salvare ----------
+async function saveDevize() {
+  const clientNume = document.getElementById("dvz-clientNameInput").value.trim();
+  if (!clientNume) { alert("Numele clientului (sau firma) este obligatoriu."); return; }
+
+  dvzCalculateAllTotals();
+  const totalPiese = parseFloat(document.getElementById("dvz-totalParts").value) || 0;
+  const totalManopera = parseFloat(document.getElementById("dvz-totalOps").value) || 0;
+  const tarifVal = parseFloat(document.getElementById("dvz-tarifValue").value);
+
+  const payload = {
+    client_id: dvzSelectedClientId || null,
+    motocicleta_id: dvzSelectedMotoId || null,
+    mecanic_id: dvzSelectedMecanicId || null,
+    tarif_manopera: isNaN(tarifVal) ? null : tarifVal,
+    stare: "Draft",
+    data_intrare: document.getElementById("dvz-dataIntrare").value || null,
+    ora_intrare: document.getElementById("dvz-oraIntrare").value.trim() || null,
+    stare_vizuala: document.getElementById("dvz-stareVizuala").value.trim() || null,
+    cerinte_client: document.getElementById("dvz-cerinteClient").value.trim() || null,
+    constatari: dvzCollectConstatari(),
+    dosar_dauna: document.getElementById("dvz-dosarDauna").value.trim() || null,
+    data_dauna: document.getElementById("dvz-dataDauna").value || null,
+    client_nume: clientNume,
+    client_adresa: document.getElementById("dvz-clientAdresaInput").value.trim() || null,
+    client_contact: document.getElementById("dvz-clientTelInput").value.trim() || null,
+    client_cui: document.getElementById("dvz-clientCUIInput").value.trim() || null,
+    moto_brand_categorie: document.getElementById("dvz-brandSelect").value || null,
+    moto_model: dvzGetModelValue() || null,
+    moto_vin: document.getElementById("dvz-vinInput").value.trim() || null,
+    moto_an: document.getElementById("dvz-anFabInput").value.trim() || null,
+    moto_plate: document.getElementById("dvz-plateInput").value.trim() || null,
+    moto_km: document.getElementById("dvz-kmInput").value.trim() || null,
+    comanda_id: document.getElementById("dvz-comandaSelect").value || null,
+    total_piese: totalPiese,
+    total_manopera: totalManopera,
+    total_general: totalPiese + totalManopera,
+  };
+
+  let devizId = dvzEditingId;
+  let error, nrGenerat = null;
+  if (devizId) {
+    ({ error } = await client.from("devize").update(payload).eq("id", devizId));
+  } else {
+    const { data: nrData, error: nrErr } = await client.rpc("fn_next_deviz_numar_zi");
+    if (nrErr) { alert("Eroare la generarea numărului de deviz: " + nrErr.message); return; }
+    nrGenerat = nrData;
+    payload.nr_zi = nrData;
+    payload.data = todayISODate();
+    payload.punct_lucru_id = getMyCreateLocationId();
+    payload.creat_de = currentProfile.id;
+    payload.creat_de_nume = currentProfile.nume;
+    const { data: inserted, error: insErr } = await client.from("devize").insert(payload).select().single();
+    error = insErr;
+    if (!error && inserted) devizId = inserted.id;
+  }
+  if (error) { alert("Eroare la salvare: " + error.message); return; }
+
+  const { error: delErr } = await client.from("deviz_linii").delete().eq("deviz_id", devizId);
+  if (delErr) { alert("Deviz salvat, dar liniile nu s-au putut rescrie: " + delErr.message); return; }
+  const linii = dvzCollectLinii().map(l => ({ ...l, deviz_id: devizId }));
+  if (linii.length) {
+    const { error: linErr } = await client.from("deviz_linii").insert(linii);
+    if (linErr) { alert("Deviz salvat, dar liniile nu s-au putut salva: " + linErr.message); return; }
+  }
+
+  dvzEditingId = devizId;
+  if (nrGenerat != null) {
+    document.getElementById("dvz-nrFisaInput").value = nrGenerat;
+    document.getElementById("dvz-nrDevizInput").value = nrGenerat;
+  }
+  if (typeof rzToast === "function") rzToast("Deviz salvat", "ok");
+  await loadDevize();
+}
+
+// ---------- Print / Save + Export PDF ----------
+function dvzSnapshotNode(sourceEl) {
+  const clone = sourceEl.cloneNode(true);
+  const liveInputs = sourceEl.querySelectorAll("input, select, textarea");
+  const cloneInputs = clone.querySelectorAll("input, select, textarea");
+  liveInputs.forEach((live, i) => {
+    const c = cloneInputs[i];
+    if (!c) return;
+    if (live.tagName === "TEXTAREA") { c.textContent = live.value; }
+    else if (live.tagName === "SELECT") {
+      Array.from(c.options).forEach((o, oi) => { o.selected = !!(live.options[oi] && live.options[oi].selected); });
+    } else if (live.type === "checkbox") {
+      if (live.checked) c.setAttribute("checked", ""); else c.removeAttribute("checked");
+    } else {
+      c.setAttribute("value", live.value == null ? "" : live.value);
+    }
+  });
+  return clone;
+}
+function dvzPagesForPrint() {
+  const p1 = dvzSnapshotNode(document.getElementById("dvz-page1"));
+  const p2 = dvzSnapshotNode(document.getElementById("dvz-page2"));
+  p1.classList.remove("dvz-page-hidden");
+  p2.classList.remove("dvz-page-hidden");
+  return { p1, p2 };
+}
+function dvzDocTitle() {
+  const nume = document.getElementById("dvz-clientNameInput").value.trim();
+  const vin = document.getElementById("dvz-vinInput").value.trim();
+  const parts = ["DS"];
+  if (nume) parts.push(nume);
+  if (vin) parts.push(vin);
+  return parts.join(" ");
+}
+function dvzPrintSave() {
+  const { p1, p2 } = dvzPagesForPrint();
+  const pagesHtml = p1.outerHTML + p2.outerHTML;
+
+  const styleEl = document.getElementById("dvz-style");
+  const css = styleEl ? styleEl.textContent : "";
+  const standaloneHtml = "<!DOCTYPE html>\n<html lang=\"ro\"><head><meta charset=\"UTF-8\"><title>" + escapeHtml(dvzDocTitle()) + "</title><style>" + css + "</style></head><body>" + pagesHtml + "</body></html>";
+  const blob = new Blob([standaloneHtml], { type: "text/html" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = (dvzDocTitle() || "Deviz_Service") + ".html";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  const area = document.getElementById("print-area");
+  area.classList.add("dvz-print-area");
+  area.innerHTML = pagesHtml;
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => { area.innerHTML = ""; area.classList.remove("dvz-print-area"); }, 400);
+  }, 300);
+}
+async function dvzExportPDF() {
+  if (typeof html2canvas === "undefined" || !window.jspdf) { alert("Librăriile de export PDF nu s-au încărcat. Verifică conexiunea la internet și reîncearcă."); return; }
+  const { p1, p2 } = dvzPagesForPrint();
+  const holder = document.createElement("div");
+  holder.style.cssText = "position:fixed; left:-99999px; top:0;";
+  holder.appendChild(p1); holder.appendChild(p2);
+  document.body.appendChild(holder);
+  try {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pages = [p1, p2];
+    for (let i = 0; i < pages.length; i++) {
+      const canvas = await html2canvas(pages[i], { scale: 2, backgroundColor: "#ffffff" });
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
+    }
+    pdf.save((dvzDocTitle() || "Deviz_Service") + ".pdf");
+  } catch (e) {
+    alert("Eroare la generarea PDF-ului: " + e.message);
+  } finally {
+    document.body.removeChild(holder);
+  }
+}
+
+// ---------- Import din Programări ----------
+function dvzOpenImportFromProgramari() {
+  const dataEl = document.getElementById("prog-data");
+  const data = dataEl ? dataEl.value : "";
+  if (!data) { alert("Alege mai întâi o zi în Programator."); return; }
+  const list = currentProgramari.filter(p => p.data === data).filter(matchesLocationFilter)
+    .sort((a, b) => (a.ora_inceput || "").localeCompare(b.ora_inceput || ""));
+  if (!list.length) { alert("Nicio programare în ziua selectată."); return; }
+
+  const rowsHtml = list.map(p => {
+    const checked = p.stare !== "Anulat" ? "checked" : "";
+    const moto = [p.marca, p.model].filter(Boolean).join(" ") + (p.nr_inmatriculare ? " · " + p.nr_inmatriculare : "");
+    return `<label style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid #eee;font-size:13px;">
+      <input type="checkbox" class="dvz-import-chk" value="${p.id}" ${checked}>
+      <span style="flex:1;">
+        <b>${fmtOra(p.ora_inceput)}</b> — ${escapeHtml(p.nume_client)}
+        ${moto.trim() ? `<span class="muted"> · ${escapeHtml(moto)}</span>` : ""}
+        ${p.stare === "Anulat" ? '<span class="badge" style="background:#fee2e2;color:#991b1b;margin-left:6px;">Anulat</span>' : ""}
+      </span>
+    </label>`;
+  }).join("");
+
+  rzOpenModal(`
+    <h2>🧾 Creează devize din programările zilei — ${formatDate(data)}</h2>
+    <div class="muted" style="font-size:12.5px;margin-bottom:8px">Se creează câte un deviz nou (draft, gol la piese/manoperă) pentru fiecare programare bifată. Poți reimporta oricând — nu există protecție la duplicate.</div>
+    <div style="margin-bottom:8px;">
+      <button type="button" class="btn-secondary" onclick="dvzImportSelectAll(true)">Selectează tot</button>
+      <button type="button" class="btn-secondary" onclick="dvzImportSelectAll(false)">Deselectează tot</button>
+    </div>
+    <div id="dvz-import-list" style="max-height:360px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">${rowsHtml}</div>
+    <div style="margin-top:14px;text-align:right;">
+      <button type="button" class="btn-primary" onclick="dvzImportSelected('${data}')">Creează devize</button>
+    </div>
+  `);
+}
+function dvzImportSelectAll(state) {
+  document.querySelectorAll("#dvz-import-list .dvz-import-chk").forEach(c => c.checked = state);
+}
+async function dvzImportSelected(data) {
+  const ids = Array.from(document.querySelectorAll("#dvz-import-list .dvz-import-chk:checked")).map(c => c.value);
+  if (!ids.length) { alert("Nicio programare bifată."); return; }
+  const list = currentProgramari.filter(p => ids.includes(p.id));
+
+  let created = 0, failed = 0;
+  for (const p of list) {
+    const marca = (p.marca || "").trim();
+    const isTriumph = marca.toLowerCase() === "triumph";
+    const payload = {
+      stare: "Draft",
+      client_nume: p.nume_client || "Client necunoscut",
+      client_contact: p.contact || null,
+      moto_brand_categorie: marca ? (isTriumph ? "Triumph" : "Alta marca") : null,
+      moto_model: p.model || null,
+      moto_vin: p.vin || null,
+      moto_plate: p.nr_inmatriculare || null,
+      comanda_id: null,
+      total_piese: 0, total_manopera: 0, total_general: 0,
+      punct_lucru_id: p.punct_lucru_id || getMyCreateLocationId(),
+      creat_de: currentProfile.id,
+      creat_de_nume: currentProfile.nume,
+      data: todayISODate(),
+    };
+    const { data: nrData, error: nrErr } = await client.rpc("fn_next_deviz_numar_zi");
+    if (nrErr) { failed++; continue; }
+    payload.nr_zi = nrData;
+    const { error } = await client.from("devize").insert(payload);
+    if (error) failed++; else created++;
+  }
+
+  rzCloseModal();
+  await loadDevize();
+  if (typeof rzToast === "function") rzToast(created + " deviz" + (created === 1 ? "" : "e") + " create" + (failed ? (", " + failed + " eșuate") : "") + ".", failed ? "warn" : "ok");
 }
 
 </script>
