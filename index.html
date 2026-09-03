@@ -951,6 +951,7 @@
           <div class="toolbar-actions">
             <button class="btn-secondary" onclick="document.getElementById('dvz-import-historic-file').click()" title="Importă fișiere .html exportate anterior (Print / Save), pentru o centralizare a devizelor vechi în sistem">📥 Importă istoric (.html)</button>
             <input type="file" id="dvz-import-historic-file" accept=".html,text/html" multiple style="display:none" onchange="dvzImportHistoricFiles(this.files); this.value='';" />
+            <button class="btn-secondary" style="color:#b91c1c" onclick="dvzDeleteAllDevize()" title="Șterge definitiv TOATE devizele din sistem (doar admin)">🗑️ Șterge toate devizele</button>
             <button class="btn-primary" onclick="openDevizEditor(null)">+ Deviz nou</button>
           </div>
         </div>
@@ -7490,6 +7491,30 @@ function confirmDeleteDeviz(id) {
   document.getElementById("confirm-title").textContent = "Ștergi acest deviz?";
   document.getElementById("confirm-overlay").classList.add("open");
 }
+// v43: la cererea lui Andrei — o cale rapidă de a curăța duplicatele create din importuri
+// repetate: șterge TOATE devizele (și liniile lor), cu confirmare dublă (ca la ștergerea unei
+// liste de prețuri întregi pe marcă, v29) — un confirm() simplu, apoi scrierea exactă a unei
+// fraze, ca să nu se întâmple din greșeală cu un singur click.
+async function dvzDeleteAllDevize() {
+  if (!amAdmin()) { alert("Doar administratorul poate șterge toate devizele."); return; }
+  const count = currentDevize.length;
+  if (!count) { alert("Nu există niciun deviz de șters."); return; }
+  if (!confirm(`Ești pe cale să ștergi DEFINITIV toate cele ${count} devize din sistem (inclusiv liniile de piese/manoperă ale fiecăruia). Acțiunea nu poate fi anulată.\n\nContinui?`)) return;
+  const FRAZA = "STERGE TOATE DEVIZELE";
+  const raspuns = prompt(`Ultima confirmare — scrie exact „${FRAZA}" (fără diacritice, cu majuscule) ca să confirmi:`);
+  if (raspuns === null) return;
+  if (raspuns.trim().toUpperCase() !== FRAZA) { alert("Textul nu se potrivește — nu s-a șters nimic."); return; }
+
+  const { error: linErr } = await client.from("deviz_linii").delete().not("id", "is", null);
+  if (linErr) { alert("Eroare la ștergerea liniilor de piese/manoperă: " + linErr.message + "\n\nNu s-a șters niciun deviz încă — reîncearcă."); return; }
+  const { error: devErr } = await client.from("devize").delete().not("id", "is", null);
+  if (devErr) { alert("Eroare la ștergerea devizelor: " + devErr.message); await loadDevize(); return; }
+
+  await loadDevize();
+  renderDevizeTable();
+  if (typeof rzToast === "function") rzToast(`Toate cele ${count} devize au fost șterse definitiv.`, "ok");
+  else alert(`Toate cele ${count} devize au fost șterse definitiv.`);
+}
 
 // ---------- EDITOR: deschidere / inchidere ----------
 function dvzGenerateTables() {
@@ -8229,6 +8254,20 @@ function dvzNormalizeDateForDB(txt) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
   return dvzParseDisplayDate(t);
 }
+// v43: prețul unitar al unei linii de piesă/manoperă e derivat, când se poate, din coloana
+// "Valoare" (val/dvz-val) în loc de recalculat din Cantitate×Preț — un fișier real al lui Andrei
+// avea un rând "Storno Avans" cu Preț=1900 dar Valoare=-1900 (suma scrisă manual în casetă, ca
+// să scadă un avans din total) — recalcularea din Cantitate×Preț pierdea semnul și dubla eroarea
+// (total prea mare cu de două ori valoarea avansului). Când "Valoare" lipsește sau nu e un
+// număr valid, se cade pe prețul unitar normal (cazul obișnuit, fără nicio schimbare de rezultat).
+function dvzPretUnitarDinVal(tr, valSelector, qty, pretFallback) {
+  const valRaw = tr.querySelector(valSelector)?.value;
+  if (valRaw !== undefined && valRaw !== null && valRaw !== "") {
+    const val = parseFloat(valRaw);
+    if (!isNaN(val)) return qty ? (val / qty) : val;
+  }
+  return pretFallback;
+}
 
 // Format nou: fișier exportat de modulul "Devize" al CRM-ului curent (dvzPrintSave) — aceeași
 // structură/id-uri ("dvz-...") ca formularul live.
@@ -8248,7 +8287,7 @@ function dvzExtractNouFormat(doc) {
   const avertismente = [];
   if (!motoBrand || !motoModel) avertismente.push("Marca/Modelul nu au putut fi recuperate din fișier — de completat manual după import.");
 
-  const dataISO = dvzParseDisplayDate(val("dvz-currentDate1")) || todayISODate();
+  const dataISO = dvzNormalizeDateForDB(val("dvz-currentDate1")) || todayISODate();
   const nrZiRaw = val("dvz-nrFisaInput").trim();
   const nrZi = /^\d+$/.test(nrZiRaw) ? parseInt(nrZiRaw, 10) : null;
 
@@ -8267,7 +8306,8 @@ function dvzExtractNouFormat(doc) {
     const den = (tr.querySelector(".dvz-denumire")?.value || "").trim();
     const um = (tr.querySelector(".dvz-um")?.value || "").trim() || "buc";
     const qty = parseFloat(tr.querySelector(".dvz-qty")?.value) || 0;
-    const pret = parseFloat(tr.querySelector(".dvz-price")?.value) || 0;
+    const pretRecalculat = parseFloat(tr.querySelector(".dvz-price")?.value) || 0;
+    const pret = dvzPretUnitarDinVal(tr, ".dvz-val", qty, pretRecalculat);
     if (!den && !qty && !pret) return;
     linii.push({ tip: "piesa", nr: i + 1, cod_piesa: cod, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
   });
@@ -8277,7 +8317,8 @@ function dvzExtractNouFormat(doc) {
     const um = (tr.querySelector(".dvz-um")?.value || "").trim() || "ora";
     const qty = parseFloat(tr.querySelector(".dvz-qty")?.value) || 0;
     const pretRaw = isFirst ? val("dvz-tarifValue") : (tr.querySelector(".dvz-price")?.value || "");
-    const pret = parseFloat(pretRaw) || 0;
+    const pretRecalculat = parseFloat(pretRaw) || 0;
+    const pret = dvzPretUnitarDinVal(tr, ".dvz-val", qty, pretRecalculat);
     if (!den && !qty && !pret) return;
     linii.push({ tip: "manopera", nr: i + 1, cod_piesa: null, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
   });
@@ -8396,25 +8437,36 @@ function dvzExtractFormatVechi(doc) {
     }
   });
 
-  const dataISO = dvzParseDisplayDate(val("currentDate2") || val("currentDate1")) || todayISODate();
+  // v42: "Data:" poate fi deja ISO într-o variantă mai nouă a generatorului vechi (constatat pe
+  // fișiere reale ale lui Andrei) — dvzNormalizeDateForDB acceptă ambele, spre deosebire de
+  // dvzParseDisplayDate (doar format românesc), care întorcea null și cădea silențios pe "azi".
+  const dataISO = dvzNormalizeDateForDB(val("currentDate2") || val("currentDate1")) || todayISODate();
 
+  // v43: citire pe bază de CLASĂ (".qty"/".price"), nu de index de <input> — un fișier real
+  // trimis de Andrei a arătat o a doua variantă a generatorului vechi, cu dropdown de mecanic pe
+  // primul rând de manoperă, care adaugă un <input type="hidden" class="price"> ÎN PLUS față de
+  // <input readonly> vizibil din aceeași celulă — indexul brut de <input> se decala, clasele nu.
+  // Coloanele fără clasă proprie (cod/denumire/U.M.) rămân citite după poziția celulei <td>,
+  // identică în ambele variante ale fișierelor vechi ale lui Andrei.
   const linii = [];
   doc.querySelectorAll("#partsTableBody tr").forEach((tr, i) => {
-    const inputs = tr.querySelectorAll("input");
-    const cod = (inputs[0]?.value || "").trim() || null;
-    const den = (inputs[1]?.value || "").trim();
-    const um = (inputs[2]?.value || "").trim() || "buc";
-    const qty = parseFloat(inputs[3]?.value) || 0;
-    const pret = parseFloat(inputs[5]?.value) || 0; // coloana "Pret" (cu TVA); "Pret (Fara TVA)" e derivat, ignorat
+    const tds = tr.querySelectorAll("td");
+    const cod = (tds[1]?.querySelector("input")?.value || "").trim() || null;
+    const den = (tds[2]?.querySelector("input")?.value || "").trim();
+    const um = (tds[3]?.querySelector("input")?.value || "").trim() || "buc";
+    const qty = parseFloat(tr.querySelector(".qty")?.value) || 0;
+    const pretRecalculat = parseFloat(tr.querySelector(".price")?.value) || 0; // "Pret" (cu TVA); "Pret (Fara TVA)" derivat, ignorat
+    const pret = dvzPretUnitarDinVal(tr, ".val", qty, pretRecalculat);
     if (!den && !qty && !pret) return;
     linii.push({ tip: "piesa", nr: i + 1, cod_piesa: cod, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
   });
   doc.querySelectorAll("#opsTableBody tr").forEach((tr, i) => {
-    const inputs = tr.querySelectorAll("input");
-    const den = (inputs[0]?.value || "").trim();
-    const um = (inputs[1]?.value || "").trim() || "ora";
-    const qty = parseFloat(inputs[2]?.value) || 0;
-    const pret = parseFloat(inputs[4]?.value) || 0; // "Tarif/Ora" (cu TVA)
+    const tds = tr.querySelectorAll("td");
+    const den = (tds[1]?.querySelector("input")?.value || "").trim();
+    const um = (tds[2]?.querySelector("input")?.value || "").trim() || "ora";
+    const qty = parseFloat(tr.querySelector(".qty")?.value) || 0;
+    const pretRecalculat = parseFloat(tr.querySelector(".price")?.value) || 0; // "Tarif/Ora" (cu TVA)
+    const pret = dvzPretUnitarDinVal(tr, ".val", qty, pretRecalculat);
     if (!den && !qty && !pret) return;
     linii.push({ tip: "manopera", nr: i + 1, cod_piesa: null, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
   });
@@ -8435,6 +8487,18 @@ function dvzExtractFormatVechi(doc) {
   };
 }
 
+// v43: "semnătura" unui deviz pentru detectarea duplicatelor exacte la import — client + VIN
+// (sau, dacă VIN-ul lipsește, numărul de înmatriculare) + dată + total general. Andrei a cerut
+// explicit ca aceeași motocicletă/client să poată avea MAI MULTE devize legitime (vizite diferite
+// de service) — doar dacă manopera/piesele/data sunt identice e vorba de un import dublat din
+// greșeală. De-asta semnătura include data și totalul: dacă oricare diferă, nu mai e "duplicat".
+function dvzSemnaturaDeviz(clientNume, vinSauPlaca, dataISO, totalGeneral) {
+  const nume = (clientNume || "").trim().toUpperCase();
+  const identMoto = (vinSauPlaca || "").trim().toUpperCase();
+  const total = (Math.round((Number(totalGeneral) || 0) * 100) / 100).toFixed(2);
+  return nume + "|" + identMoto + "|" + (dataISO || "") + "|" + total;
+}
+
 async function dvzImportHistoricFiles(fileList) {
   const files = Array.from(fileList || []);
   if (!files.length) return;
@@ -8443,7 +8507,13 @@ async function dvzImportHistoricFiles(fileList) {
   // v41: erorile reale (fișier sărit / nesalvat) și avertismentele "blânde" (devizul tot s-a
   // creat, dar cu ceva de verificat manual) se țin acum separat, ca la fișiere multe erorile
   // reale să nu mai fie acoperite de avertismente în lista de rezultate (limitată la 15 rânduri).
-  const rezultat = { ok: 0, esuat: 0, erori: [], avertismente: [] };
+  // v43: semnăturile devizelor deja existente (încărcate din sistem) pornesc setul de detectare
+  // a duplicatelor — completat pe parcurs și cu cele nou-create în ACEST import, ca două fișiere
+  // identice trimise în același lot să nu creeze amândouă câte un deviz.
+  const rezultat = { ok: 0, esuat: 0, sarite: 0, erori: [], avertismente: [] };
+  const semnaturiCunoscute = new Set(
+    currentDevize.map(d => dvzSemnaturaDeviz(d.client_nume, d.moto_vin || d.moto_plate, d.data, d.total_general))
+  );
   for (const file of files) {
     try {
       const text = await file.text();
@@ -8455,6 +8525,14 @@ async function dvzImportHistoricFiles(fileList) {
 
       const totalPiese = ex.linii.filter(l => l.tip === "piesa").reduce((s, l) => s + l.cantitate * l.pret_unitar, 0);
       const totalManopera = ex.linii.filter(l => l.tip === "manopera").reduce((s, l) => s + l.cantitate * l.pret_unitar, 0);
+
+      const semnatura = dvzSemnaturaDeviz(ex.clientNume, ex.vin || ex.plate, ex.dataISO, totalPiese + totalManopera);
+      if (semnaturiCunoscute.has(semnatura)) {
+        rezultat.sarite++;
+        rezultat.avertismente.push(`${file.name}: pare identic cu un deviz deja existent (același client, VIN/nr. înmatriculare, dată și total) — sărit, ca să nu creeze un duplicat.`);
+        continue;
+      }
+      semnaturiCunoscute.add(semnatura);
 
       const payload = {
         stare: "Draft",
@@ -8501,7 +8579,9 @@ async function dvzImportHistoricFiles(fileList) {
   }
 
   await loadDevize();
-  let mesaj = `Import terminat: ${rezultat.ok} devize create` + (rezultat.esuat ? `, ${rezultat.esuat} eșuate` : "") + ".";
+  let mesaj = `Import terminat: ${rezultat.ok} devize create`
+    + (rezultat.sarite ? `, ${rezultat.sarite} sărite ca duplicate` : "")
+    + (rezultat.esuat ? `, ${rezultat.esuat} eșuate` : "") + ".";
   const toate = [...rezultat.erori, ...rezultat.avertismente];
   if (toate.length) {
     const primele = toate.slice(0, 15);
