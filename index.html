@@ -240,13 +240,22 @@
     max-width: 560px; max-height: 90vh; overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0,0,0,.3);
     animation: pop .2s ease;
+    position: relative;
   }
   .modal.small { max-width: 420px; }
   .modal.wide { max-width: 720px; }
   .modal.xwide { max-width: 900px; }
   .modal.xxwide { max-width: 1180px; }
   .modal.full { max-width: 1500px; width: 96vw; }
-  .modal h2 { margin-top: 0; font-size: 18px; font-weight: 700; }
+  .rz-modal-x {
+    position: absolute; top: 14px; right: 14px; width: 32px; height: 32px;
+    border-radius: 50%; border: none; background: #f0f1f4; color: var(--text);
+    font-size: 16px; line-height: 1; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; z-index: 5;
+    transition: background .12s ease;
+  }
+  .rz-modal-x:hover { background: #e3e6ec; }
+  .modal h2 { margin-top: 0; font-size: 18px; font-weight: 700; padding-right: 40px; }
   .modal > .muted { font-size: 13px; margin-top: -8px; margin-bottom: 16px; }
   .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
@@ -981,6 +990,7 @@
 <!-- ============ MODAL ADAUGA/EDITEAZA COMANDA ============ -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal xwide">
+    <button type="button" class="rz-modal-x" onclick="closeModal()" aria-label="Închide" title="Închide">✕</button>
     <h2 id="modal-title">Comandă nouă</h2>
     <input type="hidden" id="f-id" />
     <div class="modal-grid">
@@ -1080,6 +1090,7 @@
 <!-- ============ MODAL EXPORT ============ -->
 <div class="modal-overlay" id="export-overlay">
   <div class="modal">
+    <button type="button" class="rz-modal-x" onclick="closeExportModal()" aria-label="Închide" title="Închide">✕</button>
     <h2>Exportă comenzile (Excel)</h2>
     <div class="muted">Alege ce coloane vrei incluse.</div>
     <div id="export-fields" class="export-fields"></div>
@@ -1098,6 +1109,7 @@
 <!-- ============ MODAL ADAUGA/EDITEAZA CLIENT ============ -->
 <div class="modal-overlay" id="client-modal-overlay">
   <div class="modal">
+    <button type="button" class="rz-modal-x" onclick="closeClientModal()" aria-label="Închide" title="Închide">✕</button>
     <h2 id="client-modal-title">Client nou</h2>
     <input type="hidden" id="c-id" />
     <div class="field span-2">
@@ -1131,6 +1143,7 @@
 <!-- ============ MODAL CLIENT DUPLICAT ============ -->
 <div class="modal-overlay" id="dup-overlay">
   <div class="modal small">
+    <button type="button" class="rz-modal-x" onclick="cancelDuplicate()" aria-label="Închide" title="Închide">✕</button>
     <h2>Client posibil duplicat</h2>
     <div class="muted">Există deja client(ți) cu acest nume:</div>
     <div id="dup-list"></div>
@@ -1145,6 +1158,7 @@
 <!-- ============ MODAL ADAUGA/EDITEAZA PROGRAMARE ============ -->
 <div class="modal-overlay" id="programare-modal-overlay">
   <div class="modal wide">
+    <button type="button" class="rz-modal-x" onclick="closeProgramareModal()" aria-label="Închide" title="Închide">✕</button>
     <h2 id="programare-modal-title">Programare nouă</h2>
     <input type="hidden" id="pr-id" />
     <div class="modal-grid">
@@ -1214,6 +1228,7 @@
 <!-- ============ MODAL SARCINA (adaugare/editare) ============ -->
 <div class="modal-overlay" id="sarcina-modal-overlay">
   <div class="modal wide">
+    <button type="button" class="rz-modal-x" onclick="closeSarcinaModal()" aria-label="Închide" title="Închide">✕</button>
     <h2 id="sarcina-modal-title">Sarcină nouă</h2>
     <input type="hidden" id="sa-id" />
     <div class="modal-grid">
@@ -1272,6 +1287,7 @@
 <!-- ============ MODAL GARANȚIE (adaugare/editare) ============ -->
 <div class="modal-overlay" id="garantie-modal-overlay">
   <div class="modal wide">
+    <button type="button" class="rz-modal-x" onclick="closeGarantieModal()" aria-label="Închide" title="Închide">✕</button>
     <h2 id="garantie-modal-title">Garanție nouă</h2>
     <input type="hidden" id="g-id" />
     <div class="modal-grid">
@@ -1342,6 +1358,7 @@
 <!-- ============ MODAL DAUNĂ (dosar constatare/reconstatare) ============ -->
 <div class="modal-overlay" id="dauna-modal-overlay">
   <div class="modal wide">
+    <button type="button" class="rz-modal-x" onclick="closeDaunaModal()" aria-label="Închide" title="Închide">✕</button>
     <h2 id="dauna-modal-title">Dosar daună nou</h2>
     <input type="hidden" id="dn-id" />
     <div id="dn-stare-bar" style="display:none;margin-bottom:10px"></div>
@@ -1397,6 +1414,7 @@
 <!-- ============ MODAL CONFIRMARE STERGERE (comenzi + clienti) ============ -->
 <div class="modal-overlay" id="confirm-overlay">
   <div class="modal small">
+    <button type="button" class="rz-modal-x" onclick="closeConfirm()" aria-label="Închide" title="Închide">✕</button>
     <h2 id="confirm-title">Ștergi?</h2>
     <div class="muted">Acțiunea nu poate fi anulată.</div>
     <div class="modal-actions">
@@ -5259,14 +5277,46 @@ function rzToast(msg, type) {
 
 // ---------- MODAL GENERIC ----------
 function rzOpenModal(html, sizeClass) {
-  document.getElementById("rz-modal-box").className = sizeClass || "modal wide";
-  document.getElementById("rz-modal-box").innerHTML = html;
+  const box = document.getElementById("rz-modal-box");
+  box.className = sizeClass || "modal wide";
+  box.innerHTML = '<button type="button" class="rz-modal-x" onclick="rzCloseModal()" aria-label="Închide" title="Închide">✕</button>' + html;
   document.getElementById("rz-modal-overlay").classList.add("open");
 }
 function rzCloseModal() {
   document.getElementById("rz-modal-overlay").classList.remove("open");
   rzFocusScan();
 }
+
+// ---------- INCHIDERE POP-UP-URI: Esc + click pe fundal ----------
+const RZ_OVERLAY_CLOSERS = {
+  "modal-overlay": () => closeModal(),
+  "export-overlay": () => closeExportModal(),
+  "client-modal-overlay": () => closeClientModal(),
+  "dup-overlay": () => cancelDuplicate(),
+  "programare-modal-overlay": () => closeProgramareModal(),
+  "sarcina-modal-overlay": () => closeSarcinaModal(),
+  "garantie-modal-overlay": () => closeGarantieModal(),
+  "dauna-modal-overlay": () => closeDaunaModal(),
+  "confirm-overlay": () => closeConfirm(),
+  "rz-modal-overlay": () => rzCloseModal(),
+};
+document.addEventListener("keydown", function (e) {
+  if (e.key !== "Escape" && e.key !== "Esc") return;
+  const ids = Object.keys(RZ_OVERLAY_CLOSERS);
+  for (let i = ids.length - 1; i >= 0; i--) {
+    const el = document.getElementById(ids[i]);
+    if (el && el.classList.contains("open")) {
+      RZ_OVERLAY_CLOSERS[ids[i]]();
+      break;
+    }
+  }
+});
+document.addEventListener("click", function (e) {
+  if (!e.target || !e.target.classList) return;
+  if (!e.target.classList.contains("modal-overlay") || !e.target.classList.contains("open")) return;
+  const closer = RZ_OVERLAY_CLOSERS[e.target.id];
+  if (closer) closer();
+});
 
 // ---------- SUBMOD (Receptie / Inventar) ----------
 function rzSetMode(m) {
