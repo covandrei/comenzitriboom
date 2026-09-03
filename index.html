@@ -358,7 +358,13 @@
   .rz-price-settings-box .hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
   .rz-inline-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .rz-inline-row input, .rz-inline-row select { padding: 6px 9px; border-radius: 6px; border: 1.5px solid var(--border); font-size: 13px; font-family: inherit; }
-  .rz-toast-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 500; display: flex; flex-direction: column; gap: 8px; }
+  /* v40: notificările erau în colțul dreapta-jos, exact unde stă și bulina/panoul de chat
+     (#msg-bubble/#msg-panel, care rămân la right:20px) — o notificare apărută cât timp chatul
+     era deschis putea fi parțial acoperită. Mutate în colțul opus. */
+  .rz-toast-wrap { position: fixed; bottom: 20px; left: 20px; z-index: 500; display: flex; flex-direction: column; gap: 8px; }
+  /* v40: insignă identică celei de pe ecranul "Recepție & Inventar" (#rz-pl-status), dar în
+     antet — vizibilă din orice tab cât timp lista de prețuri se încarcă la pornire/import. */
+  #rz-pl-status-top { white-space: nowrap; }
 
   /* ---------- MESAGERIE (widget flotant) ---------- */
   #msg-bubble { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.25); z-index: 600; user-select: none; }
@@ -628,6 +634,7 @@
       <h1>Comenzi Triumph &amp; Motoboom</h1>
     </div>
     <div class="header-right">
+      <span class="rz-badge no" id="rz-pl-status-top" title="Status listă prețuri">Listă prețuri: 0 coduri</span>
       <span class="user-info" id="user-info"></span>
       <button class="btn-secondary" id="btn-punct-lucru" style="display:none" onclick="openPunctLucruModal()">📍</button>
       <button class="btn-secondary" onclick="openLegalMenu()">⚖️ Legal</button>
@@ -5467,9 +5474,20 @@ async function rzLoadAdaosuri() {
   rzAdaosuri = {};
   (data || []).forEach(r => { rzAdaosuri[r.marca] = Number(r.procent) || 0; });
 }
+// v40: scrie deodată pe insigna de status a listei de prețuri din "Recepție & Inventar"
+// (#rz-pl-status, existentă din v32) ȘI pe cea din antet (#rz-pl-status-top, nouă) — un singur
+// loc de întreținut în cod, vizibil din orice tab, nu doar de pe ecranul Recepție & Inventar.
+function rzSetPlStatus(txt, cls) {
+  const top = document.getElementById("rz-pl-status-top");
+  const bottom = document.getElementById("rz-pl-status");
+  [top, bottom].forEach(el => {
+    if (!el) return;
+    el.textContent = txt;
+    if (cls) el.className = "rz-badge " + cls;
+  });
+}
 async function rzLoadPriceListFull() {
-  const st = document.getElementById("rz-pl-status");
-  const setStatus = (txt) => { if (st) st.textContent = txt; };
+  const setStatus = (txt) => rzSetPlStatus(txt);
 
   // v32: încărcarea dura ~10 minute la Andrei — cu 36.000+ coduri, cererile secvențiale (una după
   // alta, fiecare așteptând răspunsul precedentei) se adună repede dacă limita reală de rânduri per
@@ -5486,7 +5504,7 @@ async function rzLoadPriceListFull() {
   }
 
   const cnt = rzPriceList.length;
-  if (st) { st.textContent = "Listă prețuri: " + cnt + " coduri"; st.className = "rz-badge " + (cnt ? "ok" : "no"); }
+  rzSetPlStatus("Listă prețuri: " + cnt + " coduri", cnt ? "ok" : "no");
 }
 
 // v32: aflăm întâi câte rânduri sunt în total (o cerere ieftină — doar count, fără date), aflăm cât
@@ -6387,7 +6405,6 @@ async function rzHandlePriceFile(event) {
     // restul unui fișier mare din cauza unei singure cereri picate. Afișăm și progresul live, ca să nu
     // pară „blocat” cât timp lucrează la mii de rânduri.
     const CHUNK = 500;
-    const st = document.getElementById("rz-pl-status");
     const totalChunks = Math.ceil(entries.length / CHUNK);
     let ok = 0, failed = 0;
     for (let i = 0, chunkNo = 0; i < entries.length; i += CHUNK, chunkNo++) {
@@ -6399,7 +6416,7 @@ async function rzHandlePriceFile(event) {
       }
       if (saved) ok += chunk.length;
       else { failed += chunk.length; console.error("Lot eșuat la încărcarea prețurilor (marca " + marca + "):", lastError, chunk.map(c => c.cod_piesa)); }
-      if (st) st.textContent = "Se încarcă „" + marca + "”… " + (ok + failed) + " / " + entries.length + " (lot " + (chunkNo + 1) + "/" + totalChunks + ")";
+      rzSetPlStatus("Se încarcă „" + marca + "”… " + (ok + failed) + " / " + entries.length + " (lot " + (chunkNo + 1) + "/" + totalChunks + ")");
     }
     if (!(marca in rzAdaosuri)) { await client.from("adaosuri_marca").upsert({ marca, procent: 0 }); }
     await rzLoadPriceListFull();
@@ -7010,8 +7027,7 @@ async function rzDeletePriceListForBrand() {
   );
   if (raspuns === null) return;
   if (raspuns.trim() !== marca) { alert("Numele nu se potrivește cu „" + marca + "” — nu s-a șters nimic."); return; }
-  const st = document.getElementById("rz-pl-status");
-  if (st) st.textContent = "Se șterge lista „" + marca + "”...";
+  rzSetPlStatus("Se șterge lista „" + marca + "”...");
   const { error } = await client.from("price_list").delete().eq("marca", marca);
   if (error) { alert("Eroare la ștergere: " + error.message); await rzLoadPriceListFull(); return; }
   await rzLoadPriceListFull();
@@ -8186,12 +8202,13 @@ async function dvzExportPDF() {
 // ---------- Import istoric — fișiere .html exportate anterior (Print / Save) ----------
 // v39: Andrei are pe calculator devize vechi, exportate cu "🖨️ Print / Save" înainte să
 // existe modulul "Devize" în CRM — cerere: să le poată importa, pentru o centralizare în sistem.
-// Fișierele astea sunt chiar generate de aplicație (dvzPrintSave, mai sus), deci au exact
-// aceeași structură/id-uri ca formularul live — le putem citi direct cu DOMParser, fără nicio
-// bibliotecă suplimentară. Notă onestă: fișierele exportate ÎNAINTE de fix-ul de mai sus la
-// Marca/Model (v39) pot avea acele două câmpuri goale în fișierul original — dacă aplicația nu
-// le găsește, deviz-ul tot se importă, dar cu un avertisment, ca Andrei să știe ce să completeze
-// manual după import.
+// v41: fișierele reale ale lui Andrei NU sunt toate exportate de aplicația curentă — o parte
+// (probabil cele mai vechi) provin dintr-un generator de deviz de sine-stătător, anterior
+// modulului "Devize" din CRM, cu o structură HTML complet diferită: id-uri fără prefixul "dvz-"
+// (ex. "clientNameInput" în loc de "dvz-clientNameInput") și fără clase pe celulele din tabele
+// (ex. "dvz-cod"/"dvz-denumire"), deci trebuie citite pozițional. dvzImportHistoricFiles încearcă
+// întâi formatul nou (dvzExtractNouFormat), iar dacă nu găsește numele clientului acolo, încearcă
+// formatul vechi (dvzExtractFormatVechi) înainte să declare fișierul invalid.
 function dvzParseDisplayDate(txt) {
   // formatDate() scrie "DD.MM.YYYY" (ro-RO); acceptăm și "DD/MM/YYYY" ca variantă de siguranță.
   const m = /^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/.exec((txt || "").trim());
@@ -8199,6 +8216,210 @@ function dvzParseDisplayDate(txt) {
   const [, d, mo, y] = m;
   return y + "-" + mo.padStart(2, "0") + "-" + d.padStart(2, "0");
 }
+
+// Format nou: fișier exportat de modulul "Devize" al CRM-ului curent (dvzPrintSave) — aceeași
+// structură/id-uri ("dvz-...") ca formularul live.
+function dvzExtractNouFormat(doc) {
+  const el = (id) => doc.getElementById(id);
+  const val = (id) => { const e = el(id); if (!e) return ""; return (e.value != null ? e.value : e.textContent || ""); };
+
+  const clientNume = val("dvz-clientNameInput").trim();
+  if (!clientNume) return null;
+
+  const modelManual = val("dvz-modelInputManual").trim();
+  const modelSelVal = val("dvz-modelSelect").trim();
+  const brandVal = val("dvz-brandSelect").trim();
+  const motoModel = modelManual || (modelSelVal && modelSelVal !== "Alt model" ? modelSelVal : "") || null;
+  const motoBrand = brandVal || null;
+
+  const avertismente = [];
+  if (!motoBrand || !motoModel) avertismente.push("Marca/Modelul nu au putut fi recuperate din fișier — de completat manual după import.");
+
+  const dataISO = dvzParseDisplayDate(val("dvz-currentDate1")) || todayISODate();
+  const nrZiRaw = val("dvz-nrFisaInput").trim();
+  const nrZi = /^\d+$/.test(nrZiRaw) ? parseInt(nrZiRaw, 10) : null;
+
+  const constatari = [];
+  doc.querySelectorAll("#dvz-constatari-body tr").forEach(tr => {
+    const defect = (tr.querySelector(".dvz-cst-defect")?.value || "").trim();
+    const recomandare = (tr.querySelector(".dvz-cst-recomandare")?.value || "").trim();
+    const accept = !!tr.querySelector(".dvz-cst-accept")?.checked;
+    const refuz = !!tr.querySelector(".dvz-cst-refuz")?.checked;
+    if (defect || recomandare || accept || refuz) constatari.push({ defect, recomandare, accept, refuz });
+  });
+
+  const linii = [];
+  doc.querySelectorAll("#dvz-partsTableBody tr").forEach((tr, i) => {
+    const cod = (tr.querySelector(".dvz-cod")?.value || "").trim() || null;
+    const den = (tr.querySelector(".dvz-denumire")?.value || "").trim();
+    const um = (tr.querySelector(".dvz-um")?.value || "").trim() || "buc";
+    const qty = parseFloat(tr.querySelector(".dvz-qty")?.value) || 0;
+    const pret = parseFloat(tr.querySelector(".dvz-price")?.value) || 0;
+    if (!den && !qty && !pret) return;
+    linii.push({ tip: "piesa", nr: i + 1, cod_piesa: cod, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
+  });
+  doc.querySelectorAll("#dvz-opsTableBody tr").forEach((tr, i) => {
+    const isFirst = i === 0;
+    const den = isFirst ? val("dvz-mechInput").trim() : (tr.querySelector(".dvz-denumire")?.value || "").trim();
+    const um = (tr.querySelector(".dvz-um")?.value || "").trim() || "ora";
+    const qty = parseFloat(tr.querySelector(".dvz-qty")?.value) || 0;
+    const pretRaw = isFirst ? val("dvz-tarifValue") : (tr.querySelector(".dvz-price")?.value || "");
+    const pret = parseFloat(pretRaw) || 0;
+    if (!den && !qty && !pret) return;
+    linii.push({ tip: "manopera", nr: i + 1, cod_piesa: null, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
+  });
+
+  return {
+    clientNume,
+    clientAdresa: val("dvz-clientAdresaInput").trim(),
+    clientTel: val("dvz-clientTelInput").trim(),
+    clientCUI: val("dvz-clientCUIInput").trim(),
+    motoBrand, motoModel,
+    vin: val("dvz-vinInput").trim(),
+    anFab: val("dvz-anFabInput").trim(),
+    plate: val("dvz-plateInput").trim(),
+    km: val("dvz-kmInput").trim(),
+    dataIntrare: val("dvz-dataIntrare").trim(),
+    oraIntrare: val("dvz-oraIntrare").trim(),
+    stareVizuala: val("dvz-stareVizuala").trim(),
+    cerinteClient: val("dvz-cerinteClient").trim(),
+    constatari,
+    dosarDauna: val("dvz-dosarDauna").trim(),
+    dataDauna: val("dvz-dataDauna").trim(),
+    dataISO, nrZi,
+    notiteOriginale: val("dvz-notiteService").trim(),
+    linii,
+    avertismente,
+  };
+}
+
+// Format vechi: generatorul de deviz de sine-stătător folosit înainte de modulul "Devize" —
+// id-uri fără prefix ("clientNameInput", "brandSelect"...) și fără clase pe celulele tabelelor,
+// deci piesele/manopera se citesc pozițional (după indexul <input>-urilor din fiecare <tr>).
+function dvzExtractFormatVechi(doc) {
+  const clientInput = doc.getElementById("clientNameInput");
+  const clientNume = (clientInput?.value || "").trim();
+  if (!clientNume) return null;
+
+  const val = (id) => { const e = doc.getElementById(id); if (!e) return ""; return (e.value != null ? e.value : e.textContent || ""); };
+  const rowInputVal = (rows, idx) => {
+    const tds = rows[idx]?.querySelectorAll("td");
+    const inp = tds && tds[1] ? tds[1].querySelector("input") : null;
+    return inp ? (inp.value || "").trim() : "";
+  };
+
+  let clientAdresa = "", clientTel = "", clientCUI = "";
+  const clientTable = clientInput.closest("table");
+  if (clientTable) {
+    const rows = clientTable.querySelectorAll("tbody tr");
+    clientAdresa = rowInputVal(rows, 1);
+    clientTel = rowInputVal(rows, 2);
+    clientCUI = rowInputVal(rows, 3);
+  }
+
+  const brandVal = (doc.getElementById("brandSelect")?.value || "").trim();
+  const modelSelVal = (doc.getElementById("modelSelect")?.value || "").trim();
+  const modelManual = (doc.getElementById("modelInputManual")?.value || "").trim();
+  const motoModel = modelManual || (modelSelVal && modelSelVal !== "Alt model" ? modelSelVal : "") || null;
+  const motoBrand = brandVal || null;
+
+  const avertismente = [];
+  if (!motoBrand || !motoModel) avertismente.push("Marca/Modelul nu au putut fi recuperate din fișier — de completat manual după import.");
+
+  const vinInput = doc.getElementById("vinInput");
+  const vin = (vinInput?.value || "").trim();
+  const motoTable = vinInput ? vinInput.closest("table") : null;
+  let anFab = "";
+  if (vinInput) {
+    const tds = vinInput.closest("tr")?.querySelectorAll("td");
+    anFab = tds && tds[3] ? (tds[3].querySelector("input")?.value || "").trim() : "";
+  }
+
+  const plateInput = doc.getElementById("plateInput");
+  const plate = (plateInput?.value || "").trim();
+  let km = "";
+  if (plateInput) {
+    const tds = plateInput.closest("tr")?.querySelectorAll("td");
+    km = tds && tds[3] ? (tds[3].querySelector("input")?.value || "").trim() : "";
+  }
+
+  let dataIntrare = "", oraIntrare = "";
+  if (motoTable) {
+    const rows = motoTable.querySelectorAll("tbody tr");
+    const lastRow = rows[rows.length - 1];
+    const tds = lastRow?.querySelectorAll("td");
+    if (tds) {
+      dataIntrare = tds[1] ? (tds[1].querySelector("input")?.value || "").trim() : "";
+      oraIntrare = tds[3] ? (tds[3].querySelector("input")?.value || "").trim() : "";
+    }
+  }
+
+  const textareas = doc.querySelectorAll("textarea");
+  const stareVizuala = (textareas[0]?.value ?? textareas[0]?.textContent ?? "").trim();
+  const cerinteClient = (textareas[1]?.value ?? textareas[1]?.textContent ?? "").trim();
+
+  const constatari = [];
+  doc.querySelectorAll("table").forEach(tbl => {
+    const firstTh = tbl.querySelector("thead th");
+    if (!firstTh || !/defect constatat/i.test(firstTh.textContent || "")) return;
+    tbl.querySelectorAll("tbody tr").forEach(tr => {
+      const tds = tr.querySelectorAll("td");
+      const defect = (tds[0]?.querySelector("input")?.value || "").trim();
+      const recomandare = (tds[1]?.querySelector("input")?.value || "").trim();
+      const accept = !!tds[2]?.querySelector("input[type=checkbox]")?.checked;
+      const refuz = !!tds[3]?.querySelector("input[type=checkbox]")?.checked;
+      if (defect || recomandare || accept || refuz) constatari.push({ defect, recomandare, accept, refuz });
+    });
+  });
+
+  let dosarDauna = "", dataDauna = "", nrZi = null;
+  doc.querySelectorAll("strong").forEach(s => {
+    const t = (s.textContent || "").trim();
+    if (t === "Dosar dauna:") dosarDauna = (s.parentElement?.querySelector("input")?.value || "").trim();
+    if (t === "Data Dauna:") dataDauna = (s.parentElement?.querySelector("input")?.value || "").trim();
+    if (t === "Nr:") {
+      const raw = (s.parentElement?.querySelector("input")?.value || "").trim();
+      if (/^\d+$/.test(raw)) nrZi = parseInt(raw, 10);
+    }
+  });
+
+  const dataISO = dvzParseDisplayDate(val("currentDate2") || val("currentDate1")) || todayISODate();
+
+  const linii = [];
+  doc.querySelectorAll("#partsTableBody tr").forEach((tr, i) => {
+    const inputs = tr.querySelectorAll("input");
+    const cod = (inputs[0]?.value || "").trim() || null;
+    const den = (inputs[1]?.value || "").trim();
+    const um = (inputs[2]?.value || "").trim() || "buc";
+    const qty = parseFloat(inputs[3]?.value) || 0;
+    const pret = parseFloat(inputs[5]?.value) || 0; // coloana "Pret" (cu TVA); "Pret (Fara TVA)" e derivat, ignorat
+    if (!den && !qty && !pret) return;
+    linii.push({ tip: "piesa", nr: i + 1, cod_piesa: cod, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
+  });
+  doc.querySelectorAll("#opsTableBody tr").forEach((tr, i) => {
+    const inputs = tr.querySelectorAll("input");
+    const den = (inputs[0]?.value || "").trim();
+    const um = (inputs[1]?.value || "").trim() || "ora";
+    const qty = parseFloat(inputs[2]?.value) || 0;
+    const pret = parseFloat(inputs[4]?.value) || 0; // "Tarif/Ora" (cu TVA)
+    if (!den && !qty && !pret) return;
+    linii.push({ tip: "manopera", nr: i + 1, cod_piesa: null, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
+  });
+  if (linii.some(l => l.tip === "manopera" && l.nr === 1 && /^[A-Z]{2,4}\d{1,3}$/i.test(l.denumire))) {
+    avertismente.push("Rândul de manoperă „efectuat de” conținea un cod de mecanic (nu un nume) în fișierul original — de verificat după import.");
+  }
+
+  return {
+    clientNume, clientAdresa, clientTel, clientCUI,
+    motoBrand, motoModel, vin, anFab, plate, km,
+    dataIntrare, oraIntrare, stareVizuala, cerinteClient,
+    constatari, dosarDauna, dataDauna, dataISO, nrZi,
+    notiteOriginale: "",
+    linii,
+    avertismente,
+  };
+}
+
 async function dvzImportHistoricFiles(fileList) {
   const files = Array.from(fileList || []);
   if (!files.length) return;
@@ -8209,79 +8430,36 @@ async function dvzImportHistoricFiles(fileList) {
     try {
       const text = await file.text();
       const doc = new DOMParser().parseFromString(text, "text/html");
-      const el = (id) => doc.getElementById(id);
-      const val = (id) => { const e = el(id); if (!e) return ""; return (e.value != null ? e.value : e.textContent || ""); };
+      const ex = dvzExtractNouFormat(doc) || dvzExtractFormatVechi(doc);
+      if (!ex) { rezultat.esuat++; rezultat.avertismente.push(`${file.name}: nu am găsit numele clientului — pare că nu e un fișier de deviz valid, sărit.`); continue; }
 
-      const clientNume = val("dvz-clientNameInput").trim();
-      if (!clientNume) { rezultat.esuat++; rezultat.avertismente.push(`${file.name}: nu am găsit numele clientului — pare că nu e un fișier de deviz valid, sărit.`); continue; }
+      ex.avertismente.forEach(a => rezultat.avertismente.push(`${file.name}: ${a}`));
 
-      const modelManual = val("dvz-modelInputManual").trim();
-      const modelSelVal = val("dvz-modelSelect").trim();
-      const brandVal = val("dvz-brandSelect").trim();
-      const motoModel = modelManual || (modelSelVal && modelSelVal !== "Alt model" ? modelSelVal : "") || null;
-      const motoBrand = brandVal || null;
-      if (!motoBrand || !motoModel) rezultat.avertismente.push(`${file.name}: Marca/Modelul nu au putut fi recuperate din fișier — de completat manual după import.`);
-
-      const dataISO = dvzParseDisplayDate(val("dvz-currentDate1")) || todayISODate();
-      const nrZiRaw = val("dvz-nrFisaInput").trim();
-      const nrZi = /^\d+$/.test(nrZiRaw) ? parseInt(nrZiRaw, 10) : null;
-
-      const constatari = [];
-      doc.querySelectorAll("#dvz-constatari-body tr").forEach(tr => {
-        const defect = (tr.querySelector(".dvz-cst-defect")?.value || "").trim();
-        const recomandare = (tr.querySelector(".dvz-cst-recomandare")?.value || "").trim();
-        const accept = !!tr.querySelector(".dvz-cst-accept")?.checked;
-        const refuz = !!tr.querySelector(".dvz-cst-refuz")?.checked;
-        if (defect || recomandare || accept || refuz) constatari.push({ defect, recomandare, accept, refuz });
-      });
-
-      const linii = [];
-      doc.querySelectorAll("#dvz-partsTableBody tr").forEach((tr, i) => {
-        const cod = (tr.querySelector(".dvz-cod")?.value || "").trim() || null;
-        const den = (tr.querySelector(".dvz-denumire")?.value || "").trim();
-        const um = (tr.querySelector(".dvz-um")?.value || "").trim() || "buc";
-        const qty = parseFloat(tr.querySelector(".dvz-qty")?.value) || 0;
-        const pret = parseFloat(tr.querySelector(".dvz-price")?.value) || 0;
-        if (!den && !qty && !pret) return;
-        linii.push({ tip: "piesa", nr: i + 1, cod_piesa: cod, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
-      });
-      doc.querySelectorAll("#dvz-opsTableBody tr").forEach((tr, i) => {
-        const isFirst = i === 0;
-        const den = isFirst ? val("dvz-mechInput").trim() : (tr.querySelector(".dvz-denumire")?.value || "").trim();
-        const um = (tr.querySelector(".dvz-um")?.value || "").trim() || "ora";
-        const qty = parseFloat(tr.querySelector(".dvz-qty")?.value) || 0;
-        const pretRaw = isFirst ? val("dvz-tarifValue") : (tr.querySelector(".dvz-price")?.value || "");
-        const pret = parseFloat(pretRaw) || 0;
-        if (!den && !qty && !pret) return;
-        linii.push({ tip: "manopera", nr: i + 1, cod_piesa: null, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
-      });
-
-      const totalPiese = linii.filter(l => l.tip === "piesa").reduce((s, l) => s + l.cantitate * l.pret_unitar, 0);
-      const totalManopera = linii.filter(l => l.tip === "manopera").reduce((s, l) => s + l.cantitate * l.pret_unitar, 0);
-      const notiteOriginale = val("dvz-notiteService").trim();
+      const totalPiese = ex.linii.filter(l => l.tip === "piesa").reduce((s, l) => s + l.cantitate * l.pret_unitar, 0);
+      const totalManopera = ex.linii.filter(l => l.tip === "manopera").reduce((s, l) => s + l.cantitate * l.pret_unitar, 0);
 
       const payload = {
         stare: "Draft",
-        data: dataISO,
-        nr_zi: nrZi,
-        data_intrare: val("dvz-dataIntrare").trim() || null,
-        ora_intrare: val("dvz-oraIntrare").trim() || null,
-        stare_vizuala: val("dvz-stareVizuala").trim() || null,
-        cerinte_client: val("dvz-cerinteClient").trim() || null,
-        constatari,
-        dosar_dauna: val("dvz-dosarDauna").trim() || null,
-        data_dauna: val("dvz-dataDauna").trim() || null,
-        client_nume: clientNume,
-        client_adresa: val("dvz-clientAdresaInput").trim() || null,
-        client_contact: val("dvz-clientTelInput").trim() || null,
-        client_cui: val("dvz-clientCUIInput").trim() || null,
-        moto_brand_categorie: motoBrand,
-        moto_model: motoModel,
-        moto_vin: val("dvz-vinInput").trim() || null,
-        moto_an: val("dvz-anFabInput").trim() || null,
-        moto_plate: val("dvz-plateInput").trim() || null,
-        moto_km: val("dvz-kmInput").trim() || null,
-        notite: (notiteOriginale ? notiteOriginale + "\n\n" : "") + `[Import istoric — fișier original: ${file.name}]`,
+        data: ex.dataISO,
+        nr_zi: ex.nrZi,
+        data_intrare: ex.dataIntrare || null,
+        ora_intrare: ex.oraIntrare || null,
+        stare_vizuala: ex.stareVizuala || null,
+        cerinte_client: ex.cerinteClient || null,
+        constatari: ex.constatari,
+        dosar_dauna: ex.dosarDauna || null,
+        data_dauna: ex.dataDauna || null,
+        client_nume: ex.clientNume,
+        client_adresa: ex.clientAdresa || null,
+        client_contact: ex.clientTel || null,
+        client_cui: ex.clientCUI || null,
+        moto_brand_categorie: ex.motoBrand,
+        moto_model: ex.motoModel,
+        moto_vin: ex.vin || null,
+        moto_an: ex.anFab || null,
+        moto_plate: ex.plate || null,
+        moto_km: ex.km || null,
+        notite: (ex.notiteOriginale ? ex.notiteOriginale + "\n\n" : "") + `[Import istoric — fișier original: ${file.name}]`,
         total_piese: totalPiese,
         total_manopera: totalManopera,
         total_general: totalPiese + totalManopera,
@@ -8292,8 +8470,8 @@ async function dvzImportHistoricFiles(fileList) {
 
       const { data: inserted, error: insErr } = await client.from("devize").insert(payload).select().single();
       if (insErr) { rezultat.esuat++; rezultat.avertismente.push(`${file.name}: eroare la salvare — ${insErr.message}`); continue; }
-      if (linii.length) {
-        const liniiPayload = linii.map(l => ({ ...l, deviz_id: inserted.id }));
+      if (ex.linii.length) {
+        const liniiPayload = ex.linii.map(l => ({ ...l, deviz_id: inserted.id }));
         const { error: linErr } = await client.from("deviz_linii").insert(liniiPayload);
         if (linErr) rezultat.avertismente.push(`${file.name}: devizul a fost creat, dar liniile (piese/manoperă) nu s-au putut salva — ${linErr.message}`);
       }
