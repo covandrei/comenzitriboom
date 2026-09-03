@@ -4986,14 +4986,91 @@ async function rzLoadAdaosuri() {
   (data || []).forEach(r => { rzAdaosuri[r.marca] = Number(r.procent) || 0; });
 }
 async function rzLoadPriceListFull() {
-  // Supabase/PostgREST limitează implicit fiecare select() la un număr fix de rânduri per cerere
-  // (setare de proiect — „Max Rows”, pe unele proiecte 1000, pe altele mai puțin), indiferent câte
-  // există în tabel — un select() simplu, fără paginare, se oprea tăcut la prima "pagină" (fără
-  // nicio eroare), motiv pentru care liste mari (ex. 36000+ coduri Triumph) nu se încărcau complet.
-  // Fix corect (nu presupunem CÂT anume limitează serverul per cerere): cerem câte 1000 din
-  // .range(), dar avansăm de fiecare dată exact cu câte au venit efectiv (nu cu 1000 fix) și ne
-  // oprim doar când o cerere întoarce 0 rânduri — asta merge indiferent de limita reală a
-  // proiectului, chiar dacă e sub 1000.
+  const st = document.getElementById("rz-pl-status");
+  const setStatus = (txt) => { if (st) st.textContent = txt; };
+
+  // v32: încărcarea dura ~10 minute la Andrei — cu 36.000+ coduri, cererile secvențiale (una după
+  // alta, fiecare așteptând răspunsul precedentei) se adună repede dacă limita reală de rânduri per
+  // cerere a proiectului Supabase ("Max Rows") e mult sub 1000: pot fi nevoie de sute de cereri, iar
+  // suma lor ajunge ușor la minute întregi. Fix: le cerem acum în PARALEL (mai multe deodată), nu
+  // una câte una — timpul de așteptare devine cât durează cel mai lent grup de cereri simultane, nu
+  // suma tuturor. Dacă din orice motiv (rețea, eroare) încărcarea paralelă eșuează sau nu se
+  // potrivește exact la număr, revenim automat la metoda veche, secvențială — mai lentă, dar sigură.
+  try {
+    await rzLoadPriceListFullParallel(setStatus);
+  } catch (e) {
+    console.error("Încărcare în paralel eșuată, revin la metoda secvențială (mai lentă, dar sigură):", e);
+    await rzLoadPriceListFullSequential(setStatus);
+  }
+
+  const cnt = rzPriceList.length;
+  if (st) { st.textContent = "Listă prețuri: " + cnt + " coduri"; st.className = "rz-badge " + (cnt ? "ok" : "no"); }
+}
+
+// v32: aflăm întâi câte rânduri sunt în total (o cerere ieftină — doar count, fără date), aflăm cât
+// de mari sunt de fapt paginile primite de la server (o cerere de test, ca să nu presupunem NIMIC
+// despre limita reală a proiectului — aceeași lecție ca la v27/v28), apoi cerem restul paginilor cu
+// mai multe cereri deodată (CONCURRENCY), nu una câte una.
+async function rzLoadPriceListFullParallel(setStatus) {
+  const REQUEST_SIZE = 1000;
+  const CONCURRENCY = 6; // cereri simultane — suficient ca să fie mult mai rapid, suficient de puțin ca să nu sufoce serverul
+
+  setStatus("Listă prețuri: se încarcă...");
+
+  const { count, error: countErr } = await client.from("price_list").select("id", { count: "exact", head: true });
+  if (countErr) throw countErr;
+  if (!count) { rzPriceList = []; return; }
+
+  // prima pagină, ca să aflăm CÂT de mari sunt de fapt paginile primite (limita reală a proiectului)
+  const { data: firstPage, error: firstErr } = await client.from("price_list").select("*")
+    .order("marca", { ascending: true }).order("cod_piesa", { ascending: true }).range(0, REQUEST_SIZE - 1);
+  if (firstErr) throw firstErr;
+  const pageSize = (firstPage || []).length;
+  if (!pageSize) { rzPriceList = []; return; }
+
+  const pages = [firstPage];
+  let loaded = pageSize;
+  setStatus(`Listă prețuri: se încarcă... (${loaded}/${count})`);
+
+  // restul paginilor, calculate din mărimea REALĂ a primei pagini (pageSize) — nu din cât am cerut
+  // (REQUEST_SIZE). Dacă limita reală a proiectului e sub 1000, o cerere .range(from, from+999) tot
+  // întoarce doar "pageSize" rânduri, nu 999 — pasul dintre cereri trebuie să fie exact atât cât
+  // primim efectiv, altfel sar rânduri întregi neobservat (exact greșeala din v27, acum în varianta
+  // paralelă). Cerute în paralel, maxim CONCURRENCY deodată.
+  const offsets = [];
+  for (let from = pageSize; from < count; from += pageSize) offsets.push(from);
+
+  let nextIdx = 0;
+  async function worker() {
+    while (nextIdx < offsets.length) {
+      const myIdx = nextIdx++;
+      const from = offsets[myIdx];
+      const { data, error } = await client.from("price_list").select("*")
+        .order("marca", { ascending: true }).order("cod_piesa", { ascending: true }).range(from, from + REQUEST_SIZE - 1);
+      if (error) throw error;
+      pages[myIdx + 1] = data || [];
+      loaded += (data || []).length;
+      setStatus(`Listă prețuri: se încarcă... (${Math.min(loaded, count)}/${count})`);
+    }
+  }
+  const workers = [];
+  for (let i = 0; i < Math.min(CONCURRENCY, offsets.length); i++) workers.push(worker());
+  await Promise.all(workers);
+
+  const all = pages.flat();
+  if (all.length !== count) {
+    // ceva nu s-a potrivit exact (ex: cineva a adăugat/șters coduri chiar în timp ce se încărca) —
+    // nu acceptăm tăcit o listă posibil incompletă, mai bine lăsăm apelantul să reîncerce sigur, secvențial
+    throw new Error(`Verificare eșuată la încărcarea în paralel: ${all.length} rânduri primite, ${count} așteptate.`);
+  }
+  rzPriceList = all;
+}
+
+// metoda veche, secvențială — folosită doar ca rezervă, dacă încărcarea în paralel eșuează dintr-un
+// motiv oarecare (rețea, o eroare punctuală etc.). Mai lentă, dar cel mai sigur mod de a nu pierde
+// niciun cod, indiferent de limita reală a proiectului: avansează exact cu câte rânduri au venit
+// efectiv la fiecare cerere și se oprește doar când o cerere întoarce 0 rânduri.
+async function rzLoadPriceListFullSequential(setStatus) {
   const REQUEST_SIZE = 1000;
   const MAX_ITERATII = 2000; // gardă de siguranță (2.000.000 de rânduri) — nu ar trebui atinsă niciodată
   let all = [];
@@ -5005,11 +5082,9 @@ async function rzLoadPriceListFull() {
     if (!primite.length) break;
     all = all.concat(primite);
     from += primite.length;
+    if (setStatus) setStatus(`Listă prețuri: se încarcă... (${all.length})`);
   }
   rzPriceList = all;
-  const cnt = rzPriceList.length;
-  const st = document.getElementById("rz-pl-status");
-  if (st) { st.textContent = "Listă prețuri: " + cnt + " coduri"; st.className = "rz-badge " + (cnt ? "ok" : "no"); }
 }
 
 async function loadBranduriMoto() {
