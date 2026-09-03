@@ -12,6 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
   :root {
     --bg: #f3f4f7;
@@ -1360,7 +1361,10 @@
 
     <div id="dn-fisiere-wrap" style="margin-top:14px;display:none">
       <div class="piese-section">
-        <label>Fișiere dosar</label>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <label style="margin:0">Fișiere dosar</label>
+          <button type="button" class="btn-secondary" style="padding:5px 10px;font-size:12px" onclick="descarcaPozeDaunaZip(document.getElementById('dn-id').value)">⬇ Descarcă toate pozele (.zip)</button>
+        </div>
         <div id="dn-fisiere-categorii"></div>
       </div>
     </div>
@@ -4401,12 +4405,23 @@ async function closeDaunaModal() {
   daunaDraftUnconfirmed = false;
 }
 
+// Bifele „Constatare"/„Reconstatare" din formular sunt salvate în baza de date abia la „Salvează" —
+// dar secțiunile de poze (📷 Poze Constatare / 📷 Poze Reconstatare) trebuie arătate/ascunse pe loc,
+// după starea LIVE a bifelor din ecran, nu după ce scrie încă în baza de date. Orice re-randare a
+// secțiunilor de fișiere (după bifă, după încărcare, după ștergere) trebuie să treacă prin acest
+// helper, altfel o secțiune cu poze proaspăt încărcate poate „dispărea" până la următoarea bifare —
+// exact bug-ul raportat: pozele nu se pierd niciodată, doar secțiunea lor nu se mai arăta.
+function daunaRecordCuBifeLive(d) {
+  const cb1 = document.getElementById("dn-constatare");
+  const cb2 = document.getElementById("dn-reconstatare");
+  return { ...d, constatare: cb1 ? cb1.checked : !!d.constatare, reconstatare: cb2 ? cb2.checked : !!d.reconstatare };
+}
 function onDaunaBifeChanged() {
   const id = document.getElementById("dn-id").value;
   if (!id) return;
   const d = currentDaune.find(x => x.id === id);
   if (!d) return;
-  renderDaunaFisiereSections({ ...d, constatare: document.getElementById("dn-constatare").checked, reconstatare: document.getElementById("dn-reconstatare").checked });
+  renderDaunaFisiereSections(daunaRecordCuBifeLive(d));
 }
 
 async function saveDauna() {
@@ -4558,7 +4573,7 @@ async function uploadFisiereDauna(dosarId, categorie, inputEl) {
   inputEl.value = "";
   await loadDaune();
   const d = currentDaune.find(x => x.id === dosarId);
-  if (d) renderDaunaFisiereSections(d);
+  if (d) renderDaunaFisiereSections(daunaRecordCuBifeLive(d));
   if (typeof rzToast === "function") rzToast("Fișiere încărcate", "ok");
 }
 async function deschideFisierDauna(fisierId) {
@@ -4578,8 +4593,59 @@ async function stergeFisierDauna(fisierId) {
   if (dbErr) alert("Fișierul a fost șters din stocare, dar înregistrarea lui nu s-a putut șterge: " + dbErr.message);
   await loadDaune();
   const d = currentDaune.find(x => x.id === f.dosar_id);
-  if (d) renderDaunaFisiereSections(d);
+  if (d) renderDaunaFisiereSections(daunaRecordCuBifeLive(d));
   if (typeof rzToast === "function") rzToast("Fișier șters", "ok");
+}
+
+// Descarcă, într-o singură arhivă .zip, toate pozele (Constatare + Reconstatare) unui dosar de daună
+// — în loc să deschizi/salvezi fiecare poză pe rând, un singur fișier cu tot.
+async function descarcaPozeDaunaZip(dosarId) {
+  if (!dosarId) { alert("Salvează mai întâi dosarul."); return; }
+  const d = currentDaune.find(x => x.id === dosarId);
+  if (!d) { alert("Dosar negăsit."); return; }
+  const poze = (d.fisiere || []).filter(f => f.categorie === "foto_constatare" || f.categorie === "foto_reconstatare");
+  if (!poze.length) { alert("Nu există poze încărcate pentru acest dosar."); return; }
+  if (typeof JSZip === "undefined") { alert("Funcția de arhivare nu s-a putut încărca (verifică internetul) — încearcă din nou, sau descarcă pozele una câte una."); return; }
+  if (typeof rzToast === "function") rzToast("Se pregătește arhiva cu " + poze.length + " poze...", "ok");
+  const zip = new JSZip();
+  const usedNames = new Set();
+  let esuate = 0;
+  for (const f of poze) {
+    try {
+      const { data, error } = await client.storage.from("daune").createSignedUrl(f.path, 3600);
+      if (error) throw error;
+      const resp = await fetch(data.signedUrl);
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      const blob = await resp.blob();
+      let nume = f.nume_fisier || ("poza_" + f.id);
+      if (usedNames.has(nume)) {
+        const dotIdx = nume.lastIndexOf(".");
+        const baza = dotIdx > 0 ? nume.slice(0, dotIdx) : nume;
+        const ext = dotIdx > 0 ? nume.slice(dotIdx) : "";
+        nume = baza + "_" + f.id.slice(0, 6) + ext;
+      }
+      usedNames.add(nume);
+      const subfolder = f.categorie === "foto_constatare" ? "Constatare" : "Reconstatare";
+      zip.file(subfolder + "/" + nume, blob);
+    } catch (e) {
+      console.error("Nu s-a putut adăuga în arhivă: " + f.nume_fisier, e);
+      esuate++;
+    }
+  }
+  if (Object.keys(zip.files).length === 0) { alert("Nicio poză nu a putut fi descărcată."); return; }
+  const continut = await zip.generateAsync({ type: "blob" });
+  const url = URL.createObjectURL(continut);
+  const a = document.createElement("a");
+  a.href = url;
+  const sufixDosar = d.numar_dosar ? ("_" + String(d.numar_dosar).replace(/[^a-zA-Z0-9\-_]/g, "")) : "";
+  a.download = "poze_dauna" + sufixDosar + ".zip";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  if (typeof rzToast === "function") {
+    rzToast(esuate ? `Arhivă descărcată — ${poze.length - esuate} poze (${esuate} au eșuat)` : `Arhivă descărcată: ${poze.length} poze`, esuate ? "err" : "ok");
+  }
 }
 
 // ---------- Observații (jurnal de comentarii, ca la Sarcini) ----------
