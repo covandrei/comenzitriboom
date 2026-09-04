@@ -274,6 +274,7 @@
   .piesa-row input.piesa-pret-fara,
   .piesa-row input.piesa-pret-cu { flex: 0 0 13%; min-width: 78px; }
   .piesa-row select.piesa-moneda { flex: 0 0 68px; }
+  .piesa-row input.piesa-factura { flex: 0 0 13%; min-width: 90px; }
   .piesa-row input:focus, .piesa-row select:focus { outline: none; border-color: var(--accent); }
 
   .export-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px; }
@@ -1485,8 +1486,9 @@
         </select>
       </div>
       <div class="field" id="wrap-factura">
-        <label>Nr. factură</label>
+        <label>Nr. factură (implicit, la nivel de comandă)</label>
         <input id="f-factura" placeholder="—" />
+        <div class="hint">Fiecare piesă poate avea propriul număr de factură — vezi câmpul „Nr. factură” de la fiecare piesă, mai jos.</div>
       </div>
       <div class="field">
         <label>Furnizor (de la cine s-a achiziționat)</label>
@@ -1503,9 +1505,10 @@
       </div>
 
       <div class="piese-section">
-        <label>Piese comandate * <span class="perm-summary">(cod / denumire / cantitate / preț cu TVA / preț fără TVA / monedă)</span></label>
+        <label>Piese comandate * <span class="perm-summary">(cod / denumire / cantitate / preț cu TVA / preț fără TVA / monedă / Nr. factură)</span></label>
         <div id="piese-list"></div>
         <button type="button" class="btn-secondary" onclick="addPiesaRow()">+ Adaugă altă piesă</button>
+        <div class="hint">Completează un „Cod piesă” existent în „Piese (listă prețuri)” sau în Inventar Liber — denumirea și prețul se preiau automat, dacă sunt goale.</div>
       </div>
     </div>
     <div class="modal-actions">
@@ -2401,7 +2404,7 @@ function switchTab(tab) {
 async function loadOrders() {
   const { data, error } = await client
     .from("comenzi")
-    .select("*, piese:comenzi_piese(id,cod_piesa,denumire_piesa,cantitate,pret_cu_tva,moneda)")
+    .select("*, piese:comenzi_piese(id,cod_piesa,denumire_piesa,cantitate,pret_cu_tva,moneda,numar_factura)")
     .order("termen_livrare", { ascending: true });
 
   if (error) { alert("Eroare la încărcarea comenzilor: " + error.message); return; }
@@ -2555,6 +2558,22 @@ function renderStareSelect(o) {
 function renderFacturaInput(o) {
   return `<input type="text" class="factura-input" value="${escapeHtml(o.numar_factura || "")}" placeholder="—" onchange="updateField('${o.id}','numar_factura',this.value)" />`;
 }
+// v46: la cererea lui Andrei — factura se atașează acum PE PIESĂ, nu pe toată comanda deodată, ca
+// să poată atașa factura pentru piesele deja sosite chiar dacă alta din aceeași comandă lipsește
+// încă. Comanda fără nicio piesă (caz rar) rămâne pe `renderFacturaInput(o)`, la nivel de comandă.
+function renderPiesaFacturaInput(p) {
+  return `<input type="text" class="factura-input" value="${escapeHtml(p.numar_factura || "")}" placeholder="—" onchange="updatePiesaField('${p.id}','numar_factura',this.value)" />`;
+}
+async function updatePiesaField(piesaId, field, value) {
+  const payload = {}; payload[field] = value;
+  const { error } = await client.from("comenzi_piese").update(payload).eq("id", piesaId);
+  if (error) { alert("Nu s-a putut salva: " + error.message); await loadOrders(); return; }
+  for (const o of currentOrders) {
+    const p = (o.piese || []).find(x => x.id === piesaId);
+    if (p) { p[field] = value; break; }
+  }
+  renderTable();
+}
 
 function renderPretCell(o) {
   const piese = o.piese || [];
@@ -2668,24 +2687,24 @@ function renderTable() {
       rowStyle = `style="background:${getStareStyle(o.stare_comanda).row}"`;
     }
 
-    // v31: fiecare piesă din comandă apare pe rândul ei, ca într-un Excel — celulele
-    // specifice comenzii (nu piesei) se întind pe toate rândurile ei cu rowspan, ca referință.
+    // v46: la cererea lui Andrei — fiecare piesă din comandă apare acum pe un rând COMPLET
+    // INDEPENDENT, ca la "Piese de comandat", cu datele comenzii repetate pe fiecare rând (nu mai
+    // sunt "întinse" cu rowspan, ca la v31) — asta permite atașarea unei facturi diferite pe fiecare
+    // piesă în parte, chiar dacă restul comenzii încă n-a sosit.
     const piese = (o.piese && o.piese.length) ? o.piese : [null];
     const n = piese.length;
-    const rs = n > 1 ? ` rowspan="${n}"` : "";
 
-    const checkboxCell = `<td${rs}><input type="checkbox" class="order-select-cb" value="${o.id}" onchange="toggleOrderCheckbox('${o.id}', this.checked)" ${selectedOrderIds.has(o.id) ? "checked" : ""} /></td>`;
-    const brandCell = `<td${rs}>${renderBrandBadge(o.brand)}</td>`;
-    const termenCell = `<td${rs}>${formatDate(o.termen_livrare)}</td>`;
-    const clientCell = `<td${rs}>${escapeHtml(o.client_nume)} ${escapeHtml(o.client_prenume || "")}${o.atribuit_catre_nume ? `<span class="atribuit-badge">→ ${escapeHtml(o.atribuit_catre_nume)}</span>` : ""}</td>`;
-    const telefonCell = `<td${rs}>${escapeHtml(o.client_telefon || "")}</td>`;
-    const emailCell = `<td${rs}>${escapeHtml(o.client_email || "")}</td>`;
-    const furnizorCell = `<td${rs}>${renderFurnizorCell(o)}</td>`;
-    const facturaCell = `<td${rs}>${renderFacturaInput(o)}</td>`;
-    const stareCell = `<td${rs}>${renderStareSelect(o)}</td>`;
-    const plataCell = `<td${rs}>${renderPlataSelect(o)}</td>`;
-    const creatDeCell = `<td${rs}>${escapeHtml(o.creat_de_nume || "")}</td>`;
-    const actionsCell = `<td${rs}>${renderActions(o)}</td>`;
+    const checkboxCell = `<td><input type="checkbox" class="order-select-cb" value="${o.id}" onchange="toggleOrderCheckbox('${o.id}', this.checked)" ${selectedOrderIds.has(o.id) ? "checked" : ""} /></td>`;
+    const brandCell = `<td>${renderBrandBadge(o.brand)}</td>`;
+    const termenCell = `<td>${formatDate(o.termen_livrare)}</td>`;
+    const clientCell = `<td>${escapeHtml(o.client_nume)} ${escapeHtml(o.client_prenume || "")}${o.atribuit_catre_nume ? `<span class="atribuit-badge">→ ${escapeHtml(o.atribuit_catre_nume)}</span>` : ""}</td>`;
+    const telefonCell = `<td>${escapeHtml(o.client_telefon || "")}</td>`;
+    const emailCell = `<td>${escapeHtml(o.client_email || "")}</td>`;
+    const furnizorCell = `<td>${renderFurnizorCell(o)}</td>`;
+    const stareCell = `<td>${renderStareSelect(o)}</td>`;
+    const plataCell = `<td>${renderPlataSelect(o)}</td>`;
+    const creatDeCell = `<td>${escapeHtml(o.creat_de_nume || "")}</td>`;
+    const actionsCell = `<td>${renderActions(o)}</td>`;
     const editBtn = (canDo("perm_comenzi") || canDo("perm_piese_comandat"))
       ? `<button type="button" class="rz-mini-edit pret-edit-btn" onclick="openPiesaPretModal('${o.id}')">✎ Preț</button>`
       : "";
@@ -2701,18 +2720,16 @@ function renderTable() {
           : `<div>${roFmtNum(p.pret_cu_tva)} ${escapeHtml(p.moneda || "RON")} <span class="muted">(cu TVA)</span></div>`;
       }
       const pretCell = `<td class="wrap-cell"><div class="pret-cell">${pretInner}${idx === 0 ? editBtn : ""}</div></td>`;
+      const facturaCell = `<td>${p ? renderPiesaFacturaInput(p) : renderFacturaInput(o)}</td>`;
 
-      if (idx === 0) {
-        return `<tr ${rowStyle} class="${n > 1 ? "comanda-grup-prima" : ""}">${checkboxCell}${brandCell}${codCell}${denCell}${cantCell}${pretCell}${termenCell}${clientCell}${telefonCell}${emailCell}${furnizorCell}${facturaCell}${stareCell}${plataCell}${creatDeCell}${actionsCell}</tr>`;
-      }
-      return `<tr ${rowStyle} class="comanda-grup-linie">${codCell}${denCell}${cantCell}${pretCell}</tr>`;
+      return `<tr ${rowStyle} class="${n > 1 ? (idx === 0 ? "comanda-grup-prima" : "comanda-grup-linie") : ""}">${checkboxCell}${brandCell}${codCell}${denCell}${cantCell}${pretCell}${termenCell}${clientCell}${telefonCell}${emailCell}${furnizorCell}${facturaCell}${stareCell}${plataCell}${creatDeCell}${actionsCell}</tr>`;
     }).join("");
   }).join("");
   updateTrimiteColegButton();
 }
 
-// v31: bifa unei comenzi cu mai multe piese apare pe mai multe rânduri (rowspan) —
-// dar dacă vreodată apar bife multiple pentru aceeași comandă, le ținem sincronizate.
+// bifa unei comenzi cu mai multe piese apare acum pe mai multe rânduri independente —
+// ținem toate bifele aceleiași comenzi sincronizate între ele.
 function toggleOrderCheckbox(id, checked) {
   document.querySelectorAll(`.order-select-cb[value="${id}"]`).forEach(cb => { cb.checked = checked; });
   updateTrimiteColegButton();
@@ -2846,7 +2863,25 @@ function selectClientTip(tip) {
 }
 
 // ---------- PIESE (randuri dinamice in modal, cod, denumire si cantitate separate) ----------
-function addPiesaRowEl(cod, denumire, cantitate, pretCuTva, moneda) {
+// v46: la cererea lui Andrei — cand se completeaza "Cod piesa" la o comanda, interogam automat
+// lista de preturi ("Piese") si apoi Inventar Liber; daca gasim codul, preluam denumirea si pretul
+// automat (doar in campurile inca goale, ca sa nu suprascriem ce a scris deja Andrei manual).
+function comenziLookupCod(cod) {
+  const upper = (cod || "").trim().toUpperCase();
+  if (!upper) return null;
+  const dinPreturi = (typeof rzPriceList !== "undefined" ? rzPriceList : []).find(p => (p.cod_piesa || "").toUpperCase() === upper);
+  if (dinPreturi) {
+    return { denumire: dinPreturi.denumire || "", pret: rzGetPrice(dinPreturi.cod_piesa), sursa: "Piese (listă prețuri)" };
+  }
+  const dinInventar = (typeof rzInvItems !== "undefined" ? rzInvItems : []).find(it => (it.cod || "").toUpperCase() === upper);
+  if (dinInventar) {
+    const pret = dinInventar.pret_manual ? rzApplyMarkupManual(dinInventar.pret_manual, dinInventar.marca) : rzGetPrice(dinInventar.cod);
+    return { denumire: dinInventar.denumire || "", pret, sursa: "Inventar Liber" };
+  }
+  return null;
+}
+
+function addPiesaRowEl(cod, denumire, cantitate, pretCuTva, moneda, numarFactura) {
   const container = document.getElementById("piese-list");
   const row = document.createElement("div");
   row.className = "piesa-row";
@@ -2868,20 +2903,34 @@ function addPiesaRowEl(cod, denumire, cantitate, pretCuTva, moneda) {
   selectMoneda.className = "piesa-moneda";
   selectMoneda.innerHTML = '<option value="RON">RON</option><option value="EUR">EUR</option>';
   selectMoneda.value = moneda || "RON";
+  const inputFactura = document.createElement("input");
+  inputFactura.type = "text"; inputFactura.className = "piesa-factura"; inputFactura.placeholder = "Nr. factură"; inputFactura.value = numarFactura || "";
+  // v46: la completarea codului, interoghează automat Piese/Inventar Liber și preia denumirea +
+  // prețul dacă găsește o potrivire exactă — doar în câmpurile încă goale.
+  inputCod.addEventListener("change", () => {
+    const rezultat = comenziLookupCod(inputCod.value);
+    if (!rezultat) return;
+    if (!inputDenumire.value.trim() && rezultat.denumire) inputDenumire.value = rezultat.denumire;
+    if (rezultat.pret !== null && rezultat.pret !== undefined && !inputPretCu.value.trim()) {
+      inputPretCu.value = roFmtNum(rezultat.pret);
+      inputPretFara.value = roFmtNum(roPretFaraTva(rezultat.pret));
+    }
+    if (typeof rzToast === "function") rzToast(`Preluat din ${rezultat.sursa}: ${inputCod.value.trim().toUpperCase()}`, "ok");
+  });
   const removeBtn = document.createElement("button");
   removeBtn.type = "button"; removeBtn.className = "icon-btn danger"; removeBtn.innerHTML = ICON_CLOSE;
   removeBtn.onclick = () => row.remove();
   row.appendChild(inputCod); row.appendChild(inputDenumire); row.appendChild(inputCantitate);
-  row.appendChild(inputPretCu); row.appendChild(inputPretFara); row.appendChild(selectMoneda); row.appendChild(removeBtn);
+  row.appendChild(inputPretCu); row.appendChild(inputPretFara); row.appendChild(selectMoneda); row.appendChild(inputFactura); row.appendChild(removeBtn);
   container.appendChild(row);
 }
-function addPiesaRow() { addPiesaRowEl("", "", 1, null, "RON"); }
+function addPiesaRow() { addPiesaRowEl("", "", 1, null, "RON", ""); }
 
 function renderPieseInputs(initialPiese) {
   const container = document.getElementById("piese-list");
   container.innerHTML = "";
   const list = (initialPiese && initialPiese.length) ? initialPiese : [{ cod_piesa: "", denumire_piesa: "", cantitate: 1 }];
-  list.forEach(p => addPiesaRowEl(p.cod_piesa, p.denumire_piesa, p.cantitate, p.pret_cu_tva, p.moneda));
+  list.forEach(p => addPiesaRowEl(p.cod_piesa, p.denumire_piesa, p.cantitate, p.pret_cu_tva, p.moneda, p.numar_factura));
 }
 
 function collectPieseInputs() {
@@ -2891,6 +2940,7 @@ function collectPieseInputs() {
       denumire_piesa: row.querySelector(".piesa-denumire").value.trim(),
       cantitate: Math.max(1, parseInt(row.querySelector(".piesa-cantitate").value) || 1),
       pret_cu_tva: roParseNum(row.querySelector(".piesa-pret-cu").value),
+      numar_factura: row.querySelector(".piesa-factura").value.trim() || null,
       moneda: row.querySelector(".piesa-moneda").value,
     }))
     .filter(p => p.cod_piesa);
@@ -3085,7 +3135,7 @@ async function saveOrder() {
     ({ error } = await client.from("comenzi").update(payload).eq("id", id));
     if (!error) {
       await client.from("comenzi_piese").delete().eq("comanda_id", id);
-      const rows = piese.map(p => ({ comanda_id: id, cod_piesa: p.cod_piesa, denumire_piesa: p.denumire_piesa || "—", cantitate: p.cantitate || 1, pret_cu_tva: p.pret_cu_tva, moneda: p.moneda }));
+      const rows = piese.map(p => ({ comanda_id: id, cod_piesa: p.cod_piesa, denumire_piesa: p.denumire_piesa || "—", cantitate: p.cantitate || 1, pret_cu_tva: p.pret_cu_tva, moneda: p.moneda, numar_factura: p.numar_factura || null }));
       ({ error } = await client.from("comenzi_piese").insert(rows));
     }
   } else {
@@ -3096,7 +3146,7 @@ async function saveOrder() {
     error = insErr;
     if (!error && data) {
       comandaId = data.id;
-      const rows = piese.map(p => ({ comanda_id: comandaId, cod_piesa: p.cod_piesa, denumire_piesa: p.denumire_piesa || "—", cantitate: p.cantitate || 1, pret_cu_tva: p.pret_cu_tva, moneda: p.moneda }));
+      const rows = piese.map(p => ({ comanda_id: comandaId, cod_piesa: p.cod_piesa, denumire_piesa: p.denumire_piesa || "—", cantitate: p.cantitate || 1, pret_cu_tva: p.pret_cu_tva, moneda: p.moneda, numar_factura: p.numar_factura || null }));
       ({ error } = await client.from("comenzi_piese").insert(rows));
     }
   }
@@ -3171,6 +3221,10 @@ function doExport() {
             : (f.key === "moneda") ? p.moneda
             : (f.key === "pret_cu_tva") ? roFmtNum(p.pret_cu_tva)
             : (f.key === "pret_fara_tva") ? roFmtNum(roPretFaraTva(p.pret_cu_tva))
+            // v46: Nr. factură se ține acum pe piesă — la export, fiecare linie arată factura ei
+            // proprie (nu mai e mereu identică cu a comenzii întregi), cu rezervă pe cea a comenzii
+            // pentru liniile "goale" (comandă fără nicio piesă încă).
+            : (f.key === "numar_factura") ? (p.numar_factura || o.numar_factura || "")
             : o[f.key];
           rowObj[f.label] = (val === null || val === undefined) ? "" : val;
         });
@@ -3209,8 +3263,15 @@ async function comenziSetFacturaFromFile(fileList) {
   if (!selectedOrderIds.size) { alert("Selectează cel puțin o comandă din tabel."); if (input) input.value = ""; return; }
   const numeFaraExtensie = file.name.replace(/\.[^/.]+$/, "").trim() || file.name;
   const ids = [...selectedOrderIds];
-  const { error } = await client.from("comenzi").update({ numar_factura: numeFaraExtensie }).in("id", ids);
+  // v46: factura se ține acum PE PIESĂ (comenzi_piese.numar_factura) — încărcarea în bulk aplică
+  // numele fișierului pe toate piesele comenzilor bifate deodată; comenzi.numar_factura rămâne scris
+  // în paralel, ca valoare implicită/istoric la nivel de comandă.
+  const [{ error: errComenzi }, { error: errPiese }] = await Promise.all([
+    client.from("comenzi").update({ numar_factura: numeFaraExtensie }).in("id", ids),
+    client.from("comenzi_piese").update({ numar_factura: numeFaraExtensie }).in("comanda_id", ids),
+  ]);
   if (input) input.value = "";
+  const error = errComenzi || errPiese;
   if (error) { alert("Eroare la actualizarea numărului de factură: " + error.message); return; }
   await loadOrders();
   const mesaj = `Nr. factură „${numeFaraExtensie}” aplicat la ${ids.length} comandă${ids.length === 1 ? "" : "(ă/ăi)"}.`;
