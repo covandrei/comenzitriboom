@@ -120,8 +120,20 @@
   header .btn-secondary:hover { background: rgba(255,255,255,.25); }
   .notif-btn { position: relative; }
   .notif-badge { position: absolute; top: -6px; right: -6px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 800; border-radius: 10px; padding: 1px 5px; display: none; min-width: 16px; text-align: center; }
+  /* v51: la cererea lui Andrei — „Toate punctele"/„Useri & Roluri"/„Curs & Adaos"/„Log Out" mutate
+     dintr-un antet aglomerat într-un meniu hamburger (dropdown), ca să elibereze spațiu din bara de sus. */
+  .hamburger-wrap { position: relative; }
+  .hamburger-btn { font-size: 16px; line-height: 1; padding: 7px 11px; }
+  .hamburger-dropdown { display: none; flex-direction: column; gap: 4px; position: absolute; top: calc(100% + 8px); right: 0; background: var(--card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 28px rgba(0,0,0,.22); padding: 8px; min-width: 210px; z-index: 700; }
+  .hamburger-dropdown.open { display: flex; }
+  .hamburger-dropdown .btn-secondary { width: 100%; text-align: left; }
 
   main { padding: 22px 26px 60px; max-width: 1880px; margin: 0 auto; }
+
+  /* v51: footer nou — „⚖️ Legal" și statusul listei de prețuri, mutate din antet la cererea lui
+     Andrei, ca să nu mai ocupe loc sus, vizibile tot timpul din orice tab, la baza paginii. */
+  #app-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 26px; margin-top: 8px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  #app-footer .rz-badge { font-size: 12px; }
 
   /* ---------- STATS ---------- */
   .stats-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -672,14 +684,17 @@
       <h1>Comenzi Triumph &amp; Motoboom</h1>
     </div>
     <div class="header-right">
-      <span class="rz-badge no" id="rz-pl-status-top" title="Status listă prețuri">Listă prețuri: 0 coduri</span>
       <span class="user-info" id="user-info"></span>
-      <button class="btn-secondary" id="btn-punct-lucru" style="display:none" onclick="openPunctLucruModal()">📍</button>
-      <button class="btn-secondary" onclick="openLegalMenu()">⚖️ Legal</button>
-      <button class="btn-secondary" id="btn-useri-roluri" style="display:none" onclick="openUseriRoluriModal()">👥 Useri &amp; Roluri</button>
-      <button class="btn-secondary" onclick="rzOpenPriceSettings()">💰 Curs &amp; Adaos</button>
       <button class="btn-secondary notif-btn" onclick="openNotifPanel()">🔔<span class="notif-badge" id="notif-badge"></span></button>
-      <button class="btn-secondary" onclick="doLogout()">Ieșire</button>
+      <div class="hamburger-wrap">
+        <button class="btn-secondary hamburger-btn" id="btn-hamburger" onclick="toggleHamburgerMenu(event)" aria-label="Meniu" title="Meniu">☰</button>
+        <div class="hamburger-dropdown" id="hamburger-dropdown">
+          <button class="btn-secondary" id="btn-punct-lucru" style="display:none" onclick="closeHamburgerMenu(); openPunctLucruModal()">📍</button>
+          <button class="btn-secondary" id="btn-useri-roluri" style="display:none" onclick="closeHamburgerMenu(); openUseriRoluriModal()">👥 Useri &amp; Roluri</button>
+          <button class="btn-secondary" onclick="closeHamburgerMenu(); rzOpenPriceSettings()">💰 Curs &amp; Adaos</button>
+          <button class="btn-secondary" onclick="closeHamburgerMenu(); doLogout()">Log Out</button>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -990,7 +1005,7 @@
       <div id="devize-list-section">
         <div class="toolbar">
           <div class="filters">
-            <input type="text" id="dvz-cautare" placeholder="Caută după client, VIN sau nr. înmatriculare..." oninput="renderDevizeTable()" style="min-width:260px" />
+            <input type="text" id="dvz-cautare" placeholder="Caută după client, motocicletă/model, VIN sau nr. înmatriculare..." oninput="dvzListPage=1;renderDevizeTable()" style="min-width:280px" />
           </div>
           <div class="toolbar-actions">
             <button class="btn-secondary" onclick="document.getElementById('dvz-import-historic-file').click()" title="Importă fișiere .html exportate anterior (Print / Save), pentru o centralizare a devizelor vechi în sistem">📥 Importă istoric (.html)</button>
@@ -1017,6 +1032,7 @@
             </tbody>
           </table>
         </div>
+        <div class="rz-inline-row" id="devize-pagination" style="justify-content:space-between;margin-top:10px;font-size:12.5px"></div>
       </div>
 
       <!-- ---- EDITOR DEVIZ (Fisa + Deviz, A4, identic Deviz_Service.html) ---- -->
@@ -1443,6 +1459,10 @@
       </div>
     </div>
   </main>
+  <footer id="app-footer">
+    <span class="rz-badge no" id="rz-pl-status-top" title="Status listă prețuri">Listă prețuri: 0 coduri</span>
+    <button class="btn-secondary" onclick="openLegalMenu()">⚖️ Legal</button>
+  </footer>
 </div>
 
 <div id="print-area"></div>
@@ -1470,11 +1490,11 @@
       </div>
       <div class="field">
         <label id="lbl-f-nume">Nume client *</label>
-        <input id="f-nume" />
+        <input id="f-nume" oninput="suzCapitalizeInput(this)" />
       </div>
       <div class="field" id="wrap-f-prenume">
         <label>Prenume client *</label>
-        <input id="f-prenume" />
+        <input id="f-prenume" oninput="suzCapitalizeInput(this)" />
       </div>
       <div class="field" id="wrap-f-cui" style="display:none">
         <label>CUI firmă</label>
@@ -1582,8 +1602,8 @@
       </div>
     </div>
     <div class="modal-grid">
-      <div class="field"><label id="lbl-c-nume">Nume *</label><input id="c-nume" /></div>
-      <div class="field" id="wrap-c-prenume"><label>Prenume *</label><input id="c-prenume" /></div>
+      <div class="field"><label id="lbl-c-nume">Nume *</label><input id="c-nume" oninput="suzCapitalizeInput(this)" /></div>
+      <div class="field" id="wrap-c-prenume"><label>Prenume *</label><input id="c-prenume" oninput="suzCapitalizeInput(this)" /></div>
       <div class="field"><label>Telefon *</label><input id="c-telefon" /></div>
       <div class="field"><label>Email</label><input id="c-email" /></div>
       <div class="field span-2" id="wrap-cui" style="display:none"><label>CUI firmă</label><input id="c-cui" placeholder="ex: RO12345678" /></div>
@@ -1997,6 +2017,8 @@ let pendingClientMotos = null;
 let currentProgramari = [];
 let catalogPage = 1;
 const CATALOG_PAGE_SIZE = 100; // catalogul de piese arată max 100 de coduri pe ecran, cu paginare — pe liste de zeci de mii de coduri, randarea într-un singur tabel uriaș era lentă
+let dvzListPage = 1;
+const DVZ_LIST_PAGE_SIZE = 50; // v51: la cererea lui Andrei — paginație în loc de randare completă ("infinite scroll") la lista de Devize, ca la fel ca la catalogul de Piese
 let programatorMode = "zi";
 
 let selectedOrderIds = new Set();
@@ -2324,7 +2346,7 @@ async function doLogin() {
       errEl.textContent = "Autentificare eșuată: " + error.message + (error.status ? " (cod " + error.status + ")" : "");
       return;
     }
-    await afterLogin();
+    await afterLogin(true);
   } catch (e) {
     errEl.textContent = "Eroare de conexiune la Supabase: " + e.message;
   }
@@ -2335,7 +2357,7 @@ async function doLogout() {
   location.reload();
 }
 
-async function afterLogin() {
+async function afterLogin(freshLogin) {
   const { data: { user } } = await client.auth.getUser();
   if (!user) return;
 
@@ -2355,6 +2377,12 @@ async function afterLogin() {
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("app-screen").style.display = "block";
   document.getElementById("user-info").textContent = profile.nume + (profile.rol === "admin" ? " (admin)" : "");
+  // v51: la cererea lui Andrei — mesaj de bun venit personalizat, cu numele angajatului, la fiecare
+  // logare REALĂ (nu și la reîncărcarea paginii cu o sesiune deja activă — `doLogin()` trimite
+  // `freshLogin=true`, `initSession()` de mai jos nu trimite nimic, deci rămâne `undefined`/fals).
+  if (freshLogin && typeof rzToast === "function") {
+    rzToast("👋 Spor la treabă, " + profile.nume + "!", "ok");
+  }
 
   populateStareComandaOptions();
   await loadMyPermissions();
@@ -2804,6 +2832,26 @@ function escapeHtml(str) {
 // devine din nou un literal de șir valid, cu conținutul deja escapat corect ca literal JS.
 function jsStrAttr(value) {
   return escapeHtml(JSON.stringify(value == null ? "" : value));
+}
+
+// v51: la cererea lui Andrei — la scrierea unui nume de client sau a unei denumiri de firmă,
+// prima literă a fiecărui cuvânt (după un spațiu) devine automat majusculă, chiar în timp ce
+// se scrie (ex: "ion popescu" → "Ion Popescu"). Restul textului rămâne neatins — NU forțează
+// minuscule pe rest — ca abrevieri gen "SRL"/"S.A." din denumirea unei firme să nu fie stricate.
+// Poziția cursorului e păstrată explicit, ca să nu „sară" la finalul câmpului la fiecare literă.
+function suzCapitalizeInput(el) {
+  const start = el.selectionStart, end = el.selectionEnd;
+  const v = el.value;
+  let out = "";
+  let atWordStart = true;
+  for (const ch of v) {
+    out += (atWordStart && /\p{L}/u.test(ch)) ? ch.toUpperCase() : ch;
+    atWordStart = (ch === " ");
+  }
+  if (out !== v) {
+    el.value = out;
+    try { el.setSelectionRange(start, end); } catch (e) { /* ignorat — unele input-uri (ex: type=number) nu suportă selecție */ }
+  }
 }
 
 // ---------- ACTUALIZARE RAPIDA (stare / factura) ----------
@@ -5736,9 +5784,20 @@ async function rzLoadPriceListFull() {
 // de mari sunt de fapt paginile primite de la server (o cerere de test, ca să nu presupunem NIMIC
 // despre limita reală a proiectului — aceeași lecție ca la v27/v28), apoi cerem restul paginilor cu
 // mai multe cereri deodată (CONCURRENCY), nu una câte una.
+// v51: la cererea lui Andrei — "putem sa facem cumva astfel incat sa se incarce lista de preturi
+// si mai rapid?". Două schimbări, ambele cu risc scăzut (nu ating deloc formatul datelor folosite
+// în restul aplicației): (1) CONCURRENCY 6→10 — tot un număr conservator, dar ceva mai agresiv,
+// exact în logica deja explicată mai jos ("suficient de mult ca să fie rapid, suficient de puțin ca
+// să nu sufoce serverul"); (2) coloanele cerute de la Supabase nu mai sunt `select("*")`, ci EXACT
+// cele 6 coloane chiar folosite undeva în `index.html` (verificat prin căutare exhaustivă în cod:
+// `marca`, `cod_piesa`, `denumire`, `pret_eur`, `pret_ron`, `actualizat_la` — niciun alt câmp din
+// `price_list` nu e citit nicăieri, inclusiv `id`, care nu e folosit deloc pentru rândurile din
+// listă, ștergerea/redenumirea unei mărci întregi lucrând deja după `marca`, nu după `id`) — mai
+// puține date de transferat și de parsat pe ~36.000 de rânduri, fără nicio pierdere funcțională.
+const RZ_PRICE_LIST_COLS = "marca,cod_piesa,denumire,pret_eur,pret_ron,actualizat_la";
 async function rzLoadPriceListFullParallel(setStatus) {
   const REQUEST_SIZE = 1000;
-  const CONCURRENCY = 6; // cereri simultane — suficient ca să fie mult mai rapid, suficient de puțin ca să nu sufoce serverul
+  const CONCURRENCY = 10; // cereri simultane — suficient ca să fie mult mai rapid, suficient de puțin ca să nu sufoce serverul
 
   setStatus("Listă prețuri: se încarcă...");
 
@@ -5747,7 +5806,7 @@ async function rzLoadPriceListFullParallel(setStatus) {
   if (!count) { rzPriceList = []; return; }
 
   // prima pagină, ca să aflăm CÂT de mari sunt de fapt paginile primite (limita reală a proiectului)
-  const { data: firstPage, error: firstErr } = await client.from("price_list").select("*")
+  const { data: firstPage, error: firstErr } = await client.from("price_list").select(RZ_PRICE_LIST_COLS)
     .order("marca", { ascending: true }).order("cod_piesa", { ascending: true }).range(0, REQUEST_SIZE - 1);
   if (firstErr) throw firstErr;
   const pageSize = (firstPage || []).length;
@@ -5770,7 +5829,7 @@ async function rzLoadPriceListFullParallel(setStatus) {
     while (nextIdx < offsets.length) {
       const myIdx = nextIdx++;
       const from = offsets[myIdx];
-      const { data, error } = await client.from("price_list").select("*")
+      const { data, error } = await client.from("price_list").select(RZ_PRICE_LIST_COLS)
         .order("marca", { ascending: true }).order("cod_piesa", { ascending: true }).range(from, from + REQUEST_SIZE - 1);
       if (error) throw error;
       pages[myIdx + 1] = data || [];
@@ -5801,7 +5860,7 @@ async function rzLoadPriceListFullSequential(setStatus) {
   let all = [];
   let from = 0;
   for (let i = 0; i < MAX_ITERATII; i++) {
-    const { data, error } = await client.from("price_list").select("*").order("marca", { ascending: true }).order("cod_piesa", { ascending: true }).range(from, from + REQUEST_SIZE - 1);
+    const { data, error } = await client.from("price_list").select(RZ_PRICE_LIST_COLS).order("marca", { ascending: true }).order("cod_piesa", { ascending: true }).range(from, from + REQUEST_SIZE - 1);
     if (error) { console.error(error); break; }
     const primite = data || [];
     if (!primite.length) break;
@@ -6006,6 +6065,7 @@ const RZ_OVERLAY_CLOSERS = {
   "dauna-modal-overlay": () => closeDaunaModal(),
   "confirm-overlay": () => closeConfirm(),
   "rz-modal-overlay": () => rzCloseModal(),
+  "hamburger-dropdown": () => closeHamburgerMenu(),
 };
 document.addEventListener("keydown", function (e) {
   if (e.key !== "Escape" && e.key !== "Esc") return;
@@ -6023,6 +6083,21 @@ document.addEventListener("click", function (e) {
   if (!e.target.classList.contains("modal-overlay") || !e.target.classList.contains("open")) return;
   const closer = RZ_OVERLAY_CLOSERS[e.target.id];
   if (closer) closer();
+});
+
+// v51: meniu hamburger din antet (📍 Toate punctele / 👥 Useri & Roluri / 💰 Curs & Adaos / Log Out)
+function toggleHamburgerMenu(e) {
+  if (e) e.stopPropagation();
+  const el = document.getElementById("hamburger-dropdown");
+  if (el) el.classList.toggle("open");
+}
+function closeHamburgerMenu() {
+  const el = document.getElementById("hamburger-dropdown");
+  if (el) el.classList.remove("open");
+}
+document.addEventListener("click", function (e) {
+  const wrap = document.querySelector(".hamburger-wrap");
+  if (wrap && !wrap.contains(e.target)) closeHamburgerMenu();
 });
 
 // ---------- SUBMOD (Receptie / Inventar) ----------
@@ -7968,6 +8043,7 @@ async function loadDevize() {
 function dvzSetSort(column) {
   if (dvzSortState.column === column) dvzSortState.dir = dvzSortState.dir === "asc" ? "desc" : "asc";
   else { dvzSortState.column = column; dvzSortState.dir = column === "data" ? "desc" : "asc"; }
+  dvzListPage = 1;
   renderDevizeTable();
 }
 function dvzUpdateSortIndicators() {
@@ -7996,21 +8072,34 @@ function dvzSortRows(rows) {
 }
 function renderDevizeTable() {
   const tbody = document.getElementById("devize-table-body");
+  const pagBox = document.getElementById("devize-pagination");
   if (!tbody) return;
   const cautareEl = document.getElementById("dvz-cautare");
   const cautare = (cautareEl ? cautareEl.value : "").trim().toLowerCase();
   let rows = currentDevize.filter(matchesLocationFilter).filter(d => {
     if (!cautare) return true;
-    const hay = [d.client_nume, d.moto_vin, d.moto_plate, d.moto_model].map(v => (v || "").toLowerCase()).join(" ");
+    // v51: la cererea lui Andrei — căutarea acoperă acum și „motocicletă" (moto_brand_categorie,
+    // ex: „Tiger 900"), nu doar „model" (moto_model), care era deja inclus dar nescris în placeholder.
+    const hay = [d.client_nume, d.moto_vin, d.moto_plate, d.moto_brand_categorie, d.moto_model].map(v => (v || "").toLowerCase()).join(" ");
     return hay.includes(cautare);
   });
   rows = dvzSortRows(rows);
   dvzUpdateSortIndicators();
   if (!rows.length) {
     tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Niciun deviz înregistrat încă.</td></tr>';
+    if (pagBox) pagBox.innerHTML = "";
     return;
   }
-  tbody.innerHTML = rows.map(d => `
+
+  // v51: la cererea lui Andrei — paginație în loc de randare completă a listei ("infinite scroll"),
+  // ca să se încarce/reseneze mai repede — exact același tipar ca la catalogul „Piese" (v29).
+  const totalPages = Math.max(1, Math.ceil(rows.length / DVZ_LIST_PAGE_SIZE));
+  if (dvzListPage > totalPages) dvzListPage = totalPages;
+  if (dvzListPage < 1) dvzListPage = 1;
+  const startIdx = (dvzListPage - 1) * DVZ_LIST_PAGE_SIZE;
+  const pageRows = rows.slice(startIdx, startIdx + DVZ_LIST_PAGE_SIZE);
+
+  tbody.innerHTML = pageRows.map(d => `
     <tr class="rz-row-clickable" onclick="if(event.target.closest('button,.actions-cell'))return; openDevizEditor('${d.id}')" title="Click pentru a deschide devizul">
       <td>${d.nr_zi != null ? escapeHtml(String(d.nr_zi)) : "—"}</td>
       <td>${d.data ? formatDate(d.data) : "—"}</td>
@@ -8025,6 +8114,24 @@ function renderDevizeTable() {
       </td>
     </tr>
   `).join("");
+
+  if (pagBox) {
+    const dela = rows.length ? startIdx + 1 : 0;
+    const panaLa = Math.min(startIdx + DVZ_LIST_PAGE_SIZE, rows.length);
+    pagBox.innerHTML = `
+      <span class="muted">${dela}–${panaLa} din ${rows.length} devize</span>
+      <span style="display:flex;gap:6px;align-items:center">
+        <button type="button" class="btn-secondary" style="padding:4px 10px" ${dvzListPage <= 1 ? "disabled" : ""} onclick="dvzListGoToPage(1)">« Prima</button>
+        <button type="button" class="btn-secondary" style="padding:4px 10px" ${dvzListPage <= 1 ? "disabled" : ""} onclick="dvzListGoToPage(${dvzListPage - 1})">‹ Anterioară</button>
+        <span class="muted">Pagina ${dvzListPage} din ${totalPages}</span>
+        <button type="button" class="btn-secondary" style="padding:4px 10px" ${dvzListPage >= totalPages ? "disabled" : ""} onclick="dvzListGoToPage(${dvzListPage + 1})">Următoare ›</button>
+        <button type="button" class="btn-secondary" style="padding:4px 10px" ${dvzListPage >= totalPages ? "disabled" : ""} onclick="dvzListGoToPage(${totalPages})">Ultima »</button>
+      </span>`;
+  }
+}
+function dvzListGoToPage(p) {
+  dvzListPage = p;
+  renderDevizeTable();
 }
 function confirmDeleteDeviz(id) {
   pendingDelete = { type: "devize", id };
@@ -8295,6 +8402,7 @@ function dvzUpdateSignatures() {
 
 // ---------- Autocomplete client (Nume/Firma) ----------
 function dvzClientACInput(inputEl) {
+  suzCapitalizeInput(inputEl); // v51: capitalizare automată și pe câmpul de client de la Devize
   dvzUpdateSignatures();
   const q = (inputEl.value || "").trim().toLowerCase();
   dvzCloseClientAC();
