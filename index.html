@@ -7852,8 +7852,18 @@ async function dvzSavePreturiUzualeRow(id) {
 }
 async function dvzDeletePreturiUzualeRow(id, nume) {
   if (!confirm(`Ștergi „${nume}" din lista de produse/manopere uzuale?`)) return;
-  const { error } = await client.from("preturi_uzuale").delete().eq("id", id);
+  // v48: fix — Andrei raporta că ștergerea "nu îl lasă". Cauza cea mai probabilă: un DELETE blocat
+  // de o politică RLS pe Supabase nu întoarce nicio eroare — șterge pur și simplu 0 rânduri, în
+  // tăcere (comportament normal al Postgres RLS), așa că butonul părea să nu facă nimic (sau
+  // arăta fals-pozitiv "Șters", cu rândul revenind după reîncărcare). Fix: cerem înapoi rândurile
+  // efectiv șterse (.select()) și verificăm explicit că am șters ceva, cu mesaj clar dacă nu —
+  // vezi „Adăugat v48" pentru migrarea care adaugă politica de ștergere lipsă.
+  const { data, error } = await client.from("preturi_uzuale").delete().eq("id", id).select();
   if (error) { alert("Eroare la ștergere: " + error.message); return; }
+  if (!data || !data.length) {
+    alert(`Nu s-a șters „${nume}" — cel mai probabil lipsește o regulă de permisiune (RLS) de ștergere pe tabela „preturi_uzuale" în Supabase. Rulează migrarea „migrare-v48.sql" (adaugă politica de ștergere lipsă) și încearcă din nou.`);
+    return;
+  }
   await dvzLoadPreturiUzuale();
   rzToast("Șters", "ok");
   dvzRenderPreturiUzuale();
@@ -7971,7 +7981,7 @@ async function dvzDeleteAllDevize() {
 function dvzBuildPartRowHtml(nr) {
   return `<tr>
       <td class="dvz-w-number">${nr}</td>
-      <td><input type="text" class="dvz-cod"></td>
+      <td><input type="text" class="dvz-cod" onchange="dvzHandleCodChange(this)"></td>
       <td><input type="text" class="dvz-denumire"></td>
       <td class="dvz-w-um"><input type="text" class="dvz-um" value="buc"></td>
       <td><input type="number" class="dvz-qty" oninput="dvzCalculateRow(this)"></td>
@@ -8314,6 +8324,26 @@ function dvzScheduleCloseDropdown() {
 document.addEventListener("pointerdown", (e) => {
   if (dvzActiveDropdown && !dvzActiveDropdown.contains(e.target) && e.target !== dvzActiveInput) dvzCloseDropdown();
 });
+// v48: la cererea lui Andrei — la Deviz, un cod de piesă introdus pe un rând de piese e acum
+// interogat automat în „Piese" (listă prețuri) apoi Inventar Liber, la fel ca la Comenzi (v46,
+// `comenziLookupCod`) — dacă găsește o potrivire, preia denumirea + prețul CU TVA în câmpurile
+// goale ale rândului; prețul FĂRĂ TVA se recalculează automat de `dvzCalculateRow()`, ca la orice
+// altă completare de preț din Deviz (nu suprascrie o denumire/preț deja completate manual).
+function dvzHandleCodChange(inputEl) {
+  const cod = (inputEl.value || "").trim();
+  if (!cod) return;
+  const rezultat = typeof comenziLookupCod === "function" ? comenziLookupCod(cod) : null;
+  if (!rezultat) return;
+  const tr = inputEl.closest("tr");
+  if (!tr) return;
+  const denumireInput = tr.querySelector(".dvz-denumire");
+  if (denumireInput && !denumireInput.value.trim()) denumireInput.value = rezultat.denumire;
+  const priceInput = tr.querySelector(".dvz-price");
+  if (priceInput && !priceInput.value && rezultat.pret != null) {
+    priceInput.value = Number(rezultat.pret).toFixed(2);
+    dvzCalculateRow(priceInput);
+  }
+}
 function dvzDoSelect(item, inputEl) {
   inputEl.value = item.nume;
   const tr = inputEl.closest("tr");
@@ -8558,6 +8588,7 @@ async function saveDevize() {
   }
   if (typeof rzToast === "function") rzToast("Deviz salvat", "ok");
   await loadDevize();
+  closeDevizEditor(); // v48: la cererea lui Andrei — „Salvează" duce acum înapoi la lista de devize
 }
 
 // ---------- Print / Save + Export PDF ----------
