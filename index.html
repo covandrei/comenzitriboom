@@ -187,6 +187,8 @@
   th.sortable:hover { color: var(--text); }
   .sort-ind { opacity: .35; margin-left: 3px; }
   .sort-ind.active { opacity: 1; color: var(--accent); }
+  .dvz-sort-ind { opacity: .35; margin-left: 3px; }
+  .dvz-sort-ind.active { opacity: 1; color: var(--accent); }
   tbody tr { transition: background .15s; }
   tbody tr:hover { filter: brightness(0.98); }
   tr:last-child td { border-bottom: none; }
@@ -413,9 +415,22 @@
 
   #print-area { display: none; }
   @media print {
+    /* v44: "visibility:hidden" pe restul paginii NU scoate acel conținut din layout — tot ocupă
+       spațiu pe verticală, iar Chrome tot îl paginează, generând pagini albe suplimentare la
+       finalul printului (raportat de Andrei: "doua pagini albe goale" la print Deviz — exact cât
+       înălțimea ecranului de editare, care rămâne deschis "în spate" cât timp se printează, cu
+       ambele pagini de previzualizare ale devizului afișate simultan, adică ~2 pagini A4 de
+       conținut invizibil, dar tot paginat). Fix: pe lângă visibility:hidden, colapsăm complet din
+       layout tot ce nu e #print-area — adică toți fiii direcți ai <body> (ecranul de login,
+       ecranul aplicației, orice modal deschis) — astfel #print-area rămâne singurul element cu
+       înălțime reală în pagină la print, deci nu mai apar pagini goale suplimentare. */
     body * { visibility: hidden; }
+    body > *:not(#print-area) { display: none !important; }
     #print-area, #print-area * { visibility: visible; }
     #print-area { display: block; position: absolute; top: 0; left: 0; width: 100%; padding: 24px; }
+    /* v44: marcaj generic pentru elemente doar-ecran (ex: butoanele de adăugat/șters rând din
+       editorul de Deviz) — nu trebuie să apară niciodată pe pagina tipărită. */
+    .dvz-no-print { display: none !important; }
   }
   .print-header { background: #1e3a8a; color: white; padding: 16px 20px; border-radius: 6px; margin-bottom: 16px; }
   .print-header h2 { margin: 0 0 4px; }
@@ -571,6 +586,8 @@
   .dvz-sel-mecanic, .dvz-sel-tarif { width: 100%; border: 1px solid #aaa !important; background: #fffbe6; font-family: inherit; font-size: 10px; box-sizing: border-box; outline: none; padding: 1px 2px; text-align: center; border-radius: 2px; cursor: pointer; }
   .dvz-sel-mecanic:focus, .dvz-sel-tarif:focus { border-color: #1a6b1a !important; background: #eef; }
   .dvz-w-number { width: 25px; text-align: center; }
+  .dvz-w-actions { width: 28px; text-align: center; padding: 0 2px !important; }
+  .dvz-w-actions .icon-btn { padding: 2px; }
   .dvz-w-code { width: 70px; text-align: center; }
   .dvz-w-um { width: 35px; text-align: center; }
   .dvz-w-money { width: 65px; text-align: center; }
@@ -691,6 +708,8 @@
         </div>
         <div class="toolbar-actions">
           <button class="btn-secondary" id="btn-trimite-coleg" style="display:none" onclick="openTrimiteColegModal()">📨 Trimite selecția unui coleg</button>
+          <button class="btn-secondary" id="btn-incarca-factura" style="display:none" onclick="document.getElementById('bulk-factura-file').click()" title="Numele fișierului încărcat devine automat Nr. factură pentru toate comenzile bifate">📄 Încarcă factură</button>
+          <input type="file" id="bulk-factura-file" style="display:none" onchange="comenziSetFacturaFromFile(this.files)" />
           <button class="btn-secondary" id="btn-sterge-selectie" style="display:none;color:#b91c1c" onclick="confirmBulkDeleteComenzi()">🗑 Șterge selecția</button>
           <button class="btn-secondary" onclick="openExportModal()">Exportă Excel</button>
           <button class="btn-primary" onclick="openAddModal()">+ Comandă nouă</button>
@@ -959,11 +978,11 @@
           <table>
             <thead>
               <tr>
-                <th>Nr.</th>
-                <th>Dată</th>
-                <th>Client</th>
-                <th>Motocicletă</th>
-                <th>Total</th>
+                <th class="sortable" data-col="nr_zi" onclick="dvzSetSort('nr_zi')">Nr. <span class="dvz-sort-ind" data-ind="nr_zi">⇅</span></th>
+                <th class="sortable" data-col="data" onclick="dvzSetSort('data')">Dată <span class="dvz-sort-ind" data-ind="data">⇅</span></th>
+                <th class="sortable" data-col="client" onclick="dvzSetSort('client')">Client <span class="dvz-sort-ind" data-ind="client">⇅</span></th>
+                <th class="sortable" data-col="moto" onclick="dvzSetSort('moto')">Motocicletă <span class="dvz-sort-ind" data-ind="moto">⇅</span></th>
+                <th class="sortable" data-col="total" onclick="dvzSetSort('total')">Total <span class="dvz-sort-ind" data-ind="total">⇅</span></th>
                 <th>Acțiuni</th>
               </tr>
             </thead>
@@ -1169,10 +1188,14 @@
                   <th class="dvz-w-money-calc">Pret (Fara TVA)</th>
                   <th class="dvz-w-money">Pret</th>
                   <th class="dvz-w-money">Valoare</th>
+                  <th class="dvz-no-print dvz-w-actions"></th>
                 </tr>
               </thead>
               <tbody id="dvz-partsTableBody"></tbody>
             </table>
+            <div class="dvz-no-print" style="margin:4px 0 8px;">
+              <button type="button" class="btn-secondary" onclick="dvzAddPartRow()" style="font-size:12px;padding:4px 10px;">+ Adaugă rând piesă</button>
+            </div>
             <table style="margin-top:0;border-top:none;">
               <tfoot>
                 <tr>
@@ -1193,10 +1216,14 @@
                   <th class="dvz-w-money-calc">Tarif/Ora (Fara TVA)</th>
                   <th class="dvz-w-money">Tarif/Ora</th>
                   <th class="dvz-w-money">Valoare</th>
+                  <th class="dvz-no-print dvz-w-actions"></th>
                 </tr>
               </thead>
               <tbody id="dvz-opsTableBody"></tbody>
             </table>
+            <div class="dvz-no-print" style="margin:4px 0 8px;">
+              <button type="button" class="btn-secondary" onclick="dvzAddOpRow()" style="font-size:12px;padding:4px 10px;">+ Adaugă rând manoperă</button>
+            </div>
             <table style="margin-top:0;border-top:none;">
               <tfoot>
                 <tr>
@@ -1916,6 +1943,10 @@ let currentOrders = [];
 let currentClients = [];
 let activeTab = "toate";
 let sortState = { column: "termen_livrare", dir: "asc" };
+// v44: sortare separată pentru lista de Devize (dupa data, client, motocicleta, total) — variabilă
+// proprie, nu refolosim "sortState"/"setSort" de mai sus, care e legat strict de tabelul de la
+// "Piese de comandat" (aceleași nume de funcție ar coliziona cu acel tabel).
+let dvzSortState = { column: "data", dir: "desc" };
 let statusFilter = null;
 let brandFilter = "";
 let selectedBrand = null;
@@ -3140,8 +3171,28 @@ function updateTrimiteColegButton() {
   selectedOrderIds = new Set([...document.querySelectorAll(".order-select-cb:checked")].map(el => el.value));
   const btn = document.getElementById("btn-trimite-coleg");
   if (btn) btn.style.display = selectedOrderIds.size ? "inline-flex" : "none";
+  const btnFactura = document.getElementById("btn-incarca-factura");
+  if (btnFactura) btnFactura.style.display = selectedOrderIds.size ? "inline-flex" : "none";
   const btnDel = document.getElementById("btn-sterge-selectie");
   if (btnDel) btnDel.style.display = (selectedOrderIds.size && amAdmin()) ? "inline-flex" : "none";
+}
+// v44: la cererea lui Andrei — bifează mai multe comenzi (ex: piese primite/recepționate) și
+// "Încarcă factură" preia automat numele fișierului (fără extensie) ca Nr. factură pentru toate
+// comenzile bifate deodată, în loc să-l scrie manual pe fiecare rând. Scrierea manuală din
+// "Nr. factură" (renderFacturaInput, pe fiecare rând) rămâne neschimbată pentru cazul fără fișier.
+async function comenziSetFacturaFromFile(fileList) {
+  const file = fileList && fileList[0];
+  const input = document.getElementById("bulk-factura-file");
+  if (!file) return;
+  if (!selectedOrderIds.size) { alert("Selectează cel puțin o comandă din tabel."); if (input) input.value = ""; return; }
+  const numeFaraExtensie = file.name.replace(/\.[^/.]+$/, "").trim() || file.name;
+  const ids = [...selectedOrderIds];
+  const { error } = await client.from("comenzi").update({ numar_factura: numeFaraExtensie }).in("id", ids);
+  if (input) input.value = "";
+  if (error) { alert("Eroare la actualizarea numărului de factură: " + error.message); return; }
+  await loadOrders();
+  const mesaj = `Nr. factură „${numeFaraExtensie}” aplicat la ${ids.length} comandă${ids.length === 1 ? "" : "(ă/ăi)"}.`;
+  if (typeof rzToast === "function") rzToast(mesaj, "ok"); else alert(mesaj);
 }
 
 // ---------- STERGERE ÎN BULK (comenzi selectate, admin) ----------
@@ -3316,8 +3367,10 @@ function renderClientsTable() {
     tbody.innerHTML = '<tr class="empty-row"><td colspan="11">Niciun client înregistrat încă.</td></tr>';
     return;
   }
-  tbody.innerHTML = rows.map(c => `
-    <tr>
+  tbody.innerHTML = rows.map(c => {
+    const poateEdita = currentProfile.rol === "admin" || canDo("perm_clienti");
+    return `
+    <tr${poateEdita ? ` class="rz-row-clickable" onclick="if(event.target.closest('input,button,.actions-cell'))return; openClientModal('${c.id}')" title="Click pentru a deschide clientul"` : ""}>
       <td><span class="badge" style="background:${c.tip_client === "juridica" ? "#ede9fe" : "#e0f2fe"};color:${c.tip_client === "juridica" ? "#5b21b6" : "#075985"}">${c.tip_client === "juridica" ? "Juridică" : "Fizică"}</span></td>
       <td>${escapeHtml(c.nume)}</td>
       <td>${escapeHtml(c.prenume || "")}</td>
@@ -3328,14 +3381,15 @@ function renderClientsTable() {
       <td class="wrap-cell">${renderMotoCell(c.motociclete)}</td>
       <td>${escapeHtml(c.creat_de_nume || "")}</td>
       <td>${formatDate(c.creat_la)}</td>
-      <td>${(currentProfile.rol === "admin" || canDo("perm_clienti")) ? `
+      <td>${poateEdita ? `
         <div class="actions-cell">
           <button class="icon-btn" title="Editează" onclick="openClientModal('${c.id}')">${ICON_EDIT}</button>
           <button class="icon-btn danger" title="Șterge" onclick="confirmDeleteClient('${c.id}')">${ICON_TRASH}</button>
         </div>` : '<span class="muted">—</span>'}
       </td>
     </tr>
-  `).join("");
+  `;
+  }).join("");
 }
 
 // ---------- CLIENTI: motociclete (randuri dinamice) ----------
@@ -4812,7 +4866,8 @@ function renderDauneTable() {
     const potPreda = (amAdmin() || d.creat_de === currentProfile.id) && d.stare === "Etapa 1";
     const potFinaliza = (amAdmin() || d.predat_catre === currentProfile.id) && d.stare === "Predat";
     const potAnula = amAdmin() && (d.stare === "Etapa 1" || d.stare === "Predat");
-    return `<tr>
+    const poateEdita = amAdmin() || canDo("perm_daune");
+    return `<tr${poateEdita ? ` class="rz-row-clickable" onclick="if(event.target.closest('input,button,.actions-cell'))return; openDauneModal('${d.id}')" title="Click pentru a deschide dosarul"` : ""}>
       <td>${escapeHtml(dauneClientLabel(d))}</td>
       <td>${d.tip_client === "juridica" ? "Juridică" : "Fizică"}</td>
       <td>${escapeHtml(d.vin || "—")}${d.numar_inmatriculare ? " / " + escapeHtml(d.numar_inmatriculare) : ""}</td>
@@ -7050,8 +7105,11 @@ function renderPieseComandat() {
   const tbody = document.getElementById("piese-comandat-table-body");
   if (!tbody) return;
   const search = (document.getElementById("pc-search").value || "").trim().toLowerCase();
-  const finalizate = ["Primită", "Predată clientului", "Anulată"];
-  let orders = currentOrders.filter(o => !finalizate.includes(o.stare_comanda)).filter(matchesLocationFilter);
+  // v44: la cererea lui Andrei — "Piese de comandat" arată acum STRICT comenzile cu status
+  // "În așteptare" sau "Lipsă stoc furnizor" (înainte arăta orice status în afară de cele 3
+  // finalizate, deci și "Trimisă la furnizor"/"Comandată", care acum nu mai apar aici).
+  const vizibileInPieseComandat = ["În așteptare", "Lipsă stoc furnizor"];
+  let orders = currentOrders.filter(o => vizibileInPieseComandat.includes(o.stare_comanda)).filter(matchesLocationFilter);
   if (pieseComandatTab === "mie") orders = orders.filter(o => o.atribuit_catre === currentProfile.id);
 
   const linii = [];
@@ -7456,16 +7514,50 @@ async function loadDevize() {
   currentDevize = data || [];
   renderDevizeTable();
 }
+// v44: sortare pentru lista de Devize, la cererea lui Andrei ("dupa data, client, motocicleta si
+// dupa total") — click pe antet comută asc/desc (la fel ca la "Piese de comandat"), dar cu propria
+// stare/funcții ca să nu se amestece cu sortarea de acolo.
+function dvzSetSort(column) {
+  if (dvzSortState.column === column) dvzSortState.dir = dvzSortState.dir === "asc" ? "desc" : "asc";
+  else { dvzSortState.column = column; dvzSortState.dir = column === "data" ? "desc" : "asc"; }
+  renderDevizeTable();
+}
+function dvzUpdateSortIndicators() {
+  document.querySelectorAll(".dvz-sort-ind").forEach(el => {
+    const col = el.getAttribute("data-ind");
+    if (col === dvzSortState.column) { el.textContent = dvzSortState.dir === "asc" ? "▲" : "▼"; el.classList.add("active"); }
+    else { el.textContent = "⇅"; el.classList.remove("active"); }
+  });
+}
+function dvzSortRows(rows) {
+  const { column, dir } = dvzSortState;
+  const mul = dir === "asc" ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    let va, vb;
+    switch (column) {
+      case "nr_zi": va = a.nr_zi != null ? a.nr_zi : -Infinity; vb = b.nr_zi != null ? b.nr_zi : -Infinity; break;
+      case "client": va = (a.client_nume || "").toLowerCase(); vb = (b.client_nume || "").toLowerCase(); break;
+      case "moto": va = [a.moto_brand_categorie, a.moto_model].filter(Boolean).join(" ").toLowerCase(); vb = [b.moto_brand_categorie, b.moto_model].filter(Boolean).join(" ").toLowerCase(); break;
+      case "total": va = a.total_general != null ? a.total_general : -Infinity; vb = b.total_general != null ? b.total_general : -Infinity; break;
+      default: va = a.data || ""; vb = b.data || "";
+    }
+    if (va < vb) return -1 * mul;
+    if (va > vb) return 1 * mul;
+    return 0;
+  });
+}
 function renderDevizeTable() {
   const tbody = document.getElementById("devize-table-body");
   if (!tbody) return;
   const cautareEl = document.getElementById("dvz-cautare");
   const cautare = (cautareEl ? cautareEl.value : "").trim().toLowerCase();
-  const rows = currentDevize.filter(matchesLocationFilter).filter(d => {
+  let rows = currentDevize.filter(matchesLocationFilter).filter(d => {
     if (!cautare) return true;
     const hay = [d.client_nume, d.moto_vin, d.moto_plate, d.moto_model].map(v => (v || "").toLowerCase()).join(" ");
     return hay.includes(cautare);
   });
+  rows = dvzSortRows(rows);
+  dvzUpdateSortIndicators();
   if (!rows.length) {
     tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Niciun deviz înregistrat încă.</td></tr>';
     return;
@@ -7517,11 +7609,16 @@ async function dvzDeleteAllDevize() {
 }
 
 // ---------- EDITOR: deschidere / inchidere ----------
-function dvzGenerateTables() {
-  let partsHTML = "";
-  for (let i = 1; i <= 20; i++) {
-    partsHTML += `<tr>
-      <td class="dvz-w-number">${i}</td>
+// v44: rândurile de piese/manoperă erau fixe (20/5) — la cererea lui Andrei ("cum adaug sau scot
+// produse si manopere din deviz?") tabelele sunt acum extensibile: dvzGenerateTables(n, m) mai
+// primește opțional câte rânduri să genereze (implicit tot 20/5, ca să nu schimbe aspectul unui
+// deviz obișnuit), dvzBuildPartRowHtml/dvzBuildOpRowHtml construiesc câte UN rând (refolosite și
+// la generarea inițială, și la butonul "+ Adaugă rând"), iar fiecare rând (cu excepția rândului 1
+// de manoperă, care ține mecanicul/tariful și nu se poate șterge) are un buton 🗑 de ștergere.
+// Coloana de acțiuni e marcată "dvz-no-print" ca să nu apară la Print/Export PDF.
+function dvzBuildPartRowHtml(nr) {
+  return `<tr>
+      <td class="dvz-w-number">${nr}</td>
       <td><input type="text" class="dvz-cod"></td>
       <td><input type="text" class="dvz-denumire"></td>
       <td class="dvz-w-um"><input type="text" class="dvz-um" value="buc"></td>
@@ -7529,31 +7626,67 @@ function dvzGenerateTables() {
       <td><input type="text" class="dvz-price-no-vat" readonly></td>
       <td><input type="number" class="dvz-price" oninput="dvzCalculateRow(this)"></td>
       <td><input type="number" class="dvz-val" oninput="dvzCalculateAllTotals()"></td>
+      <td class="dvz-no-print dvz-w-actions"><button type="button" class="icon-btn danger" title="Șterge rândul" onclick="dvzRemoveRow(this)">${ICON_TRASH}</button></td>
     </tr>`;
-  }
-  document.getElementById("dvz-partsTableBody").innerHTML = partsHTML;
-
-  let opsHTML = "";
-  for (let i = 1; i <= 5; i++) {
-    const isFirst = i === 1;
-    const descCell = isFirst
-      ? `<input type="text" id="dvz-mechInput" class="dvz-sel-mecanic" placeholder="Mecanic..." autocomplete="off" oninput="dvzCheckMechanicDropdown(this)" onfocus="dvzCheckMechanicDropdown(this)" onblur="dvzScheduleCloseDropdown()">`
-      : `<input type="text" class="dvz-denumire">`;
-    const tarifCell = isFirst
-      ? `<input type="text" id="dvz-tarifInput" class="dvz-sel-tarif" placeholder="Tarif..." readonly onfocus="dvzShowTarifDropdown(this)">
-         <input type="hidden" class="dvz-price" id="dvz-tarifValue">`
-      : `<input type="number" class="dvz-price" oninput="dvzCalculateRow(this)">`;
-    opsHTML += `<tr>
-      <td class="dvz-w-number">${i}</td>
+}
+function dvzBuildOpRowHtml(nr, isFirst) {
+  const descCell = isFirst
+    ? `<input type="text" id="dvz-mechInput" class="dvz-sel-mecanic" placeholder="Mecanic..." autocomplete="off" oninput="dvzCheckMechanicDropdown(this)" onfocus="dvzCheckMechanicDropdown(this)" onblur="dvzScheduleCloseDropdown()">`
+    : `<input type="text" class="dvz-denumire">`;
+  const tarifCell = isFirst
+    ? `<input type="text" id="dvz-tarifInput" class="dvz-sel-tarif" placeholder="Tarif..." readonly onfocus="dvzShowTarifDropdown(this)">
+       <input type="hidden" class="dvz-price" id="dvz-tarifValue">`
+    : `<input type="number" class="dvz-price" oninput="dvzCalculateRow(this)">`;
+  return `<tr>
+      <td class="dvz-w-number">${nr}</td>
       <td>${descCell}</td>
       <td class="dvz-w-um"><input type="text" class="dvz-um" value="ora"></td>
       <td><input type="number" class="dvz-qty" oninput="${isFirst ? "dvzCalculateRowManopera(this)" : "dvzCalculateRow(this)"}"></td>
       <td><input type="text" class="dvz-price-no-vat" readonly></td>
       <td>${tarifCell}</td>
       <td><input type="number" class="dvz-val" oninput="dvzCalculateAllTotals()"></td>
+      <td class="dvz-no-print dvz-w-actions">${isFirst ? "" : `<button type="button" class="icon-btn danger" title="Șterge rândul" onclick="dvzRemoveRow(this)">${ICON_TRASH}</button>`}</td>
     </tr>`;
-  }
+}
+function dvzGenerateTables(numPiese, numManopera) {
+  const nPiese = numPiese || 20;
+  const nManopera = numManopera || 5;
+  let partsHTML = "";
+  for (let i = 1; i <= nPiese; i++) partsHTML += dvzBuildPartRowHtml(i);
+  document.getElementById("dvz-partsTableBody").innerHTML = partsHTML;
+
+  let opsHTML = "";
+  for (let i = 1; i <= nManopera; i++) opsHTML += dvzBuildOpRowHtml(i, i === 1);
   document.getElementById("dvz-opsTableBody").innerHTML = opsHTML;
+}
+function dvzRenumberRows() {
+  document.querySelectorAll("#dvz-partsTableBody tr").forEach((tr, i) => { tr.querySelector(".dvz-w-number").textContent = i + 1; });
+  document.querySelectorAll("#dvz-opsTableBody tr").forEach((tr, i) => { tr.querySelector(".dvz-w-number").textContent = i + 1; });
+}
+function dvzAddPartRow() {
+  const tbody = document.getElementById("dvz-partsTableBody");
+  const nextNr = tbody.querySelectorAll("tr").length + 1;
+  tbody.insertAdjacentHTML("beforeend", dvzBuildPartRowHtml(nextNr));
+  const lastRow = tbody.lastElementChild;
+  const denInput = lastRow.querySelector(".dvz-denumire");
+  if (denInput) dvzAttachAutocomplete(denInput, false);
+  lastRow.scrollIntoView({ block: "nearest" });
+}
+function dvzAddOpRow() {
+  const tbody = document.getElementById("dvz-opsTableBody");
+  const nextNr = tbody.querySelectorAll("tr").length + 1;
+  tbody.insertAdjacentHTML("beforeend", dvzBuildOpRowHtml(nextNr, false));
+  const lastRow = tbody.lastElementChild;
+  const denInput = lastRow.querySelector(".dvz-denumire");
+  if (denInput) dvzAttachAutocomplete(denInput, true);
+  lastRow.scrollIntoView({ block: "nearest" });
+}
+function dvzRemoveRow(btn) {
+  const tr = btn.closest("tr");
+  if (!tr) return;
+  tr.remove();
+  dvzRenumberRows();
+  dvzCalculateAllTotals();
 }
 function dvzResetForm() {
   ["dvz-clientNameInput", "dvz-clientAdresaInput", "dvz-clientTelInput", "dvz-clientCUIInput",
@@ -7929,7 +8062,12 @@ function dvzCalculateAllTotals() {
 async function dvzLoadLinii(devizId) {
   const { data, error } = await client.from("deviz_linii").select("*").eq("deviz_id", devizId).order("nr");
   if (error) { alert("Eroare la încărcarea liniilor: " + error.message); return; }
-  dvzGenerateTables();
+  // v44: dacă devizul a fost salvat cu mai multe rânduri decât cele 20/5 implicite (rânduri
+  // adăugate cu "+ Adaugă rând"), generăm exact câte sunt necesare ca să nu se piardă liniile
+  // peste 20/5 la reîncărcare.
+  const maxPiesaNr = (data || []).filter(l => l.tip === "piesa").reduce((m, l) => Math.max(m, l.nr || 0), 0);
+  const maxManoperaNr = (data || []).filter(l => l.tip !== "piesa").reduce((m, l) => Math.max(m, l.nr || 0), 0);
+  dvzGenerateTables(Math.max(20, maxPiesaNr), Math.max(5, maxManoperaNr));
   (data || []).forEach(l => {
     if (l.tip === "piesa") {
       const tr = document.querySelectorAll("#dvz-partsTableBody tr")[l.nr - 1];
@@ -8104,6 +8242,11 @@ function dvzPagesForPrint() {
   const p2 = dvzSnapshotNode(document.getElementById("dvz-page2"));
   p1.classList.remove("dvz-page-hidden");
   p2.classList.remove("dvz-page-hidden");
+  // v44: scoatem butoanele "doar-ecran" (adaugă/șterge rând) și din fișierul .html descărcat de
+  // "Print/Save" — nu doar din pagina tipărită (unde oricum le ascunde .dvz-no-print la @media
+  // print) — ca fișierul salvat să nu conțină controale de editare fără sens într-un instantaneu.
+  p1.querySelectorAll(".dvz-no-print").forEach(el => el.remove());
+  p2.querySelectorAll(".dvz-no-print").forEach(el => el.remove());
   return { p1, p2 };
 }
 // v39: clonă separată, folosită STRICT pentru captura html2canvas de la "Export PDF" — nu și
@@ -8166,6 +8309,11 @@ function dvzPagesForPdf() {
   const p2 = dvzPrepareCloneForCanvas(document.getElementById("dvz-page2"));
   p1.classList.remove("dvz-page-hidden");
   p2.classList.remove("dvz-page-hidden");
+  // v44: Export PDF nu trece prin @media print (html2canvas desenează direct DOM-ul, offscreen),
+  // deci butoanele "doar-ecran" (adaugă/șterge rând) tot ar apărea în PDF dacă nu le scoatem
+  // explicit din clonă aici — la fel ca ".dvz-no-print { display:none }" de la Print/Save.
+  p1.querySelectorAll(".dvz-no-print").forEach(el => el.remove());
+  p2.querySelectorAll(".dvz-no-print").forEach(el => el.remove());
   return { p1, p2 };
 }
 function dvzDocTitle() {
@@ -8638,6 +8786,13 @@ async function dvzImportSelected(data) {
   for (const p of list) {
     const marca = (p.marca || "").trim();
     const isTriumph = marca.toLowerCase() === "triumph";
+    // v44: pe lângă marca/model/VIN/plăcuță (deja transferate), programarea mai poartă și data +
+    // ora de start (ora la care motorul e programat să intre în service) și textul liber cu ce a
+    // cerut clientul ("servicii"/"observații") — informații care înainte se pierdeau la import,
+    // obligându-l pe Andrei să le rescrie manual de fiecare dată în devizul creat din programare.
+    const cerinte = [p.servicii, p.observatii].filter(v => (v || "").trim()).join(
+      (p.servicii || "").trim() && (p.observatii || "").trim() ? " — " : ""
+    );
     const payload = {
       stare: "Draft",
       client_nume: p.nume_client || "Client necunoscut",
@@ -8646,6 +8801,9 @@ async function dvzImportSelected(data) {
       moto_model: p.model || null,
       moto_vin: p.vin || null,
       moto_plate: p.nr_inmatriculare || null,
+      data_intrare: p.data || todayISODate(),
+      ora_intrare: fmtOra(p.ora_inceput) || null,
+      cerinte_client: cerinte || null,
       comanda_id: null,
       total_piese: 0, total_manopera: 0, total_general: 0,
       punct_lucru_id: p.punct_lucru_id || getMyCreateLocationId(),
