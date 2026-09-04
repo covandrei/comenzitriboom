@@ -360,6 +360,12 @@
   .rz-price-settings-box .title { font-weight: 700; margin-bottom: 8px; font-size: 13.5px; }
   .rz-price-settings-box .hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
   .rz-inline-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  /* v47: reordonare prin drag-and-drop la "Produse/Manopere uzuale" (Devize) */
+  .dvz-pu-drag-cell { width: 26px; text-align: center; cursor: default; }
+  .dvz-pu-drag-handle { cursor: grab; font-size: 15px; color: var(--muted); user-select: none; touch-action: none; }
+  .dvz-pu-drag-handle:active { cursor: grabbing; }
+  tr.dvz-pu-row-dragging { opacity: .4; }
+  tr.dvz-pu-row-dragover td { border-top: 2px solid var(--accent); }
   .rz-inline-row input, .rz-inline-row select { padding: 6px 9px; border-radius: 6px; border: 1.5px solid var(--border); font-size: 13px; font-family: inherit; }
   /* v40: notificările erau în colțul dreapta-jos, exact unde stă și bulina/panoul de chat
      (#msg-bubble/#msg-panel, care rămân la right:20px) — o notificare apărută cât timp chatul
@@ -2719,7 +2725,10 @@ function renderTable() {
           ? '<div class="muted">—</div>'
           : `<div>${roFmtNum(p.pret_cu_tva)} ${escapeHtml(p.moneda || "RON")} <span class="muted">(cu TVA)</span></div>`;
       }
-      const pretCell = `<td class="wrap-cell"><div class="pret-cell">${pretInner}${idx === 0 ? editBtn : ""}</div></td>`;
+      // v47: la cererea lui Andrei — iconița "✎ Preț" apare acum pe FIECARE rând (nu doar pe primul
+      // cod al comenzii) — deschide același pop-up cu toate piesele comenzii, indiferent de rândul
+      // de pe care a fost apăsat.
+      const pretCell = `<td class="wrap-cell"><div class="pret-cell">${pretInner}${editBtn}</div></td>`;
       const facturaCell = `<td>${p ? renderPiesaFacturaInput(p) : renderFacturaInput(o)}</td>`;
 
       return `<tr ${rowStyle} class="${n > 1 ? (idx === 0 ? "comanda-grup-prima" : "comanda-grup-linie") : ""}">${checkboxCell}${brandCell}${codCell}${denCell}${cantCell}${pretCell}${termenCell}${clientCell}${telefonCell}${emailCell}${furnizorCell}${facturaCell}${stareCell}${plataCell}${creatDeCell}${actionsCell}</tr>`;
@@ -6683,12 +6692,38 @@ async function rzPsClearEur() {
 // job programat se blochează sau eșuează, cursul afișat rămâne "înghețat" pe ultima valoare bună,
 // fără niciun semn în interfață; până acum n-a existat NICIUN mod de a forța o reîncercare din
 // aplicație). Butonul apelează aceeași funcție la cerere și arată explicit eroarea, dacă apare.
+// v47: la cererea lui Andrei — a confirmat exact riscul semnalat la v45: "curs-bnr" nu răspunde
+// la apeluri din browser ("Failed to send a request to the Edge Function" — eroarea generică
+// aruncată de supabase-js când fetch-ul propriu-zis eșuează, tipic din lipsa headerelor CORS pe
+// funcție, nu o eroare de business logic venită de la ea). Încercăm acum și un al doilea nume
+// posibil ("functie-curs-bnr", numele fișierului sursă) înainte să renunțăm, ca o eventuală
+// nepotrivire de nume să se repare singură; dacă ambele eșuează la fel (fetch, nu răspuns HTTP),
+// arătăm un mesaj care explică exact ce trebuie verificat în Supabase, nu doar eroarea brută.
+async function rzInvokeCursBnr() {
+  const numeCandidate = ["curs-bnr", "functie-curs-bnr"];
+  let ultimaEroare = null;
+  for (const nume of numeCandidate) {
+    const { data, error } = await client.functions.invoke(nume);
+    if (!error) return { data, error: null };
+    ultimaEroare = error;
+    const pareEsecDeRetea = error.name === "FunctionsFetchError" || /failed to send/i.test(error.message || "");
+    if (!pareEsecDeRetea) break; // eroare venită efectiv de la funcție (ex. erori business) — nu mai încercăm alt nume
+  }
+  return { data: null, error: ultimaEroare };
+}
 async function rzRefreshCursBnr() {
   const btn = document.getElementById("rz-btn-refresh-curs");
   if (btn) { btn.disabled = true; btn.textContent = "⏳ Se interoghează..."; }
   try {
-    const { error } = await client.functions.invoke("curs-bnr");
-    if (error) { alert("Eroare la interogarea cursului BNR/BCE: " + error.message); return; }
+    const { error } = await rzInvokeCursBnr();
+    if (error) {
+      const pareEsecDeRetea = error.name === "FunctionsFetchError" || /failed to send/i.test(error.message || "");
+      const mesaj = pareEsecDeRetea
+        ? `Eroare la interogarea cursului BNR/BCE: ${error.message} — funcția Supabase "curs-bnr" nu răspunde la apeluri din browser. Cel mai probabil nu are headerele CORS necesare (a fost gândită doar pentru rulare programată, nu pentru apel direct din aplicație) sau nu există sub acest nume. Verifică în Supabase Dashboard → Edge Functions.`
+        : `Eroare la interogarea cursului BNR/BCE: ${error.message}`;
+      alert(mesaj);
+      return;
+    }
     await rzLoadSetari();
     rzRender();
     if (typeof rzToast === "function") rzToast("Curs actualizat", "ok");
@@ -7644,7 +7679,9 @@ async function dvzLoadTarife() {
   if (!error) dvzTarife = data || [];
 }
 async function dvzLoadPreturiUzuale() {
-  const { data, error } = await client.from("preturi_uzuale").select("*").order("nume");
+  // v47: ordinea aleasă manual de Andrei (coloană nouă "ordine", migrare-v47.sql) are prioritate;
+  // intrările fără ordine (nescrisă încă) cad la coadă, ordonate alfabetic între ele ca rezervă.
+  const { data, error } = await client.from("preturi_uzuale").select("*").order("ordine", { ascending: true, nullsFirst: false }).order("nume");
   if (!error) dvzPreturiUzuale = data || [];
 }
 
@@ -7657,16 +7694,19 @@ async function dvzLoadPreturiUzuale() {
 // alimentează direct meniul rapid din Deviz (dvzPreturiUzuale) — la fiecare adăugare/ștergere/modificare
 // se reîncarcă automat și sugestiile din deviz reflectă imediat schimbarea.
 let dvzPuFilterTip = "toate";
+let dvzPuDragId = null;
 function dvzOpenPreturiUzuale() {
   dvzRenderPreturiUzuale();
 }
+// v47: la cererea lui Andrei — pop-up lățit ("modal full", 1500px/96vw în loc de "wide", 720px) ca
+// să nu mai fie nevoie de scroll orizontal pe rândurile mai late (acum și cu mânerul de drag); zona
+// de listă nu mai are propriul scroll fix (340px) — se lasă liberă, iar `.modal` are deja scroll
+// propriu la 90vh înălțime, folosit doar dacă lista chiar nu mai încape, nu artificial ca înainte.
 function dvzRenderPreturiUzuale() {
-  const lista = dvzPreturiUzuale
-    .filter(p => dvzPuFilterTip === "toate" || p.tip === dvzPuFilterTip)
-    .slice()
-    .sort((a, b) => (a.nume || "").localeCompare(b.nume || "", "ro"));
+  const lista = dvzPreturiUzuale.filter(p => dvzPuFilterTip === "toate" || p.tip === dvzPuFilterTip);
   const rows = lista.map(p => `
-    <tr data-id="${p.id}">
+    <tr data-id="${p.id}" ondragover="dvzPuRowDragOver(event)" ondragleave="dvzPuRowDragLeave(event)" ondrop="dvzPuRowDrop(event, '${p.id}')">
+      <td class="dvz-pu-drag-cell"><span class="dvz-pu-drag-handle" draggable="true" title="Trage pentru a reordona" ondragstart="dvzPuRowDragStart(event, '${p.id}')" ondragend="dvzPuRowDragEnd(event)">⠿</span></td>
       <td>${p.tip === "manopera" ? "🔧 Manoperă" : "⚙️ Piesă"}</td>
       <td><input class="dvz-pu-cod" value="${escapeHtml(p.cod || "")}" style="width:100px" /></td>
       <td><input class="dvz-pu-nume" value="${escapeHtml(p.nume || "")}" style="min-width:180px" /></td>
@@ -7678,7 +7718,7 @@ function dvzRenderPreturiUzuale() {
     </tr>`).join("");
   rzOpenModal(`<h3>⚙️ Produse / Manopere uzuale</h3>
     <div style="margin-top:6px;font-size:13px">
-      <div class="hint">Lista de mai jos alimentează sugestiile (autocomplete) care apar când completezi denumirea unei piese sau a unei operații de manoperă într-un deviz. E complet separată de „Inventar liber" (care ține evidența stocului fizic scanat) — aici păstrezi doar o listă de prețuri „standard" pentru ce folosești des.</div>
+      <div class="hint">Lista de mai jos alimentează sugestiile (autocomplete) care apar când completezi denumirea unei piese sau a unei operații de manoperă într-un deviz. E complet separată de „Inventar liber" (care ține evidența stocului fizic scanat) — aici păstrezi doar o listă de prețuri „standard" pentru ce folosești des. Trage de mânerul ⠿ ca să reordonezi — cele mai folosite le poți pune primele.</div>
       <div class="rz-inline-row" style="margin:10px 0">
         <label style="font-size:12px">Filtru:</label>
         <select id="dvz-pu-filter" onchange="dvzPuFilterTip=this.value; dvzRenderPreturiUzuale()" style="width:auto">
@@ -7687,10 +7727,10 @@ function dvzRenderPreturiUzuale() {
           <option value="manopera" ${dvzPuFilterTip === "manopera" ? "selected" : ""}>Doar manoperă</option>
         </select>
       </div>
-      <div style="max-height:340px;overflow:auto;border:1px solid var(--border);border-radius:8px">
+      <div style="border:1px solid var(--border);border-radius:8px">
         <table class="data-table" style="margin:0">
-          <thead><tr><th>Tip</th><th>Cod</th><th>Denumire</th><th>Preț (TVA inclus)</th><th></th></tr></thead>
-          <tbody>${rows || '<tr><td colspan="5" class="muted" style="text-align:center;padding:14px">Nicio intrare încă.</td></tr>'}</tbody>
+          <thead><tr><th></th><th>Tip</th><th>Cod</th><th>Denumire</th><th>Preț (TVA inclus)</th><th></th></tr></thead>
+          <tbody id="dvz-pu-tbody">${rows || '<tr><td colspan="6" class="muted" style="text-align:center;padding:14px">Nicio intrare încă.</td></tr>'}</tbody>
         </table>
       </div>
       <div class="rz-price-settings-box" style="margin-top:12px">
@@ -7704,7 +7744,83 @@ function dvzRenderPreturiUzuale() {
         </div>
       </div>
     </div>
-    <div class="modal-actions"><button class="btn-secondary" onclick="rzCloseModal()">Închide</button></div>`);
+    <div class="modal-actions"><button class="btn-secondary" onclick="rzCloseModal()">Închide</button></div>`, "modal full");
+}
+// ---------- Reordonare prin drag-and-drop ----------
+function dvzPuRowDragStart(e, id) {
+  dvzPuDragId = id;
+  e.dataTransfer.effectAllowed = "move";
+  try { e.dataTransfer.setData("text/plain", id); } catch (err) { /* ignorat — unele browsere sunt stricte aici */ }
+  const tr = e.target.closest("tr");
+  if (tr) tr.classList.add("dvz-pu-row-dragging");
+}
+function dvzPuRowDragEnd(e) {
+  const tr = e.target.closest("tr");
+  if (tr) tr.classList.remove("dvz-pu-row-dragging");
+  document.querySelectorAll(".dvz-pu-row-dragover").forEach(el => el.classList.remove("dvz-pu-row-dragover"));
+}
+function dvzPuRowDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+  const tr = e.currentTarget;
+  document.querySelectorAll(".dvz-pu-row-dragover").forEach(el => { if (el !== tr) el.classList.remove("dvz-pu-row-dragover"); });
+  tr.classList.add("dvz-pu-row-dragover");
+}
+function dvzPuRowDragLeave(e) {
+  e.currentTarget.classList.remove("dvz-pu-row-dragover");
+}
+// Mută subsetul FILTRAT (vizibil) în noua ordine cerută de drag, apoi îl reinserează la locul unde
+// începea în lista completă — restul intrărilor (ascunse de filtrul curent) își păstrează poziția
+// relativă neschimbată, ca ordinea globală să rămână coerentă chiar dacă reordonezi cu filtrul activ.
+function dvzMergeReorderedSubset(fullList, subsetIdsInNewOrder) {
+  const subsetSet = new Set(subsetIdsInNewOrder);
+  const byId = new Map(fullList.map(p => [p.id, p]));
+  const result = [];
+  let inserted = false;
+  for (const item of fullList) {
+    if (subsetSet.has(item.id)) {
+      if (!inserted) {
+        subsetIdsInNewOrder.forEach(id => { if (byId.has(id)) result.push(byId.get(id)); });
+        inserted = true;
+      }
+    } else {
+      result.push(item);
+    }
+  }
+  return result;
+}
+async function dvzPuRowDrop(e, targetId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove("dvz-pu-row-dragover");
+  const draggedId = dvzPuDragId;
+  dvzPuDragId = null;
+  if (!draggedId || draggedId === targetId) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const before = (e.clientY - rect.top) < rect.height / 2;
+
+  const filtered = dvzPreturiUzuale.filter(p => dvzPuFilterTip === "toate" || p.tip === dvzPuFilterTip);
+  const filteredIds = filtered.map(p => p.id);
+  const fromIdx = filteredIds.indexOf(draggedId);
+  if (fromIdx === -1) return;
+  filteredIds.splice(fromIdx, 1);
+  let toIdx = filteredIds.indexOf(targetId);
+  if (toIdx === -1) return;
+  if (!before) toIdx += 1;
+  filteredIds.splice(toIdx, 0, draggedId);
+
+  const merged = dvzMergeReorderedSubset(dvzPreturiUzuale, filteredIds);
+  const updates = merged.map((p, idx) => ({ id: p.id, ordine: (idx + 1) * 10 }));
+  updates.forEach(u => { const p = merged.find(x => x.id === u.id); if (p) p.ordine = u.ordine; });
+  dvzPreturiUzuale = merged;
+  dvzRenderPreturiUzuale(); // feedback vizual imediat, înainte de confirmarea din baza de date
+
+  const results = await Promise.all(updates.map(u => client.from("preturi_uzuale").update({ ordine: u.ordine }).eq("id", u.id)));
+  const err = results.find(r => r.error);
+  if (err) {
+    alert("Eroare la salvarea ordinii: " + err.error.message);
+    await dvzLoadPreturiUzuale();
+    dvzRenderPreturiUzuale();
+  }
 }
 async function dvzAddPreturiUzualeRow() {
   const tip = document.getElementById("dvz-pu-new-tip").value;
@@ -7712,7 +7828,10 @@ async function dvzAddPreturiUzualeRow() {
   const nume = document.getElementById("dvz-pu-new-nume").value.trim();
   const pret = parseFloat(document.getElementById("dvz-pu-new-pret").value) || 0;
   if (!nume) { alert("Completează denumirea."); return; }
-  const { error } = await client.from("preturi_uzuale").insert({ tip, cod: cod || null, nume, pret_cu_tva: pret });
+  // v47: intrarea nouă merge la coada listei (ordinea maximă existentă + 10), ca să apară ultima,
+  // predictibil, în loc să depindă de cum tratează sortarea SQL o valoare "ordine" nescrisă (NULL).
+  const ordineMax = dvzPreturiUzuale.reduce((max, p) => Math.max(max, p.ordine || 0), 0);
+  const { error } = await client.from("preturi_uzuale").insert({ tip, cod: cod || null, nume, pret_cu_tva: pret, ordine: ordineMax + 10 });
   if (error) { alert("Eroare la adăugare: " + error.message); return; }
   await dvzLoadPreturiUzuale();
   rzToast("Adăugat: " + nume, "ok");
