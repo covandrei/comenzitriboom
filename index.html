@@ -4,6 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Comenzi Triumph & Motoboom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" />
 <link rel="icon" type="image/png" sizes="16x16" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACjklEQVR42qVTTU9TURA9M5fW8lEKCBQopbQEqdEQiHHBRjFRbHFt/whho6bdEBckLEz8WGli+ErElUhMRI0YdgqCGkUTbSG8JvCkFhf46nv3XjfUQKJG41lNZs45yWTmAP8JCoVCHtb6HAtRDQnkciZ2dgpwuRiAQMG24BICtpQ44PHA7/cDElCQXxTRDB0Khzs1aJmZQUSIxePw+XwwTRO2baO8vBwutwtulxtZw8D8/DyEEJBSAlp1ia18fqu60ne8ULDCn7e2bCkdeDweFWxpUVVVPmUVLFVfX69yuZzKpNNqZWXFFswg4ocfVzNXiIjQ2tTUefjI0cWu7m5sb29zPp8n09yEuWlCa42GhgYcrK2Ft9Kra2pq1NLLJbx98/rYaja7zMlksiRtGK9a2yI3O6JRcbrvjBybnEC8vx+rmVWsra2hL3YWY5MTiMXisqMjKsLh8K2MYSwnk8kSAsBaaxBR3akTJ9+dTyR8geYApT+l6fLQEADgwqWLiEQien3d0HfvTH198uxpVGttEhEYgEokEkREG83B5qGR4WFeeP5ClZWVQkoJKSVKS8uwsLCgRoaHOdgcHCKijd7eXgagGACmpqaU1ppHx8evGdnse2+ll5VSqnhrpZTyer1sZLMfbk+MXtVa89zcnAQA3uVoAMTMBcuxB4UQRMS6aMBMWghBlmMPMnMBAO1qfhoAgJRSCgDTtm3POo4jiEgSkXQcR3y37UcA7u1yZFFUsu8tiQCAZh88HnB7xGJFRQUDwMz0fcdy7IE9nD9CAECg3n+9PRzR7eGIDvj9N/bO9oJ/YaBTqRTXNTWmlFLflFRWXWNjMpVKcXHvvwoZALSFQj1toVDP3t4/JfU39T78ANr+G/HUdEizAAAAAElFTkSuQmCC" />
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,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" />
 <link rel="icon" type="image/png" sizes="48x48" href="data:image/png;base64,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" />
@@ -16,25 +19,50 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
   :root {
-    --bg: #f3f4f7;
+    /* v52: redesign corporate, la cererea lui Andrei — antet+navigare în antracit, accent
+       Triumph, fără emoji/iconițe, tranziții scurte pe orice acțiune. */
+    --bg: #f5f6f8;
     --card: #ffffff;
     --text: #14171f;
     --muted: #6b7280;
-    --border: #e5e7eb;
-    --accent: #1e3a8a;
+    --muted-2: #9aa1ac;
+    --border: #e3e5ea;
+    --border-soft: #edeef2;
+    --ink-950: #0a0c10;
+    --ink-900: #12151b;
+    --ink-850: #181c24;
+    --accent: #c1421f;
+    --accent-dark: #9c341a;
+    --accent-soft: #fdeee8;
+    --accent-soft-2: #f6d9cb;
     --accent-2: #f59e0b;
-    --danger: #dc2626;
+    --ok: #137a4c;
+    --ok-soft: #e6f6ee;
+    --warn: #a16207;
+    --warn-soft: #fef6e0;
+    --danger: #b0241a;
+    --danger-soft: #fbe9e7;
+    --info: #3346a6;
+    --info-soft: #ecefff;
     --radius: 12px;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --shadow-card: 0 1px 2px rgba(15,18,25,.04), 0 1px 1px rgba(15,18,25,.03);
+    --shadow-pop: 0 24px 60px rgba(9,11,16,.35);
+    --ease: cubic-bezier(.2,.7,.2,1);
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
     -webkit-font-smoothing: antialiased;
   }
+  .mono, .rz-mono { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
   ::selection { background: var(--accent); color: #fff; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 
   /* ---------- LOGIN ---------- */
   #login-screen {
@@ -42,69 +70,103 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: radial-gradient(circle at 20% 20%, #1e3a8a 0%, #0f172a 55%, #0b1120 100%);
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(1100px 560px at 12% -8%, rgba(193,66,31,.16), transparent 60%),
+      radial-gradient(800px 460px at 108% 112%, rgba(255,255,255,.05), transparent 60%),
+      linear-gradient(160deg, var(--ink-950), var(--ink-900) 55%, var(--ink-950));
   }
   .login-box {
     background: var(--card);
-    padding: 36px 32px;
+    padding: 40px 36px 34px;
     border-radius: 18px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    box-shadow: var(--shadow-pop);
     width: 100%;
-    max-width: 380px;
-    animation: pop .35s ease;
+    max-width: 400px;
+    animation: pop .35s var(--ease);
   }
-  @keyframes pop { from { opacity:0; transform: translateY(8px) scale(.98);} to {opacity:1; transform:none;} }
-  .login-title { font-size: 21px; font-weight: 800; text-align: center; margin: 0 0 4px; letter-spacing: -.01em; }
-  .login-subtitle { font-size: 12.5px; font-weight: 700; text-align: center; margin: 0 0 24px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .03em; }
+  @keyframes pop { from { opacity:0; transform: translateY(10px) scale(.97);} to {opacity:1; transform:none;} }
+
+  /* ---------- INTRARE ÎN APLICAȚIE (v52) ---------- */
+  .entrance-overlay {
+    position: fixed; inset: 0; z-index: 3000;
+    background: linear-gradient(160deg, var(--ink-950), var(--ink-900) 60%, var(--ink-950));
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; cursor: pointer;
+    transition: opacity .35s var(--ease);
+  }
+  .entrance-overlay.show { opacity: 1; pointer-events: auto; }
+  .entrance-content { text-align: center; animation: entranceGreetIn .5s var(--ease) both; }
+  .entrance-eyebrow { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px; }
+  .entrance-greet { font-size: 30px; font-weight: 700; color: #fff; letter-spacing: -.01em; line-height: 1.3; }
+  .entrance-underline { height: 2px; width: 0; background: var(--accent); margin: 18px auto 0; animation: entranceLineGrow .5s var(--ease) .3s both; }
+  @keyframes entranceGreetIn { 0% { opacity: 0; transform: translateY(10px) scale(.96); } 100% { opacity: 1; transform: none; } }
+  @keyframes entranceLineGrow { from { width: 0; } to { width: 64px; } }
+  @keyframes revealApp { from { opacity: 0; filter: blur(6px); transform: scale(1.01); } to { opacity: 1; filter: blur(0); transform: none; } }
+  .app-entering { animation: revealApp .5s var(--ease) both; }
+
+  .login-title { font-size: 20px; font-weight: 700; text-align: center; margin: 0 0 4px; letter-spacing: -.01em; }
+  .login-subtitle { font-size: 11.5px; font-weight: 600; text-align: center; margin: 0 0 28px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+  .field { margin-bottom: 16px; animation: fadeUp .35s var(--ease) both; }
+  .field:nth-of-type(1) { animation-delay: .04s; }
+  .field:nth-of-type(2) { animation-delay: .08s; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .03em; }
   .field input, .field select, .field textarea {
     width: 100%;
-    padding: 10px 12px;
+    padding: 11px 13px;
     border: 1.5px solid var(--border);
     border-radius: 8px;
     font-size: 14px;
     font-family: inherit;
-    transition: border-color .15s, box-shadow .15s;
+    color: var(--text);
+    transition: border-color .15s var(--ease), box-shadow .15s var(--ease);
   }
   .field input:focus, .field select:focus, .field textarea:focus {
-    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
   }
   button {
     cursor: pointer;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     padding: 10px 18px;
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 600;
+    letter-spacing: .01em;
     font-family: inherit;
-    transition: transform .1s, box-shadow .15s, opacity .15s, background .15s;
+    transition: transform .15s var(--ease), box-shadow .15s var(--ease), opacity .15s var(--ease), background-color .15s var(--ease), border-color .15s var(--ease), color .15s var(--ease);
   }
   button:active { transform: scale(0.97); }
-  .btn-primary { background: var(--accent); color: white; box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 40%, transparent); }
-  .btn-primary:hover { opacity: .92; }
-  .btn-secondary { background: #eef0f4; color: var(--text); }
-  .btn-secondary:hover { background: #e3e6ec; }
+  .btn-primary { background: var(--accent); color: white; box-shadow: 0 1px 2px rgba(193,66,31,.25); }
+  .btn-primary:hover { background: var(--accent-dark); box-shadow: 0 6px 16px rgba(193,66,31,.35); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0) scale(.97); }
+  .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border-soft); border-color: var(--muted-2); }
   .btn-danger { background: var(--danger); color: white; }
-  .btn-danger:hover { opacity: .9; }
+  .btn-danger:hover { background: #8f1d15; box-shadow: 0 6px 16px rgba(176,36,26,.3); transform: translateY(-1px); }
   .full-width { width: 100%; }
   #error-msg { color: var(--danger); font-size: 13px; margin-top: 12px; text-align: center; min-height: 16px; }
-  .login-footer { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); text-align: center; font-size: 11px; color: #9aa1ae; letter-spacing: .01em; }
+  .login-footer { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); text-align: center; font-size: 11px; color: var(--muted-2); letter-spacing: .01em; }
   .login-legal-links { margin-top: 6px; }
-  .login-legal-links a { color: #9aa1ae; text-decoration: underline; }
+  .login-legal-links a { color: var(--muted-2); text-decoration: underline; transition: color .15s var(--ease); }
   .login-legal-links a:hover { color: var(--accent); }
 
   /* ---------- APP SHELL ---------- */
   #app-screen { display: none; min-height: 100vh; }
+  /* v52: redesign corporate, la cererea lui Andrei — antet + navigare pe un fond antracit închis
+     (era albastru plin), accent Triumph rezervat pentru stări/acțiuni, fără emoji/iconițe. */
   header {
-    background: var(--accent);
-    background: linear-gradient(120deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #0b1120));
+    background: linear-gradient(180deg, var(--ink-900), var(--ink-950));
     color: white;
-    padding: 16px 26px;
+    box-shadow: 0 2px 16px rgba(0,0,0,.15);
+    display: flex;
+    flex-direction: column;
+  }
+  header .header-top {
+    padding: 14px 26px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 16px rgba(0,0,0,.15);
   }
   header .brand-block { display: flex; align-items: center; gap: 12px; }
   header .brand-logos {
@@ -113,24 +175,44 @@
   }
   header .brand-logo-img { height: 20px; width: auto; display: block; }
   header .brand-logo-sep { width: 1px; height: 18px; background: rgba(0,0,0,.15); }
-  header h1 { font-size: 17px; margin: 0; font-weight: 700; letter-spacing: .01em; }
-  header .user-info { font-size: 12.5px; opacity: .85; }
-  header .header-right { display: flex; align-items: center; gap: 14px; }
-  header .btn-secondary { background: rgba(255,255,255,.15); color: white; }
-  header .btn-secondary:hover { background: rgba(255,255,255,.25); }
+  header h1 { font-size: 15.5px; margin: 0; font-weight: 700; letter-spacing: .01em; }
+  header .user-info { font-size: 12.5px; opacity: .7; }
+  header .header-right { display: flex; align-items: center; gap: 12px; }
+  header .btn-secondary { background: rgba(255,255,255,.08); color: white; border: 1px solid transparent; }
+  header .btn-secondary:hover { background: rgba(255,255,255,.16); }
   .notif-btn { position: relative; }
-  .notif-badge { position: absolute; top: -6px; right: -6px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 800; border-radius: 10px; padding: 1px 5px; display: none; min-width: 16px; text-align: center; }
+  .notif-badge { position: absolute; top: -6px; right: -6px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 800; border-radius: 10px; padding: 1px 5px; display: none; min-width: 16px; text-align: center; }
   /* v51: la cererea lui Andrei — „Toate punctele"/„Useri & Roluri"/„Curs & Adaos"/„Log Out" mutate
      dintr-un antet aglomerat într-un meniu hamburger (dropdown), ca să elibereze spațiu din bara de sus. */
   .hamburger-wrap { position: relative; }
-  .hamburger-btn { font-size: 16px; line-height: 1; padding: 7px 11px; }
-  .hamburger-dropdown { display: none; flex-direction: column; gap: 4px; position: absolute; top: calc(100% + 8px); right: 0; background: var(--card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 28px rgba(0,0,0,.22); padding: 8px; min-width: 210px; z-index: 700; }
-  .hamburger-dropdown.open { display: flex; }
-  .hamburger-dropdown .btn-secondary { width: 100%; text-align: left; }
+  .hamburger-btn { font-size: 12.5px; font-weight: 600; line-height: 1; padding: 9px 14px; }
+  .hamburger-dropdown { display: none; flex-direction: column; gap: 4px; position: absolute; top: calc(100% + 8px); right: 0; background: var(--card); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-pop); padding: 6px; min-width: 216px; z-index: 700; }
+  .hamburger-dropdown.open { display: flex; animation: slideDown .18s var(--ease); }
+  .hamburger-dropdown .btn-secondary { width: 100%; text-align: left; background: none; border: none; color: var(--text); border-radius: 6px; padding: 10px 12px; font-weight: 500; }
+  .hamburger-dropdown .btn-secondary:hover { background: var(--border-soft); }
+
+  /* v52: navigarea principală (module: Comenzi/Programator/Clienți/...) trăiește acum într-o a
+     doua bandă, tot pe fondul antracit — un singur bloc vizual continuu cu antetul, nu o bară
+     separată deschisă la culoare ca înainte. */
+  .header-tabs { padding: 0 26px; background: var(--ink-850); display: flex; gap: 2px; overflow-x: auto; }
+  .tab-btn {
+    position: relative; background: none; border: none; color: rgba(255,255,255,.5);
+    padding: 13px 16px; font-size: 12.5px; font-weight: 600; border-radius: 0; cursor: pointer;
+    transition: color .15s var(--ease); white-space: nowrap;
+  }
+  .tab-btn::after {
+    content: ""; position: absolute; left: 14px; right: 14px; bottom: 0; height: 2px;
+    background: rgba(255,255,255,.35); transform: scaleX(0); transform-origin: center;
+    transition: transform .18s var(--ease);
+  }
+  .tab-btn:hover { color: rgba(255,255,255,.9); }
+  .tab-btn:hover::after { transform: scaleX(1); }
+  .tab-btn.active { background: none; color: #fff; border-color: transparent; }
+  .tab-btn.active::after { background: var(--accent); transform: scaleX(1); }
 
   main { padding: 22px 26px 60px; max-width: 1880px; margin: 0 auto; }
 
-  /* v51: footer nou — „⚖️ Legal" și statusul listei de prețuri, mutate din antet la cererea lui
+  /* v51: footer nou — „Legal" și statusul listei de prețuri, mutate din antet la cererea lui
      Andrei, ca să nu mai ocupe loc sus, vizibile tot timpul din orice tab, la baza paginii. */
   #app-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 26px; margin-top: 8px; border-top: 1px solid var(--border); flex-wrap: wrap; }
   #app-footer .rz-badge { font-size: 12px; }
@@ -139,46 +221,51 @@
   .stats-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
   .stat-chip {
     background: var(--card);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 16px;
-    display: flex; flex-direction: column; gap: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    display: flex; flex-direction: column; gap: 3px;
     min-width: 92px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.04);
-    transition: transform .15s, border-color .15s, box-shadow .15s;
+    box-shadow: var(--shadow-card);
+    position: relative;
+    overflow: hidden;
+    transition: transform .15s var(--ease), box-shadow .15s var(--ease);
     cursor: pointer;
     text-align: left;
     font-family: inherit;
+    animation: fadeUp .35s var(--ease) both;
   }
-  .stat-chip:hover { transform: translateY(-2px); }
-  .stat-chip.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
-  .stat-chip .stat-num { font-size: 20px; font-weight: 800; line-height: 1; }
-  .stat-chip span:last-child { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+  .stat-chip::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); opacity: 0; transition: opacity .15s var(--ease); }
+  .stat-chip:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(15,18,25,.08); }
+  .stat-chip:hover::before, .stat-chip.active::before { opacity: 1; }
+  .stat-chip.active { border-color: var(--border); box-shadow: var(--shadow-card); }
+  .stat-chip .stat-num { font-family: 'IBM Plex Mono', monospace; font-size: 21px; font-weight: 600; line-height: 1; }
+  .stat-chip span:last-child { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 
   /* ---------- TABS ---------- */
-  .tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-  .tab-btn { background: var(--card); border: 1px solid var(--border); color: var(--muted); }
-  .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-  .subtabs { display: none; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  /* .tab-btn (navigarea principală, pe fond antracit) e definită mai sus, în secțiunea APP SHELL. */
+  .subtabs { display: none; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
   .subtabs.open { display: flex; }
-  .subtab-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; font-size: 12.5px; border-radius: 20px; cursor: pointer; font-family: inherit; font-weight: 600; }
-  .subtab-btn.active { background: color-mix(in srgb, var(--accent) 14%, white); color: var(--accent); border-color: var(--accent); }
+  .subtab-btn { background: #fff; border: 1px solid var(--border); color: var(--muted); padding: 7px 16px; font-size: 12.5px; border-radius: 20px; cursor: pointer; font-family: inherit; font-weight: 600; transition: background-color .15s var(--ease), color .15s var(--ease), border-color .15s var(--ease); }
+  .subtab-btn:hover { border-color: var(--muted-2); }
+  .subtab-btn.active { background: var(--accent-soft); color: var(--accent-dark); border-color: var(--accent-soft-2); }
 
   .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
   .filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .filters select { padding: 8px 10px; border-radius: 8px; border: 1.5px solid var(--border); font-size: 13px; font-family: inherit; }
+  .filters select { padding: 8px 10px; border-radius: 8px; border: 1.5px solid var(--border); font-size: 13px; font-family: inherit; transition: border-color .15s var(--ease); }
   .toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
   /* ---------- SEGMENTED TOGGLES (brand) ---------- */
   .brand-filter-toggle, .brand-toggle { display: inline-flex; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; }
   .brand-filter-opt, .brand-opt {
     background: var(--card); border: none; padding: 8px 14px; font-size: 13px; font-weight: 700;
-    color: var(--muted); cursor: pointer; font-family: inherit;
+    color: var(--muted); cursor: pointer; font-family: inherit; transition: background-color .15s var(--ease), color .15s var(--ease);
   }
   .brand-filter-opt + .brand-filter-opt, .brand-opt + .brand-opt { border-left: 1.5px solid var(--border); }
-  .brand-filter-opt.active { background: var(--accent); color: white; }
+  .brand-filter-opt.active { background: var(--text); color: white; }
   .brand-toggle { width: 100%; }
   .brand-opt { flex: 1; }
+  .brand-opt.active { background: var(--text); color: white; }
 
   /* ---------- TABLE ---------- */
   .table-wrap {
@@ -186,51 +273,54 @@
     border-radius: var(--radius);
     border: 1px solid var(--border);
     overflow-x: auto;
-    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    box-shadow: var(--shadow-card);
   }
   table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 1250px; }
   th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
   .atribuit-badge { display: block; font-size: 10.5px; color: #7b1fa2; font-weight: 700; margin-top: 3px; }
   .furnizor-cell { font-size: 12px; }
-  .pret-cell { font-size: 11.5px; line-height: 1.7; }
-  .pret-cell .pret-edit-btn { margin-top: 2px; }
-  th { background: #fafbfd; font-weight: 700; color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
-  th.sortable { cursor: pointer; user-select: none; }
-  th.sortable:hover { color: var(--text); }
-  .sort-ind { opacity: .35; margin-left: 3px; }
+  .pret-cell { font-size: 11.5px; line-height: 1.7; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+  .pret-cell .pret-edit-btn { margin-top: 2px; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  th { background: #fafbfd; font-weight: 700; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+  th.sortable { cursor: pointer; user-select: none; transition: color .15s var(--ease); }
+  th.sortable:hover { color: var(--accent); }
+  .sort-ind { opacity: .35; margin-left: 3px; transition: opacity .15s var(--ease), color .15s var(--ease); }
   .sort-ind.active { opacity: 1; color: var(--accent); }
-  .dvz-sort-ind { opacity: .35; margin-left: 3px; }
+  .dvz-sort-ind { opacity: .35; margin-left: 3px; transition: opacity .15s var(--ease), color .15s var(--ease); }
   .dvz-sort-ind.active { opacity: 1; color: var(--accent); }
-  tbody tr { transition: background .15s; }
-  tbody tr:hover { filter: brightness(0.98); }
+  tbody tr { position: relative; transition: background .15s var(--ease); }
+  tbody tr:hover { background: color-mix(in srgb, var(--accent) 3%, var(--card)); }
   tr:last-child td { border-bottom: none; }
   td.wrap-cell { white-space: normal; max-width: 240px; }
-  .piesa-line-cod { line-height: 1.6; font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .piesa-line-cod { line-height: 1.6; font-weight: 700; color: var(--accent); white-space: nowrap; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
   .piesa-line-denumire { line-height: 1.6; }
   .muted { color: var(--muted); }
   .comanda-grup-prima td { border-top: 2px solid var(--border); }
   .comanda-grup-linie td { border-top: 1px dashed var(--border); background: color-mix(in srgb, var(--text) 2.5%, transparent); }
   td[rowspan] { vertical-align: middle; }
 
-  .badge { padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 700; display: inline-block; white-space: nowrap; }
-  .badge-plata-neachitat { background: #fee2e2; color: #991b1b; }
-  .badge-plata-partial { background: #fef3c7; color: #92400e; }
-  .badge-plata-integral { background: #dcfce7; color: #166534; }
-  .badge-plata-dauna { background: #e0e7ff; color: #3730a3; }
+  .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block; white-space: nowrap; letter-spacing: .01em; }
+  .badge-plata-neachitat { background: var(--danger-soft); color: var(--danger-dark, #991b1b); }
+  .badge-plata-partial { background: var(--warn-soft); color: var(--warn-dark, #92400e); }
+  .badge-plata-integral { background: var(--ok-soft); color: var(--ok-dark, #166534); }
+  .badge-plata-dauna { background: var(--info-soft); color: var(--info-dark, #3730a3); }
+  .pr-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; flex-shrink: 0; }
 
   .stare-select {
     border: none; border-radius: 20px; padding: 5px 10px; font-size: 12px; font-weight: 700;
     cursor: pointer; font-family: inherit; appearance: none; -webkit-appearance: none;
+    transition: filter .15s var(--ease);
   }
+  .stare-select:hover { filter: brightness(.96); }
   .factura-input {
     border: 1.5px solid var(--border); border-radius: 8px; padding: 6px 9px; font-size: 12.5px;
-    width: 120px; font-family: inherit;
+    width: 120px; font-family: 'IBM Plex Mono', ui-monospace, monospace; transition: border-color .15s var(--ease), box-shadow .15s var(--ease);
   }
-  .factura-input:focus { outline: none; border-color: var(--accent); }
+  .factura-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 
-  tr.urgent-1 { background: #fecaca; }
-  tr.urgent-2 { background: #fed7aa; }
-  tr.urgent-3 { background: #fef08a; }
+  tr.urgent-1 { background: var(--danger-soft); }
+  tr.urgent-2 { background: var(--warn-soft); }
+  tr.urgent-3 { background: #fef9c3; }
 
   .empty-row td { text-align: center; color: var(--muted); padding: 40px; font-size: 14px; }
 
@@ -238,23 +328,27 @@
   .icon-btn {
     background: #eef0f4; color: var(--text); border-radius: 8px; padding: 7px;
     display: inline-flex; align-items: center; justify-content: center;
+    transition: background .15s var(--ease), transform .15s var(--ease);
   }
-  .icon-btn:hover { background: #e3e6ec; }
-  .icon-btn.danger { background: #fee2e2; color: var(--danger); }
+  .icon-btn:hover { background: #e3e6ec; transform: translateY(-1px); }
+  .icon-btn.danger { background: var(--danger-soft); color: var(--danger); }
   .icon-btn.danger:hover { background: #fecaca; }
+
+  .row-removing { animation: rowCollapse .25s var(--ease) forwards; }
+  @keyframes rowCollapse { 0% { opacity: 1; } 60% { opacity: 0; } 100% { opacity: 0; } }
 
   /* ---------- MODAL ---------- */
   .modal-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(10,12,20,0.5);
-    align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px);
+    display: none; position: fixed; inset: 0; background: rgba(10,12,20,0.55);
+    align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(3px);
   }
-  .modal-overlay.open { display: flex; animation: fadeIn .15s ease; }
+  .modal-overlay.open { display: flex; animation: fadeIn .2s var(--ease); }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .modal {
-    background: var(--card); border-radius: 16px; padding: 26px; width: 100%;
+    background: var(--card); border-radius: var(--radius); padding: 26px; width: 100%;
     max-width: 560px; max-height: 90vh; overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,.3);
-    animation: pop .2s ease;
+    box-shadow: var(--shadow-pop);
+    animation: pop .22s var(--ease);
     position: relative;
   }
   .modal.small { max-width: 420px; }
@@ -267,9 +361,9 @@
     border-radius: 50%; border: none; background: #f0f1f4; color: var(--text);
     font-size: 16px; line-height: 1; cursor: pointer; display: flex;
     align-items: center; justify-content: center; z-index: 5;
-    transition: background .12s ease;
+    transition: background .15s var(--ease), transform .15s var(--ease);
   }
-  .rz-modal-x:hover { background: #e3e6ec; }
+  .rz-modal-x:hover { background: #e3e6ec; transform: rotate(90deg); }
   .modal h2 { margin-top: 0; font-size: 18px; font-weight: 700; padding-right: 40px; }
   .modal > .muted { font-size: 13px; margin-top: -8px; margin-bottom: 16px; }
   .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -287,7 +381,8 @@
   .piesa-row input.piesa-pret-cu { flex: 0 0 13%; min-width: 78px; }
   .piesa-row select.piesa-moneda { flex: 0 0 68px; }
   .piesa-row input.piesa-factura { flex: 0 0 13%; min-width: 90px; }
-  .piesa-row input:focus, .piesa-row select:focus { outline: none; border-color: var(--accent); }
+  .piesa-row input, .piesa-row select { transition: border-color .15s var(--ease), box-shadow .15s var(--ease); }
+  .piesa-row input:focus, .piesa-row select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 
   .export-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px; }
   .export-field { display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
@@ -305,42 +400,42 @@
 
   .client-autocomplete {
     background: var(--card); border: 1.5px solid var(--border); border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0,0,0,.18); z-index: 9999; max-height: 260px; overflow-y: auto;
+    box-shadow: var(--shadow-pop); z-index: 9999; max-height: 260px; overflow-y: auto;
   }
-  .client-ac-item { padding: 7px 12px; cursor: pointer; border-bottom: 1px solid var(--border); }
+  .client-ac-item { padding: 7px 12px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background .12s var(--ease); }
   .client-ac-item:last-child { border-bottom: none; }
-  .client-ac-item:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+  .client-ac-item:hover { background: var(--accent-soft); }
   .client-ac-name { font-weight: 700; font-size: 13px; }
   .client-ac-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
-  .moto-card { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px; position: relative; }
+  .moto-card { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px; position: relative; transition: border-color .15s var(--ease); }
   .moto-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-right: 26px; }
-  .moto-grid input { padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 13px; font-family: inherit; }
-  .moto-grid input:focus { outline: none; border-color: var(--accent); }
+  .moto-grid input { padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 13px; font-family: inherit; transition: border-color .15s var(--ease), box-shadow .15s var(--ease); }
+  .moto-grid input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
   .moto-card .icon-btn.danger { position: absolute; top: 8px; right: 8px; padding: 5px; }
   .moto-line { line-height: 1.6; }
   .moto-line b { color: var(--accent); }
 
   .linie-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
-  .linie-row input { padding: 9px 11px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13.5px; font-family: inherit; }
-  .linie-row input:focus { outline: none; border-color: var(--accent); }
+  .linie-row input { padding: 9px 11px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13.5px; font-family: inherit; transition: border-color .15s var(--ease), box-shadow .15s var(--ease); }
+  .linie-row input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 
   /* ---------- RECEPTIE & INVENTAR ---------- */
   .rz-submodes { display: inline-flex; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
-  .rz-submode-opt { flex: 1; padding: 9px 18px; border: none; background: var(--card); color: var(--muted); font-weight: 700; font-size: 13px; cursor: pointer; transition: .15s; }
+  .rz-submode-opt { flex: 1; padding: 9px 18px; border: none; background: var(--card); color: var(--muted); font-weight: 700; font-size: 13px; cursor: pointer; transition: background .15s var(--ease), color .15s var(--ease); }
   .rz-submode-opt.active { background: var(--accent); color: #fff; }
   .rz-topbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .rz-badge { font-size: 11.5px; padding: 4px 10px; border-radius: 20px; font-weight: 700; }
-  .rz-badge.ok { background: #dcfce7; color: #166534; }
-  .rz-badge.no { background: #fff3e0; color: #c2410c; }
+  .rz-badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 700; }
+  .rz-badge.ok { background: var(--ok-soft); color: #166534; }
+  .rz-badge.no { background: var(--warn-soft); color: #c2410c; }
   .rz-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 14px; }
-  .rz-stat { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 10px 12px; text-align: center; }
-  .rz-stat .num { font-size: 20px; font-weight: 800; }
+  .rz-stat { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 10px 12px; text-align: center; transition: border-color .15s var(--ease), transform .15s var(--ease); }
+  .rz-stat .num { font-size: 20px; font-weight: 800; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
   .rz-stat .lbl { font-size: 10.5px; color: var(--muted); margin-top: 2px; font-weight: 600; }
   .rz-stat.ok .num { color: #166534; } .rz-stat.miss .num { color: var(--danger); } .rz-stat.over .num { color: #991b1b; } .rz-stat.sess .num { color: #7b1fa2; }
   .rz-scanbox { background: var(--card); border: 2px solid var(--accent); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 12px; display: flex; gap: 10px; align-items: center; }
-  .rz-scanbox input { flex: 1; font-size: 15px; padding: 9px 12px; border-radius: 8px; border: 1.5px solid var(--border); min-width: 0; font-family: inherit; }
-  .rz-scanbox input.flash-ok { background: #dcfce7; }
-  .rz-scanbox input.flash-err { background: #fee2e2; }
+  .rz-scanbox input { flex: 1; font-size: 15px; padding: 9px 12px; border-radius: 8px; border: 1.5px solid var(--border); min-width: 0; font-family: inherit; transition: background .15s var(--ease); }
+  .rz-scanbox input.flash-ok { background: var(--ok-soft); }
+  .rz-scanbox input.flash-err { background: var(--danger-soft); }
   .rz-scan-options { display: flex; gap: 14px; align-items: center; font-size: 12px; color: var(--muted); margin-bottom: 10px; flex-wrap: wrap; }
   .rz-scan-options label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
   .rz-legend { display: flex; gap: 14px; font-size: 11.5px; color: var(--muted); margin-bottom: 10px; flex-wrap: wrap; }
@@ -351,14 +446,14 @@
   .rz-dn-header { background: #eef2ff; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); gap: 8px; flex-wrap: wrap; }
   .rz-dn-header .dntitle { font-size: 13.5px; font-weight: 700; color: var(--accent); flex: 1; }
   .rz-dn-header .prog { font-size: 12px; color: var(--muted); }
-  .rz-row-ok td { background: #dcfce7 !important; }
+  .rz-row-ok td { background: var(--ok-soft) !important; }
   .rz-row-partial td { background: #fef9c3 !important; }
-  .rz-row-over td { background: #fee2e2 !important; }
+  .rz-row-over td { background: var(--danger-soft) !important; }
   .rz-qty-wrap { display: flex; align-items: center; gap: 6px; }
   .rz-bar-bg { width: 34px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
-  .rz-bar-fg { height: 5px; border-radius: 3px; transition: width .2s; }
+  .rz-bar-fg { height: 5px; border-radius: 3px; transition: width .2s var(--ease); }
   .rz-bar-ok { background: #16a34a; } .rz-bar-part { background: #ca8a04; } .rz-bar-over { background: var(--danger); }
-  .rz-mini-edit { font-size: 11px; padding: 2px 5px; border-radius: 4px; border: 1.5px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; line-height: 1; }
+  .rz-mini-edit { font-size: 11px; padding: 2px 5px; border-radius: 4px; border: 1.5px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; line-height: 1; transition: background .15s var(--ease); }
   .rz-mini-edit:hover { background: #eef0f4; }
   .rz-inline-input { width: 46px; font-size: 12px; padding: 2px 4px; border-radius: 4px; border: 1.5px solid var(--accent); text-align: center; font-family: inherit; }
   .rz-inline-input.wide { width: 100%; text-align: left; }
@@ -402,11 +497,12 @@
   #rz-pl-status-top { white-space: nowrap; }
 
   /* ---------- MESAGERIE (widget flotant) ---------- */
-  #msg-bubble { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.25); z-index: 600; user-select: none; }
+  #msg-bubble { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; letter-spacing: .02em; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.25); z-index: 600; user-select: none; transition: transform .15s var(--ease), box-shadow .15s var(--ease); }
+  #msg-bubble:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.3); }
   #msg-bubble:hover { filter: brightness(1.1); }
   .msg-badge { position: absolute; top: -4px; right: -4px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 800; border-radius: 10px; padding: 1px 5px; display: none; min-width: 16px; text-align: center; }
   #msg-panel { position: fixed; bottom: 88px; right: 20px; width: 330px; height: 460px; max-height: calc(100vh - 110px); background: var(--card); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.28); display: none; flex-direction: column; overflow: hidden; z-index: 599; border: 1px solid var(--border); }
-  #msg-panel.open { display: flex; animation: fadeIn .15s ease; }
+  #msg-panel.open { display: flex; animation: fadeIn .18s var(--ease); }
   .msg-panel-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--accent); color: #fff; font-weight: 700; font-size: 14px; flex-shrink: 0; }
   .msg-panel-header span#msg-panel-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .msg-panel-header button { background: transparent; border: none; color: #fff; font-size: 16px; cursor: pointer; padding: 2px 6px; line-height: 1; }
@@ -442,7 +538,7 @@
   .msg-pick-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .msg-pick-name { font-size: 13px; font-weight: 700; }
   .msg-pick-sub { font-size: 11px; color: var(--muted); }
-  .rz-toast { background: #1e293b; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; box-shadow: 0 6px 20px rgba(0,0,0,.25); animation: rzToastIn .15s ease; max-width: 320px; }
+  .rz-toast { background: var(--ink-900); color: #fff; padding: 10px 16px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; box-shadow: var(--shadow-pop); animation: rzToastIn .2s var(--ease); max-width: 320px; }
   .rz-toast.ok { background: #166534; } .rz-toast.err { background: #991b1b; } .rz-toast.warn { background: #92400e; } .rz-toast.over { background: #7c2d12; }
   @keyframes rzToastIn { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform: translateY(0);} }
 
@@ -465,13 +561,13 @@
        editorul de Deviz) — nu trebuie să apară niciodată pe pagina tipărită. */
     .dvz-no-print { display: none !important; }
   }
-  .print-header { background: #1e3a8a; color: white; padding: 16px 20px; border-radius: 6px; margin-bottom: 16px; }
+  .print-header { background: var(--ink-900); color: white; padding: 16px 20px; border-radius: 6px; margin-bottom: 16px; }
   .print-header h2 { margin: 0 0 4px; }
   .print-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
-  .print-table th { background: #1e3a8a; color: white; padding: 8px; text-align: left; font-size: 12px; }
+  .print-table th { background: var(--ink-900); color: white; padding: 8px; text-align: left; font-size: 12px; }
   .print-table td { padding: 8px; border-bottom: 1px solid #ddd; font-size: 12px; }
   .print-table tr:nth-child(even) td { background: #f4f5f7; }
-  .print-total-row td { font-weight: 800; border-top: 2px solid #1e3a8a; }
+  .print-total-row td { font-weight: 800; border-top: 2px solid var(--ink-900); }
 
   /* ---------- ROLURI & PERMISIUNI (ecran admin) ---------- */
   /* v31: tabelul ".roluri-table" e un <table> obișnuit, deci moștenea din greșeală regula
@@ -493,10 +589,10 @@
   }
   @media (max-width: 900px) {
     main { padding: 14px 10px 70px; }
-    header { padding: 12px 14px; flex-wrap: wrap; gap: 8px; }
+    header .header-top { padding: 12px 14px; flex-wrap: wrap; gap: 8px; }
     header h1 { font-size: 15px; }
     header .header-right { flex-wrap: wrap; gap: 6px; }
-    .tabs { gap: 6px; }
+    .header-tabs { padding: 0 14px; }
     .tab-btn, .subtab-btn { font-size: 12px; padding: 8px 10px; }
     .toolbar { flex-direction: column; align-items: stretch; }
     .toolbar-actions { justify-content: stretch; }
@@ -506,7 +602,7 @@
     .piesa-row input, .piesa-row select { flex: 1 1 45%; }
     .piesa-row input.piesa-cod, .piesa-row input.piesa-denumire { flex: 1 1 100%; }
     #msg-panel { width: calc(100vw - 24px); right: 12px; height: 70vh; bottom: 78px; }
-    #msg-bubble { bottom: 14px; right: 14px; width: 50px; height: 50px; font-size: 20px; }
+    #msg-bubble { bottom: 14px; right: 14px; width: 50px; height: 50px; font-size: 11px; }
     .rz-scanbox { flex-wrap: wrap; }
     .rz-stats { grid-template-columns: repeat(2, 1fr); }
     .programator-day-grid { grid-template-columns: 1fr; }
@@ -559,20 +655,20 @@
   .appt-card .appt-obs { font-size: 11px; font-style: italic; color: #c2410c; margin-top: 3px; }
   .appt-card .appt-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .appt-card .appt-actions button { padding: 4px 9px; font-size: 11px; border-radius: 6px; }
-  .sarcina-card-clickable { border-radius: 6px; transition: background-color .12s ease; }
+  .sarcina-card-clickable { border-radius: 6px; transition: background-color .15s var(--ease); }
   /* v38: aceeași idee ca la sarcini (v31/v34) — click/hover pe corpul unei programări din listă
-     deschide editarea, fără să mai fie nevoie să apeși explicit pe "🔄 Reprogramează". */
-  .prog-card-clickable { border-radius: 6px; transition: background-color .12s ease; }
+     deschide editarea, fără să mai fie nevoie să apeși explicit pe "Reprogramează". */
+  .prog-card-clickable { border-radius: 6px; transition: background-color .15s var(--ease); }
   .prog-card-clickable:hover { background: color-mix(in srgb, var(--accent) 9%, transparent); }
   .sarcina-card-clickable:hover { background: color-mix(in srgb, var(--accent) 9%, transparent); }
   /* v39: aceeași idee, dar pe rânduri de tabel — Garanții și Devize. Click oriunde pe rând (în
      afara câmpurilor editabile inline și a coloanei de acțiuni) deschide direct fereastra, cu
      hover subtil ca semn vizual că se poate da click. */
-  .rz-row-clickable { cursor: pointer; transition: background-color .12s ease; }
+  .rz-row-clickable { cursor: pointer; transition: background-color .15s var(--ease); }
   .rz-row-clickable:hover td { background: color-mix(in srgb, var(--accent) 9%, transparent); }
   .appt-empty { color: var(--muted); font-size: 12.5px; padding: 10px 0; text-align: center; }
   .month-daygroup { margin-bottom: 18px; }
-  .month-day-header { background: #1e293b; color: #fff; padding: 8px 12px; border-radius: 8px 8px 0 0; font-size: 12.5px; font-weight: 700; }
+  .month-day-header { background: var(--ink-900); color: #fff; padding: 8px 12px; border-radius: 8px 8px 0 0; font-size: 12.5px; font-weight: 700; }
   .month-day-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 10px 12px; background: var(--card); }
 </style>
 <style id="dvz-style">
@@ -672,9 +768,21 @@
   </div>
 </div>
 
+<!-- v52: tranziție de intrare — "Enjoy The Ride, <nume>!" — apare doar la o logare reală,
+     acoperă schimbarea de la ecranul de autentificare la aplicație, și poate fi sărită oricând
+     cu un click sau o tastă (vezi runEntranceSequence()). -->
+<div id="entrance-overlay" class="entrance-overlay">
+  <div class="entrance-content">
+    <div class="entrance-eyebrow">Bine ai revenit</div>
+    <div class="entrance-greet">Enjoy The Ride,<br /><span id="entrance-name"></span>!</div>
+    <div class="entrance-underline"></div>
+  </div>
+</div>
+
 <!-- ============ ECRAN APLICATIE ============ -->
 <div id="app-screen">
   <header>
+    <div class="header-top">
     <div class="brand-block">
       <div class="brand-logos">
         <img class="brand-logo-img" src="data:image/png;base64,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" alt="Triumph" title="Triumph" />
@@ -685,37 +793,38 @@
     </div>
     <div class="header-right">
       <span class="user-info" id="user-info"></span>
-      <button class="btn-secondary notif-btn" onclick="openNotifPanel()">🔔<span class="notif-badge" id="notif-badge"></span></button>
+      <button class="btn-secondary notif-btn" onclick="openNotifPanel()">Notificări<span class="notif-badge" id="notif-badge"></span></button>
       <div class="hamburger-wrap">
-        <button class="btn-secondary hamburger-btn" id="btn-hamburger" onclick="toggleHamburgerMenu(event)" aria-label="Meniu" title="Meniu">☰</button>
+        <button class="btn-secondary hamburger-btn" id="btn-hamburger" onclick="toggleHamburgerMenu(event)" aria-label="Meniu" title="Meniu">Meniu</button>
         <div class="hamburger-dropdown" id="hamburger-dropdown">
-          <button class="btn-secondary" id="btn-punct-lucru" style="display:none" onclick="closeHamburgerMenu(); openPunctLucruModal()">📍</button>
-          <button class="btn-secondary" id="btn-useri-roluri" style="display:none" onclick="closeHamburgerMenu(); openUseriRoluriModal()">👥 Useri &amp; Roluri</button>
-          <button class="btn-secondary" onclick="closeHamburgerMenu(); rzOpenPriceSettings()">💰 Curs &amp; Adaos</button>
+          <button class="btn-secondary" id="btn-punct-lucru" style="display:none" onclick="closeHamburgerMenu(); openPunctLucruModal()">Toate punctele</button>
+          <button class="btn-secondary" id="btn-useri-roluri" style="display:none" onclick="closeHamburgerMenu(); openUseriRoluriModal()">Useri &amp; Roluri</button>
+          <button class="btn-secondary" onclick="closeHamburgerMenu(); rzOpenPriceSettings()">Curs &amp; Adaos</button>
           <button class="btn-secondary" onclick="closeHamburgerMenu(); doLogout()">Log Out</button>
         </div>
       </div>
     </div>
+    </div>
+    <nav class="header-tabs" id="header-tabs">
+      <button class="tab-btn active" id="tab-group-comenzi" onclick="switchTab('toate')">Comenzi</button>
+      <button class="tab-btn" id="tab-programator" onclick="switchTab('programator')">Programator</button>
+      <button class="tab-btn" id="tab-clienti" onclick="switchTab('clienti')">Clienți</button>
+      <button class="tab-btn" id="tab-group-service" onclick="switchTab('catalog')">Piese (listă prețuri)</button>
+      <button class="tab-btn" id="tab-receptie" onclick="switchTab('receptie')">Recepție</button>
+      <button class="tab-btn" id="tab-inventar" onclick="switchTab('inventar')">Inventar</button>
+      <button class="tab-btn" id="tab-sarcini" onclick="switchTab('sarcini')">Task-uri</button>
+      <button class="tab-btn" id="tab-garantii" onclick="switchTab('garantii')">Garanții</button>
+      <button class="tab-btn" id="tab-daune" onclick="switchTab('daune')">Daune</button>
+      <button class="tab-btn" id="tab-devize" onclick="switchTab('devize')">Devize</button>
+    </nav>
   </header>
 
   <main>
-    <div class="tabs">
-      <button class="tab-btn active" id="tab-group-comenzi" onclick="switchTab('toate')">Comenzi</button>
-      <button class="tab-btn" id="tab-programator" onclick="switchTab('programator')">📅 Programator</button>
-      <button class="tab-btn" id="tab-clienti" onclick="switchTab('clienti')">Clienți</button>
-      <button class="tab-btn" id="tab-group-service" onclick="switchTab('catalog')">Piese (listă prețuri)</button>
-      <button class="tab-btn" id="tab-receptie" onclick="switchTab('receptie')">📥 Recepție</button>
-      <button class="tab-btn" id="tab-inventar" onclick="switchTab('inventar')">📦 Inventar</button>
-      <button class="tab-btn" id="tab-sarcini" onclick="switchTab('sarcini')">🗒️ Task-uri</button>
-      <button class="tab-btn" id="tab-garantii" onclick="switchTab('garantii')">🛡️ Garanții</button>
-      <button class="tab-btn" id="tab-daune" onclick="switchTab('daune')">🚗 Daune</button>
-      <button class="tab-btn" id="tab-devize" onclick="switchTab('devize')">🧾 Devize</button>
-    </div>
 
     <div class="subtabs open" id="subtabs-comenzi">
       <button class="subtab-btn active" id="tab-toate" onclick="switchTab('toate')">Toate comenzile</button>
       <button class="subtab-btn" id="tab-termene" onclick="switchTab('termene')">Termene apropiate</button>
-      <button class="subtab-btn" id="tab-piese-comandat" onclick="switchTab('piese-comandat')">🛒 Piese de comandat</button>
+      <button class="subtab-btn" id="tab-piese-comandat" onclick="switchTab('piese-comandat')">Piese de comandat</button>
     </div>
     <div class="subtabs" id="subtabs-programator">
       <button class="subtab-btn active" id="tab-prog-zi" onclick="setProgramatorMode('zi')">Programator Zi</button>
@@ -744,10 +853,10 @@
           </select>
         </div>
         <div class="toolbar-actions">
-          <button class="btn-secondary" id="btn-trimite-coleg" style="display:none" onclick="openTrimiteColegModal()">📨 Trimite selecția unui coleg</button>
-          <button class="btn-secondary" id="btn-incarca-factura" style="display:none" onclick="document.getElementById('bulk-factura-file').click()" title="Numele fișierului încărcat devine automat Nr. factură pentru toate comenzile bifate">📄 Încarcă factură</button>
+          <button class="btn-secondary" id="btn-trimite-coleg" style="display:none" onclick="openTrimiteColegModal()">Trimite selecția unui coleg</button>
+          <button class="btn-secondary" id="btn-incarca-factura" style="display:none" onclick="document.getElementById('bulk-factura-file').click()" title="Numele fișierului încărcat devine automat Nr. factură pentru toate comenzile bifate">Încarcă factură</button>
           <input type="file" id="bulk-factura-file" style="display:none" onchange="comenziSetFacturaFromFile(this.files)" />
-          <button class="btn-secondary" id="btn-sterge-selectie" style="display:none;color:#b91c1c" onclick="confirmBulkDeleteComenzi()">🗑 Șterge selecția</button>
+          <button class="btn-secondary" id="btn-sterge-selectie" style="display:none;color:#b91c1c" onclick="confirmBulkDeleteComenzi()">Șterge selecția</button>
           <button class="btn-secondary" onclick="openExportModal()">Exportă Excel</button>
           <button class="btn-primary" onclick="openAddModal()">+ Comandă nouă</button>
         </div>
@@ -821,19 +930,19 @@
     <!-- ===== VIEW PROGRAMATOR ===== -->
     <div id="programator-view" style="display:none;">
       <div id="prog-import-istoric-bar" style="display:none;text-align:right;margin-bottom:10px;">
-        <button class="btn-secondary" onclick="openImportIstoricModal()">⬆️ Importă istoric (JSON)</button>
+        <button class="btn-secondary" onclick="openImportIstoricModal()">Importă istoric (JSON)</button>
       </div>
       <div id="prog-zi-panel">
         <div class="programator-toolbar">
           <input type="date" id="prog-data" onchange="onProgramatorDataChanged()" />
           <button class="btn-secondary" onclick="progGoToday()">Azi</button>
           <button class="btn-primary" onclick="openProgramareModal()">+ Programare nouă</button>
-          <button class="btn-secondary" id="btn-dvz-import-zi" style="display:none" onclick="dvzOpenImportFromProgramari()">🧾→ Creează devize</button>
+          <button class="btn-secondary" id="btn-dvz-import-zi" style="display:none" onclick="dvzOpenImportFromProgramari()">Creează devize</button>
         </div>
         <div class="slot-grid-legend">
           <span><span class="slot-legend-dot free"></span> Liber (click pentru programare nouă)</span>
           <span><span class="slot-legend-dot busy"></span> Ocupat</span>
-          <span><span class="slot-legend-dot pauza"></span> 🍽️ Pauză de masă (13:00–13:30)</span>
+          <span><span class="slot-legend-dot pauza"></span> Pauză de masă (13:00–13:30)</span>
         </div>
         <div class="slot-grid-wrap" id="programator-slot-grid"></div>
         <div class="programator-day-grid" id="programator-day-grid"></div>
@@ -919,7 +1028,7 @@
           </select>
         </div>
         <div class="toolbar-actions">
-          <button class="btn-secondary" id="btn-gar-incarca-factura" style="display:none" onclick="document.getElementById('bulk-gar-factura-file').click()" title="Numele fișierului încărcat devine automat Nr. factură pentru toate dosarele bifate">📄 Încarcă factură</button>
+          <button class="btn-secondary" id="btn-gar-incarca-factura" style="display:none" onclick="document.getElementById('bulk-gar-factura-file').click()" title="Numele fișierului încărcat devine automat Nr. factură pentru toate dosarele bifate">Încarcă factură</button>
           <input type="file" id="bulk-gar-factura-file" style="display:none" onchange="garantiiSetFacturaFromFile(this.files)" />
           <button class="btn-secondary" onclick="exportGarantiiExcel()">Exportă Excel</button>
           <button class="btn-primary" onclick="openGarantieModal()">+ Garanție nouă</button>
@@ -1008,10 +1117,10 @@
             <input type="text" id="dvz-cautare" placeholder="Caută după client, motocicletă/model, VIN sau nr. înmatriculare..." oninput="dvzListPage=1;renderDevizeTable()" style="min-width:280px" />
           </div>
           <div class="toolbar-actions">
-            <button class="btn-secondary" onclick="document.getElementById('dvz-import-historic-file').click()" title="Importă fișiere .html exportate anterior (Print / Save), pentru o centralizare a devizelor vechi în sistem">📥 Importă istoric (.html)</button>
+            <button class="btn-secondary" onclick="document.getElementById('dvz-import-historic-file').click()" title="Importă fișiere .html exportate anterior (Print / Save), pentru o centralizare a devizelor vechi în sistem">Importă istoric (.html)</button>
             <input type="file" id="dvz-import-historic-file" accept=".html,text/html" multiple style="display:none" onchange="dvzImportHistoricFiles(this.files); this.value='';" />
-            <button class="btn-secondary" style="color:#b91c1c" onclick="dvzDeleteAllDevize()" title="Șterge definitiv TOATE devizele din sistem (doar admin)">🗑️ Șterge toate devizele</button>
-            <button class="btn-secondary" onclick="dvzOpenPreturiUzuale()" title="Gestionează lista de produse și manopere uzuale, folosită pentru sugestiile din meniul rapid (autocomplete) la completarea unui deviz">⚙️ Produse/Manopere uzuale</button>
+            <button class="btn-secondary" style="color:#b91c1c" onclick="dvzDeleteAllDevize()" title="Șterge definitiv TOATE devizele din sistem (doar admin)">Șterge toate devizele</button>
+            <button class="btn-secondary" onclick="dvzOpenPreturiUzuale()" title="Gestionează lista de produse și manopere uzuale, folosită pentru sugestiile din meniul rapid (autocomplete) la completarea unui deviz">Produse/Manopere uzuale</button>
             <button class="btn-primary" onclick="openDevizEditor(null)">+ Deviz nou</button>
           </div>
         </div>
@@ -1040,9 +1149,9 @@
         <div class="dvz-editor-toolbar">
           <button class="btn-secondary" onclick="closeDevizEditor()">← Înapoi la listă</button>
           <div class="toolbar-actions">
-            <button class="btn-secondary" onclick="dvzPrintSave()">🖨️ Print / Save</button>
-            <button class="btn-secondary" onclick="dvzExportPDF()">📄 Export PDF</button>
-            <button class="btn-primary" onclick="saveDevize()">💾 Salvează</button>
+            <button class="btn-secondary" onclick="dvzPrintSave()">Print / Save</button>
+            <button class="btn-secondary" onclick="dvzExportPDF()">Export PDF</button>
+            <button class="btn-primary" onclick="saveDevize()">Salvează</button>
             <button class="btn-primary" onclick="openDevizEditor(null)" title="Deschide direct un deviz nou, gol">＋ Deviz nou</button>
           </div>
         </div>
@@ -1327,12 +1436,12 @@
         </div>
         <div class="toolbar-actions">
           <input type="file" id="rz-price-file" accept=".xlsx,.xls" style="display:none" onchange="rzHandlePriceFile(event)" />
-          <button class="btn-primary" onclick="rzOpenPriceImportModal()">📈 Încarcă listă prețuri</button>
+          <button class="btn-primary" onclick="rzOpenPriceImportModal()">Încarcă listă prețuri</button>
           <button class="btn-secondary" onclick="switchTab('receptie')">Adaugă/actualizează prețuri din Recepție &amp; Inventar</button>
-          <button class="btn-secondary" style="color:#b91c1c" onclick="rzDeletePriceListForBrand()">🗑 Șterge lista unei mărci</button>
+          <button class="btn-secondary" style="color:#b91c1c" onclick="rzDeletePriceListForBrand()">Șterge lista unei mărci</button>
         </div>
       </div>
-      <div class="muted" style="font-size:12.5px;margin-bottom:10px">Aici încarci sau actualizezi lista de prețuri pentru o marcă, dintr-un fișier Excel — vezi butonul „📈 Încarcă listă prețuri” de mai sus. „🗑 Șterge lista unei mărci” șterge definitiv toate codurile mărcii alese în filtrul de mai sus.</div>
+      <div class="muted" style="font-size:12.5px;margin-bottom:10px">Aici încarci sau actualizezi lista de prețuri pentru o marcă, dintr-un fișier Excel — vezi butonul „Încarcă listă prețuri” de mai sus. „Șterge lista unei mărci” șterge definitiv toate codurile mărcii alese în filtrul de mai sus.</div>
       <div class="table-wrap">
         <table>
           <thead>
@@ -1379,8 +1488,8 @@
       </div>
 
       <div class="rz-submodes" style="display:none">
-        <button type="button" class="rz-submode-opt active" id="rz-mode-receptie" onclick="rzSetMode('receptie')">☑ Recepție factură</button>
-        <button type="button" class="rz-submode-opt" id="rz-mode-inventar" onclick="rzSetMode('inventar')">📋 Inventar liber</button>
+        <button type="button" class="rz-submode-opt active" id="rz-mode-receptie" onclick="rzSetMode('receptie')">Recepție factură</button>
+        <button type="button" class="rz-submode-opt" id="rz-mode-inventar" onclick="rzSetMode('inventar')">Inventar liber</button>
       </div>
 
       <div class="rz-stats" id="rz-stats">
@@ -1392,9 +1501,8 @@
       </div>
 
       <div class="rz-scanbox">
-        <span style="font-size:20px">📷</span>
         <input id="rz-scan-input" type="text" placeholder="Scanează sau scrie codul de bară..." autocomplete="off" />
-        <button class="btn-primary" onclick="rzManualScan()">✓ OK</button>
+        <button class="btn-primary" onclick="rzManualScan()">OK</button>
       </div>
       <div class="rz-scan-options" id="rz-scan-options">
         <label><input type="checkbox" id="rz-opt-rapid" /> Mod rapid (bifează cantitatea completă la prima scanare)</label>
@@ -1461,7 +1569,7 @@
   </main>
   <footer id="app-footer">
     <span class="rz-badge no" id="rz-pl-status-top" title="Status listă prețuri">Listă prețuri: 0 coduri</span>
-    <button class="btn-secondary" onclick="openLegalMenu()">⚖️ Legal</button>
+    <button class="btn-secondary" onclick="openLegalMenu()">Legal</button>
   </footer>
 </div>
 
@@ -1541,7 +1649,7 @@
       <div class="field">
         <label>Furnizor (de la cine s-a achiziționat)</label>
         <select id="f-furnizor"></select>
-        <div class="hint">Nu găsești furnizorul? Adaugă-l din „👥 Useri &amp; Roluri” → „Furnizori”.</div>
+        <div class="hint">Nu găsești furnizorul? Adaugă-l din „Useri &amp; Roluri” → „Furnizori”.</div>
       </div>
       <div class="field">
         <label>Atribuie comanda unui coleg (opțional)</label>
@@ -1561,7 +1669,7 @@
     </div>
     <div class="modal-actions">
       <span id="wrap-istoric-btn" style="display:none">
-        <button type="button" class="btn-secondary" onclick="openIstoricComandaModal(document.getElementById('f-id').value)">🕘 Istoric</button>
+        <button type="button" class="btn-secondary" onclick="openIstoricComandaModal(document.getElementById('f-id').value)">Istoric</button>
       </span>
       <button class="btn-secondary" onclick="closeModal()">Anulează</button>
       <button class="btn-primary" onclick="saveOrder()">Salvează</button>
@@ -1665,7 +1773,7 @@
         <select id="pr-ora-sfarsit"></select>
       </div>
       <div class="field span-2 muted" style="font-size:11.5px;margin-top:-6px">
-        🍽️ Sloturile sunt din 15 în 15 minute, între 10:00 și 18:00. Intervalul 13:00–13:30 este <b>pauza de masă</b>.
+        Sloturile sunt din 15 în 15 minute, între 10:00 și 18:00. Intervalul 13:00–13:30 este <b>pauza de masă</b>.
       </div>
       <div class="field span-2" style="margin-top:-4px">
         <label>Ore disponibile pe rampa aleasă — click pe un slot verde ca să-l alegi</label>
@@ -1738,10 +1846,10 @@
       <div class="field">
         <label>Prioritate</label>
         <select id="sa-prioritate">
-          <option value="Urgentă">🔴 Urgentă</option>
-          <option value="Ridicată">🟠 Ridicată</option>
-          <option value="Normală" selected>🟡 Normală</option>
-          <option value="Scăzută">⚪ Scăzută</option>
+          <option value="Urgentă">Urgentă</option>
+          <option value="Ridicată">Ridicată</option>
+          <option value="Normală" selected>Normală</option>
+          <option value="Scăzută">Scăzută</option>
         </select>
         <div class="muted" style="font-size:11px;margin-top:2px;">Task-urile se afișează în listă sortate după prioritate; în cadrul aceleiași priorități poți schimba ordinea exactă din buton ▲ / ▼ (vizualizarea Zi).</div>
       </div>
@@ -1880,7 +1988,7 @@
       <div class="piese-section">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
           <label style="margin:0">Fișiere dosar</label>
-          <button type="button" class="btn-secondary" style="padding:5px 10px;font-size:12px" onclick="descarcaPozeDaunaZip(document.getElementById('dn-id').value)">⬇ Descarcă toate pozele (.zip)</button>
+          <button type="button" class="btn-secondary" style="padding:5px 10px;font-size:12px" onclick="descarcaPozeDaunaZip(document.getElementById('dn-id').value)">Descarcă toate pozele (.zip)</button>
         </div>
         <div id="dn-fisiere-categorii"></div>
       </div>
@@ -1917,12 +2025,12 @@
 <div class="rz-toast-wrap" id="rz-toast-wrap"></div>
 
 <!-- ============ MESAGERIE (widget flotant, stil Messenger) ============ -->
-<div id="msg-bubble" onclick="msgToggleWidget()">💬<span class="msg-badge" id="msg-badge"></span></div>
+<div id="msg-bubble" onclick="msgToggleWidget()">Chat<span class="msg-badge" id="msg-badge"></span></div>
 <div id="msg-panel">
   <div class="msg-panel-header">
     <button id="msg-back-btn" onclick="msgShowList()" style="display:none">←</button>
     <span id="msg-panel-title">Mesaje</span>
-    <button id="msg-new-btn" onclick="msgOpenNewConversationModal()" title="Conversație nouă">✎</button>
+    <button id="msg-new-btn" onclick="msgOpenNewConversationModal()" title="Conversație nouă">Nouă</button>
     <button onclick="msgToggleWidget()" title="Închide">✕</button>
   </div>
   <div id="msg-list-view">
@@ -1932,7 +2040,7 @@
     <div id="msg-messages"></div>
     <div class="msg-input-row">
       <input type="text" id="msg-input" placeholder="Scrie un mesaj..." />
-      <button onclick="msgSendMessage()">➤</button>
+      <button onclick="msgSendMessage()">Trimite</button>
     </div>
   </div>
 </div>
@@ -2063,18 +2171,18 @@ const DAUNE_STARE_STYLE = {
   "Anulat": { bg: "#fee2e2", color: "#991b1b" },
 };
 const DAUNE_FISIER_CATEGORII = [
-  { key: "foto_constatare", label: "📷 Poze Constatare", doarDaca: d => !!d.constatare },
-  { key: "foto_reconstatare", label: "📷 Poze Reconstatare", doarDaca: d => !!d.reconstatare },
-  { key: "nota_constatare", label: "📄 Notă de Constatare (de la asigurator)", doarDaca: () => true },
-  { key: "deviz", label: "📄 Deviz", doarDaca: () => true },
+  { key: "foto_constatare", label: "Poze Constatare", doarDaca: d => !!d.constatare },
+  { key: "foto_reconstatare", label: "Poze Reconstatare", doarDaca: d => !!d.reconstatare },
+  { key: "nota_constatare", label: "Notă de Constatare (de la asigurator)", doarDaca: () => true },
+  { key: "deviz", label: "Deviz", doarDaca: () => true },
 ];
 let sarciniFiltruAtribuit = "";
 const PRIORITATE_RANK = { "Urgentă": 0, "Ridicată": 1, "Normală": 2, "Scăzută": 3 };
 const PRIORITATE_BADGE = {
-  "Urgentă": { bg: "#fee2e2", color: "#991b1b", icon: "🔴" },
-  "Ridicată": { bg: "#ffedd5", color: "#9a3412", icon: "🟠" },
-  "Normală": { bg: "#eef0f4", color: "var(--muted)", icon: "🟡" },
-  "Scăzută": { bg: "#f1f5f9", color: "#64748b", icon: "⚪" },
+  "Urgentă": { bg: "#fee2e2", color: "#991b1b", dot: "#dc2626" },
+  "Ridicată": { bg: "#ffedd5", color: "#9a3412", dot: "#ea580c" },
+  "Normală": { bg: "#eef0f4", color: "var(--muted)", dot: "#9aa1ac" },
+  "Scăzută": { bg: "#f1f5f9", color: "#64748b", dot: "#94a3b8" },
 };
 
 // ---------- NUMERE CU VIRGULA (format românesc) ----------
@@ -2216,10 +2324,10 @@ function updatePunctLucruHeaderBtn() {
     btn.style.display = "inline-flex";
     const total = currentPuncteLucru.length;
     const activ = (!currentLocationFilter || !currentLocationFilter.length) ? total : currentLocationFilter.length;
-    btn.textContent = "📍 " + (activ >= total ? "Toate punctele" : activ + "/" + total + " puncte");
+    btn.textContent = "" + (activ >= total ? "Toate punctele" : activ + "/" + total + " puncte");
   } else {
     btn.style.display = currentPuncteLucru.length > 1 || (currentProfile && currentProfile.punct_lucru_id) ? "inline-flex" : "none";
-    btn.textContent = "📍 " + puncteLucruLabel(currentProfile && currentProfile.punct_lucru_id);
+    btn.textContent = "" + puncteLucruLabel(currentProfile && currentProfile.punct_lucru_id);
   }
 }
 
@@ -2227,7 +2335,7 @@ function openPunctLucruModal() {
   if (!amAdmin()) { alert("Punctul tău de lucru este " + puncteLucruLabel(currentProfile && currentProfile.punct_lucru_id) + ". Doar administratorul îl poate schimba, din ecranul Useri & Roluri."); return; }
   const selected = (!currentLocationFilter || !currentLocationFilter.length) ? currentPuncteLucru.map(p => p.id) : currentLocationFilter;
   const createId = getMyCreateLocationId();
-  const html = `<h3>📍 Puncte de lucru</h3>
+  const html = `<h3>Puncte de lucru</h3>
     <div class="muted" style="font-size:12.5px">Alege ce puncte de lucru vrei să vezi în aplicație și unde se salvează înregistrările noi pe care le creezi.</div>
     <div class="export-section-label" style="margin-top:14px">Ce vreau să văd</div>
     <div id="pl-filter-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
@@ -2287,7 +2395,7 @@ async function loadLegalContent(force) {
 }
 
 function openLegalMenu() {
-  rzOpenModal(`<h3>⚖️ Informații legale</h3>
+  rzOpenModal(`<h3>Informații legale</h3>
     <div class="modal-actions" style="flex-direction:column;align-items:stretch;gap:8px">
       <button class="btn-secondary" onclick="openLegalModal('termeni')">Termeni și Condiții</button>
       <button class="btn-secondary" onclick="openLegalModal('gdpr')">GDPR — Protecția datelor</button>
@@ -2306,7 +2414,7 @@ async function openLegalModal(cheie) {
     ${actualizat ? `<div class="muted" style="font-size:11px;margin-bottom:8px">Actualizat: ${actualizat}</div>` : ""}
     <div style="white-space:pre-wrap;line-height:1.6;font-size:13px;max-height:55vh;overflow-y:auto;padding-right:4px">${escapeHtml(row.continut || "")}</div>
     <div class="modal-actions">
-      ${canEdit ? `<button class="btn-secondary" onclick="legalStartEdit('${cheie}')">✎ Editează</button>` : ""}
+      ${canEdit ? `<button class="btn-secondary" onclick="legalStartEdit('${cheie}')">Editează</button>` : ""}
       <button class="btn-secondary" onclick="rzCloseModal()">Închide</button>
     </div>`);
 }
@@ -2357,6 +2465,51 @@ async function doLogout() {
   location.reload();
 }
 
+// v52: tranziția "Enjoy The Ride, <nume>!" — vezi Entrance.dc.html din mockup-ul aprobat.
+// Ține ecranul de intrare acoperit sub un ecran de bun venit ~0.75s, apoi trece la aplicație
+// printr-un blur-reveal, cu un toast mic în colț. Poate fi sărită oricând (click sau tastă).
+function runEntranceSequence(nume) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById("entrance-overlay");
+    const nameEl = document.getElementById("entrance-name");
+    const loginScreen = document.getElementById("login-screen");
+    const appScreen = document.getElementById("app-screen");
+    if (!overlay || !nameEl || !loginScreen || !appScreen) {
+      if (loginScreen) loginScreen.style.display = "none";
+      if (appScreen) appScreen.style.display = "block";
+      resolve();
+      return;
+    }
+
+    nameEl.textContent = nume;
+    overlay.classList.add("show");
+
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      document.removeEventListener("keydown", finish);
+      overlay.removeEventListener("click", finish);
+      clearTimeout(autoTimer);
+
+      loginScreen.style.display = "none";
+      appScreen.style.display = "block";
+      appScreen.classList.add("app-entering");
+      appScreen.addEventListener("animationend", () => appScreen.classList.remove("app-entering"), { once: true });
+      overlay.classList.remove("show");
+
+      setTimeout(() => {
+        if (typeof rzToast === "function") rzToast("Spor la treabă azi", "ok");
+      }, 350);
+      resolve();
+    };
+
+    document.addEventListener("keydown", finish, { once: true });
+    overlay.addEventListener("click", finish, { once: true });
+    const autoTimer = setTimeout(finish, 750);
+  });
+}
+
 async function afterLogin(freshLogin) {
   const { data: { user } } = await client.auth.getUser();
   if (!user) return;
@@ -2374,14 +2527,16 @@ async function afterLogin(freshLogin) {
   }
 
   currentProfile = profile;
-  document.getElementById("login-screen").style.display = "none";
-  document.getElementById("app-screen").style.display = "block";
   document.getElementById("user-info").textContent = profile.nume + (profile.rol === "admin" ? " (admin)" : "");
-  // v51: la cererea lui Andrei — mesaj de bun venit personalizat, cu numele angajatului, la fiecare
-  // logare REALĂ (nu și la reîncărcarea paginii cu o sesiune deja activă — `doLogin()` trimite
-  // `freshLogin=true`, `initSession()` de mai jos nu trimite nimic, deci rămâne `undefined`/fals).
-  if (freshLogin && typeof rzToast === "function") {
-    rzToast("👋 Spor la treabă, " + profile.nume + "!", "ok");
+  // v52: la cererea lui Andrei — în loc de un simplu toast, o tranziție dedicată de intrare în
+  // aplicație ("Enjoy The Ride, <nume>!"), la fiecare logare REALĂ (nu și la reîncărcarea paginii
+  // cu o sesiune deja activă — `doLogin()` trimite `freshLogin=true`, `initSession()` de mai jos
+  // nu trimite nimic, deci rămâne `undefined`/fals). Sărim tranziția la reîncărcare, ca înainte.
+  if (freshLogin) {
+    await runEntranceSequence(profile.nume);
+  } else {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app-screen").style.display = "block";
   }
 
   populateStareComandaOptions();
@@ -2399,7 +2554,7 @@ async function afterLogin(freshLogin) {
   const unread = await loadNotifCount();
   subscribeNotifRealtime();
   if (unread > 0 && typeof rzToast === "function") {
-    rzToast("🔔 " + profile.nume + ", ai " + unread + " notificăr" + (unread === 1 ? "ă nouă" : "i noi") + ".", "ok");
+    rzToast("" + profile.nume + ", ai " + unread + " notificăr" + (unread === 1 ? "ă nouă" : "i noi") + ".", "ok");
   }
 
   await msgInit();
@@ -2643,7 +2798,7 @@ function renderPretCell(o) {
     return `<div>${roFmtNum(p.pret_cu_tva)} ${escapeHtml(p.moneda || "RON")} <span class="muted">(cu TVA)</span></div>`;
   });
   const editBtn = (canDo("perm_comenzi") || canDo("perm_piese_comandat"))
-    ? `<button type="button" class="rz-mini-edit pret-edit-btn" onclick="openPiesaPretModal('${o.id}')">✎ Preț</button>`
+    ? `<button type="button" class="rz-mini-edit pret-edit-btn" onclick="openPiesaPretModal('${o.id}')">Preț</button>`
     : "";
   return `<div class="pret-cell">${linii.join("") || '<span class="muted">—</span>'}${editBtn}</div>`;
 }
@@ -2655,13 +2810,13 @@ function renderFurnizorCell(o) {
 async function openPiesaPretModal(comandaId, piesaId) {
   const o = currentOrders.find(x => x.id === comandaId);
   if (!o) return;
-  // v50: la cererea lui Andrei — click pe "✎ Preț" pe un rând arată acum DOAR piesa de pe acel
+  // v50: la cererea lui Andrei — click pe "Preț" pe un rând arată acum DOAR piesa de pe acel
   // rând, nu toate piesele comenzii (cum se întâmpla înainte, indiferent de rândul apăsat, pentru
   // că butonul trimitea mereu doar id-ul comenzii). Când e dat un `piesaId`, filtrăm la piesa aia;
   // fără el (apel vechi/generic), arătăm toate piesele comenzii, ca înainte.
   const piese = piesaId ? (o.piese || []).filter(p => p.id === piesaId) : (o.piese || []);
   if (!piese.length) { alert("Această comandă nu are piese."); return; }
-  const titluPiesa = piesaId ? `✎ Preț piesă — ${escapeHtml(piese[0].cod_piesa || "")}` : "✎ Preț piese";
+  const titluPiesa = piesaId ? `Preț piesă — ${escapeHtml(piese[0].cod_piesa || "")}` : "Preț piese";
   const html = `<h3>${titluPiesa} — ${escapeHtml(o.client_nume)} ${escapeHtml(o.client_prenume || "")}</h3>
     <div style="max-height:400px;overflow-y:auto;margin-top:10px">
       ${piese.map(p => `
@@ -2783,11 +2938,11 @@ function renderTable() {
           ? '<div class="muted">—</div>'
           : `<div>${roFmtNum(p.pret_cu_tva)} ${escapeHtml(p.moneda || "RON")} <span class="muted">(cu TVA)</span></div>`;
       }
-      // v47: iconița "✎ Preț" apare pe FIECARE rând (nu doar pe primul cod al comenzii). v50: la
+      // v47: iconița "Preț" apare pe FIECARE rând (nu doar pe primul cod al comenzii). v50: la
       // cererea lui Andrei — deschide acum DOAR piesa de pe rândul apăsat (trimite și `p.id`), nu
       // mai toate piesele comenzii deodată; fără piesă (comandă goală) nu are ce edita, deci fără buton.
       const editBtn = (p && potFaceEditPret)
-        ? `<button type="button" class="rz-mini-edit pret-edit-btn" onclick="openPiesaPretModal('${o.id}', '${p.id}')">✎ Preț</button>`
+        ? `<button type="button" class="rz-mini-edit pret-edit-btn" onclick="openPiesaPretModal('${o.id}', '${p.id}')">Preț</button>`
         : "";
       const pretCell = `<td class="wrap-cell"><div class="pret-cell">${pretInner}${editBtn}</div></td>`;
       const facturaCell = `<td>${p ? renderPiesaFacturaInput(p) : renderFacturaInput(o)}</td>`;
@@ -3156,10 +3311,10 @@ async function openIstoricComandaModal(id) {
   if (!id) return;
   const o = currentOrders.find(x => x.id === id);
   if (!o) return;
-  rzOpenModal(`<h3>🕘 Istoric comandă — ${escapeHtml(o.client_nume)} ${escapeHtml(o.client_prenume || "")}</h3><p class="muted" style="font-size:12.5px;margin-top:8px">Se încarcă...</p>`);
+  rzOpenModal(`<h3>Istoric comandă — ${escapeHtml(o.client_nume)} ${escapeHtml(o.client_prenume || "")}</h3><p class="muted" style="font-size:12.5px;margin-top:8px">Se încarcă...</p>`);
   const { data, error } = await client.from("comenzi_istoric").select("*").eq("comanda_id", id).order("modificat_la", { ascending: true });
   if (error) {
-    rzOpenModal(`<h3>🕘 Istoric comandă</h3><p style="font-size:13px">Eroare la încărcare: ${escapeHtml(error.message)}</p><div class="modal-actions"><button class="btn-secondary" onclick="rzCloseModal()">Închide</button></div>`);
+    rzOpenModal(`<h3>Istoric comandă</h3><p style="font-size:13px">Eroare la încărcare: ${escapeHtml(error.message)}</p><div class="modal-actions"><button class="btn-secondary" onclick="rzCloseModal()">Închide</button></div>`);
     return;
   }
   renderIstoricComandaModal(o, data || []);
@@ -3180,7 +3335,7 @@ function renderIstoricComandaModal(o, rows) {
       cand: r.modificat_la,
     });
   });
-  const html = `<h3>🕘 Istoric comandă — ${escapeHtml(o.client_nume)} ${escapeHtml(o.client_prenume || "")}</h3>
+  const html = `<h3>Istoric comandă — ${escapeHtml(o.client_nume)} ${escapeHtml(o.client_prenume || "")}</h3>
     <div style="max-height:420px;overflow-y:auto;margin-top:10px;display:flex;flex-direction:column;gap:8px">
       ${linii.map(l => `
         <div class="rz-hist-item" style="flex-direction:column;align-items:flex-start;gap:2px">
@@ -3404,7 +3559,7 @@ async function openTrimiteColegModal() {
   if (!colegi.length) { alert("Nu există alți angajați înregistrați în profiles."); return; }
   const ids = [...selectedOrderIds];
   const comenziSel = currentOrders.filter(o => ids.includes(o.id));
-  const html = `<h3>📨 Trimite ${comenziSel.length} comandă(ă/ăi) unui coleg</h3>
+  const html = `<h3>Trimite ${comenziSel.length} comandă(ă/ăi) unui coleg</h3>
     <div class="field">
       <label>Coleg</label>
       <select id="tc-coleg-id">${colegi.map(p => `<option value="${p.id}">${escapeHtml(p.nume)} (${escapeHtml(profilLocatieLabel(p))})</option>`).join("")}</select>
@@ -3461,7 +3616,7 @@ function subscribeNotifRealtime() {
     client.channel("notif-sync-" + currentProfile.id)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "notificari", filter: "destinatar_id=eq." + currentProfile.id }, payload => {
         loadNotifCount();
-        if (typeof rzToast === "function") rzToast("🔔 Notificare nouă: " + escapeHtml(payload.new.mesaj), "ok");
+        if (typeof rzToast === "function") rzToast("Notificare nouă: " + escapeHtml(payload.new.mesaj), "ok");
       })
       .subscribe();
   } catch (e) { console.warn("realtime notificari indisponibil", e); }
@@ -3484,7 +3639,7 @@ async function openNotifPanel() {
   }
 }
 function renderNotifPanel() {
-  let html = "<h3>🔔 Notificările tale</h3>";
+  let html = "<h3>Notificările tale</h3>";
   if (!currentNotifications.length) {
     html += `<p style="font-size:13px;color:var(--muted);margin-top:8px">Nu ai nicio notificare.</p>`;
   } else {
@@ -3895,11 +4050,11 @@ function renderApptCard(p) {
   const moto = [p.marca, p.model].filter(Boolean).join(" ") + (p.nr_inmatriculare ? " · " + p.nr_inmatriculare : "");
   let actions = "";
   if (p.stare !== "Anulat") {
-    if (p.stare !== "Confirmat") actions += `<button type="button" class="btn-secondary" onclick="confirmaProgramare('${p.id}')">✓ Confirmă clientul</button>`;
-    actions += `<button type="button" class="btn-secondary" onclick="openProgramareModal('${p.id}')">🔄 Reprogramează</button>`;
+    if (p.stare !== "Confirmat") actions += `<button type="button" class="btn-secondary" onclick="confirmaProgramare('${p.id}')">Confirmă clientul</button>`;
+    actions += `<button type="button" class="btn-secondary" onclick="openProgramareModal('${p.id}')">Reprogramează</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="anuleazaProgramare('${p.id}')">✕ Anulează</button>`;
   }
-  if (amAdmin()) actions += `<button type="button" class="btn-secondary" style="color:#b91c1c" onclick="stergeProgramare('${p.id}')">🗑 Șterge definitiv</button>`;
+  if (amAdmin()) actions += `<button type="button" class="btn-secondary" style="color:#b91c1c" onclick="stergeProgramare('${p.id}')">Șterge definitiv</button>`;
   // v38: click/hover oriunde pe corpul cardului (in afara butoanelor de mai jos) deschide direct
   // editarea — acelasi tipar ca la Sarcini (v31/v34), doar ca zona clickabila se numeste distinct
   // (.prog-card-clickable) ca sa nu se amestece cu hover-ul de la Sarcini (.sarcina-card-clickable).
@@ -3963,7 +4118,7 @@ function renderProgramatorSlotGrid(list) {
     while (i < slots.length) {
       const t = slots[i];
       if (t >= PROG_PAUZA_START_MIN && t < PROG_PAUZA_END_MIN) {
-        cellsHtml += `<div class="slot-cell pauza" title="Pauză de masă">🍽️<br>${progMinToHHMM(t)}</div>`;
+        cellsHtml += `<div class="slot-cell pauza" title="Pauză de masă">${progMinToHHMM(t)}</div>`;
         i++;
         continue;
       }
@@ -4000,7 +4155,7 @@ function populateOraInceputSelect(selectedValue) {
   let options = '<option value="">— alege —</option>' + slots.map(t => {
     const hhmm = progMinToHHMM(t);
     const inPauza = t >= PROG_PAUZA_START_MIN && t < PROG_PAUZA_END_MIN;
-    return `<option value="${hhmm}">${hhmm}${inPauza ? " 🍽️ (pauză de masă)" : ""}</option>`;
+    return `<option value="${hhmm}">${hhmm}${inPauza ? " (pauză de masă)" : ""}</option>`;
   }).join("");
   // pastreaza o valoare veche (din date mai vechi) care nu se mai potriveste cu sloturile standard
   if (selectedValue && !slots.some(t => progMinToHHMM(t) === selectedValue)) {
@@ -4070,7 +4225,7 @@ function renderPrSlotGrid() {
   let cellsHtml = "";
   for (const t of slots) {
     if (t >= PROG_PAUZA_START_MIN && t < PROG_PAUZA_END_MIN) {
-      cellsHtml += `<div class="slot-cell pauza" title="Pauză de masă">🍽️<br>${progMinToHHMM(t)}</div>`;
+      cellsHtml += `<div class="slot-cell pauza" title="Pauză de masă">${progMinToHHMM(t)}</div>`;
       continue;
     }
     const hhmm = progMinToHHMM(t);
@@ -4435,29 +4590,29 @@ function renderSarcinaCard(t, opts) {
       actions += `<button type="button" class="btn-secondary" title="Mai urgent" onclick="sarciniMutaOrdine('${t.id}','up')">▲</button>`;
       actions += `<button type="button" class="btn-secondary" title="Mai puțin urgent" onclick="sarciniMutaOrdine('${t.id}','down')">▼</button>`;
     }
-    actions += `<button type="button" class="btn-secondary" onclick="rezolvaSarcina('${t.id}')">✓ Rezolvat</button>`;
-    actions += `<button type="button" class="btn-secondary" onclick="openCereAjutorModal('${t.id}')">🤝 Cere ajutor</button>`;
-    actions += `<button type="button" class="btn-secondary" onclick="openSarcinaModal('${t.id}')">✎ Editează</button>`;
+    actions += `<button type="button" class="btn-secondary" onclick="rezolvaSarcina('${t.id}')">Rezolvat</button>`;
+    actions += `<button type="button" class="btn-secondary" onclick="openCereAjutorModal('${t.id}')">Cere ajutor</button>`;
+    actions += `<button type="button" class="btn-secondary" onclick="openSarcinaModal('${t.id}')">Editează</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="anuleazaSarcina('${t.id}')">✕ Anulează</button>`;
   } else if (t.stare === "Rezolvat") {
-    actions += `<button type="button" class="btn-secondary" onclick="redeschideSarcina('${t.id}')">↩️ Redeschide</button>`;
+    actions += `<button type="button" class="btn-secondary" onclick="redeschideSarcina('${t.id}')">Redeschide</button>`;
   }
-  actions += `<button type="button" class="btn-secondary" onclick="openSarcinaDetaliuModal('${t.id}')">💬 Observații${nObs ? " (" + nObs + ")" : ""}</button>`;
-  if (amAdmin()) actions += `<button type="button" class="btn-secondary" style="color:#b91c1c" onclick="stergeSarcina('${t.id}')">🗑 Șterge definitiv</button>`;
+  actions += `<button type="button" class="btn-secondary" onclick="openSarcinaDetaliuModal('${t.id}')">Observații${nObs ? " (" + nObs + ")" : ""}</button>`;
+  if (amAdmin()) actions += `<button type="button" class="btn-secondary" style="color:#b91c1c" onclick="stergeSarcina('${t.id}')">Șterge definitiv</button>`;
   // v31: click oriunde pe corpul cardului (in afara butoanelor de mai jos) deschide un
   // pop-up mărit, cu toate datele sarcinii lizibil afișate + observațiile (vechi + adăugare).
   return `<div class="appt-card sarcina-card ${stCls}">
     <div class="sarcina-card-clickable" style="cursor:pointer" onclick="openSarcinaDetaliuModal('${t.id}')" title="Click pentru detalii și observații">
       <div class="appt-time">${escapeHtml(t.nume)}
-        <span class="badge" style="background:${pr.bg};color:${pr.color};font-size:10px">${pr.icon} ${escapeHtml(t.prioritate || "Normală")}</span>
+        <span class="badge" style="background:${pr.bg};color:${pr.color};font-size:10px"><span class="pr-dot" style="background:${pr.dot}"></span>${escapeHtml(t.prioritate || "Normală")}</span>
         <span class="badge" style="background:#eef0f4;color:var(--muted);font-size:10px">${escapeHtml(t.stare)}</span>
         ${t.termen_limita ? `<span class="badge" style="background:${termenDepasit ? "#fee2e2" : "#eef0f4"};color:${termenDepasit ? "#991b1b" : "var(--muted)"};font-size:10px">Termen: ${formatDate(t.termen_limita)}</span>` : ""}
       </div>
       ${t.descriere ? `<div class="appt-servicii">${escapeHtml(t.descriere)}</div>` : ""}
       ${mutata ? `<div class="appt-obs">⏳ Restantă din ${formatDate(t.data)}</div>` : ""}
       <div class="appt-moto">Creat de ${escapeHtml(t.creat_de_nume || "—")} pe ${formatDate(t.creat_la)}${t.atribuit_catre_nume ? " · Atribuit: " + escapeHtml(t.atribuit_catre_nume) : ""}${t.notifica_la_rezolvare_nume ? " · Anunță la rezolvare: " + escapeHtml(t.notifica_la_rezolvare_nume) : ""}</div>
-      ${ajutorNume.length ? `<div class="appt-obs" style="color:#1e40af">🤝 Ajutor cerut: ${escapeHtml(ajutorNume.join(", "))}</div>` : ""}
-      ${t.stare === "Rezolvat" ? `<div class="appt-obs" style="color:#166534">✓ Rezolvat de ${escapeHtml(t.rezolvat_de_nume || "—")} pe ${formatDate(t.rezolvat_la)}</div>` : ""}
+      ${ajutorNume.length ? `<div class="appt-obs" style="color:#1e40af">Ajutor cerut: ${escapeHtml(ajutorNume.join(", "))}</div>` : ""}
+      ${t.stare === "Rezolvat" ? `<div class="appt-obs" style="color:#166534">Rezolvat de ${escapeHtml(t.rezolvat_de_nume || "—")} pe ${formatDate(t.rezolvat_la)}</div>` : ""}
     </div>
     <div class="appt-actions">${actions}</div>
   </div>`;
@@ -4628,7 +4783,7 @@ async function saveSarcina() {
   };
 
   // sarcina tocmai a fost marcata "Rezolvat" chiar din acest formular (nu doar salvata
-  // cu starea deja Rezolvat) — se comporta la fel ca butonul "✓ Rezolvată": ziua ei
+  // cu starea deja Rezolvat) — se comporta la fel ca butonul "Rezolvată": ziua ei
   // devine ziua rezolvarii (nu ziua initiala programata) si se retine cine/cand a rezolvat-o.
   // Altfel, editarea unei sarcini mai vechi si trecerea ei pe "Rezolvat" din formular
   // ramanea agatata pe data ei originala, in loc sa apara in ziua in care a fost rezolvata.
@@ -4725,7 +4880,7 @@ function openCereAjutorModal(id) {
   if (!t) return;
   const deja = new Set((t.ajutor || []).map(a => a.coleg_id));
   const colegi = allProfiles.filter(p => p.id !== currentProfile.id && p.activ !== false);
-  const html = `<h3>🤝 Cere ajutor — ${escapeHtml(t.nume)}</h3>
+  const html = `<h3>Cere ajutor — ${escapeHtml(t.nume)}</h3>
     <div class="muted" style="font-size:12.5px">Alege unul sau mai mulți colegi cărora vrei să le ceri ajutor la acest task. Fiecare va primi o notificare.</div>
     <div id="sa-ajutor-list" style="display:flex;flex-direction:column;gap:6px;margin:12px 0">
       ${colegi.map(p => `
@@ -4781,7 +4936,7 @@ function renderSarcinaDetaliuModalContent(t) {
   const html = `
     <h3 style="margin-bottom:8px">${escapeHtml(t.nume)}</h3>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-      <span class="badge" style="background:${pr.bg};color:${pr.color}">${pr.icon} ${escapeHtml(t.prioritate || "Normală")}</span>
+      <span class="badge" style="background:${pr.bg};color:${pr.color}"><span class="pr-dot" style="background:${pr.dot}"></span>${escapeHtml(t.prioritate || "Normală")}</span>
       <span class="badge" style="background:#eef0f4;color:var(--muted)">${escapeHtml(t.stare)}</span>
       ${t.termen_limita ? `<span class="badge" style="background:#eef0f4;color:var(--muted)">Termen: ${formatDate(t.termen_limita)}</span>` : ""}
     </div>
@@ -4791,10 +4946,10 @@ function renderSarcinaDetaliuModalContent(t) {
       <div><b>Creat de:</b> ${escapeHtml(t.creat_de_nume || "—")} pe ${formatDate(t.creat_la)}</div>
       ${t.atribuit_catre_nume ? `<div><b>Atribuit:</b> ${escapeHtml(t.atribuit_catre_nume)}</div>` : ""}
       ${t.notifica_la_rezolvare_nume ? `<div><b>Anunță la rezolvare:</b> ${escapeHtml(t.notifica_la_rezolvare_nume)}</div>` : ""}
-      ${ajutorNume.length ? `<div><b>🤝 Ajutor cerut:</b> ${escapeHtml(ajutorNume.join(", "))}</div>` : ""}
-      ${t.stare === "Rezolvat" ? `<div style="color:#166534"><b>✓ Rezolvat de</b> ${escapeHtml(t.rezolvat_de_nume || "—")} pe ${formatDate(t.rezolvat_la)}</div>` : ""}
+      ${ajutorNume.length ? `<div><b>Ajutor cerut:</b> ${escapeHtml(ajutorNume.join(", "))}</div>` : ""}
+      ${t.stare === "Rezolvat" ? `<div style="color:#166534"><b>Rezolvat de</b> ${escapeHtml(t.rezolvat_de_nume || "—")} pe ${formatDate(t.rezolvat_la)}</div>` : ""}
     </div>
-    <div style="font-weight:700;font-size:13px;margin-bottom:8px">💬 Observații</div>
+    <div style="font-weight:700;font-size:13px;margin-bottom:8px">Observații</div>
     <div style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
       ${obs.length ? obs.map(o => `
         <div class="rz-hist-item" style="flex-direction:column;align-items:flex-start;gap:2px">
@@ -4808,7 +4963,7 @@ function renderSarcinaDetaliuModalContent(t) {
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="rzCloseModal()">Închide</button>
-      <button class="btn-secondary" onclick="rzCloseModal(); openSarcinaModal('${t.id}')">✎ Editează task-ul</button>
+      <button class="btn-secondary" onclick="rzCloseModal(); openSarcinaModal('${t.id}')">Editează task-ul</button>
       <button class="btn-primary" onclick="adaugaObservatieSarcina('${t.id}')">Adaugă observație</button>
     </div>`;
   rzOpenModal(html);
@@ -5097,9 +5252,9 @@ function renderDauneTable() {
       <td>
         <div class="actions-cell" style="flex-wrap:wrap">
           ${(amAdmin() || canDo("perm_daune")) ? `<button class="icon-btn" title="Editează" onclick="openDauneModal('${d.id}')">${ICON_EDIT}</button>` : ""}
-          <button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="openObservatiiDauna('${d.id}')">💬${(d.observatii || []).length ? " " + d.observatii.length : ""}</button>
-          ${potPreda ? `<button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="openPredareDaunaModal('${d.id}')">➡️ Predă</button>` : ""}
-          ${potFinaliza ? `<button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="finalizeazaDauna('${d.id}')">✅ Finalizează</button>` : ""}
+          <button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="openObservatiiDauna('${d.id}')">Obs.${(d.observatii || []).length ? " " + d.observatii.length : ""}</button>
+          ${potPreda ? `<button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="openPredareDaunaModal('${d.id}')">Predă</button>` : ""}
+          ${potFinaliza ? `<button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="finalizeazaDauna('${d.id}')">Finalizează</button>` : ""}
           ${potAnula ? `<button class="icon-btn danger" title="Anulează" onclick="anuleazaDauna('${d.id}')">${ICON_CLOSE}</button>` : ""}
           ${amAdmin() ? `<button class="icon-btn danger" title="Șterge definitiv" onclick="stergeDauna('${d.id}')">${ICON_TRASH}</button>` : ""}
         </div>
@@ -5135,9 +5290,9 @@ function renderDaunaStareBar(d) {
   const potPreda = (amAdmin() || d.creat_de === currentProfile.id) && d.stare === "Etapa 1";
   const potFinaliza = (amAdmin() || d.predat_catre === currentProfile.id) && d.stare === "Predat";
   actions.innerHTML =
-    (potPreda ? `<button class="btn-secondary" onclick="openPredareDaunaModal('${d.id}')">➡️ Predă spre finalizare</button>` : "") +
-    (potFinaliza ? `<button class="btn-secondary" onclick="finalizeazaDauna('${d.id}')">✅ Finalizează dosarul</button>` : "") +
-    `<button class="btn-secondary" onclick="openObservatiiDauna('${d.id}')">💬 Observații${(d.observatii || []).length ? " (" + d.observatii.length + ")" : ""}</button>`;
+    (potPreda ? `<button class="btn-secondary" onclick="openPredareDaunaModal('${d.id}')">Predă spre finalizare</button>` : "") +
+    (potFinaliza ? `<button class="btn-secondary" onclick="finalizeazaDauna('${d.id}')">Finalizează dosarul</button>` : "") +
+    `<button class="btn-secondary" onclick="openObservatiiDauna('${d.id}')">Observații${(d.observatii || []).length ? " (" + d.observatii.length + ")" : ""}</button>`;
 }
 
 function renderDaunaFisiereSections(d) {
@@ -5151,7 +5306,7 @@ function renderDaunaFisiereSections(d) {
       <div style="display:flex;flex-direction:column">
         ${fisiere.length ? fisiere.map(f => `
           <div class="dn-fisier-item">
-            <span style="cursor:pointer;color:var(--accent);text-decoration:underline;flex:1" onclick="deschideFisierDauna('${f.id}')">📎 ${escapeHtml(f.nume_fisier)}</span>
+            <span style="cursor:pointer;color:var(--accent);text-decoration:underline;flex:1" onclick="deschideFisierDauna('${f.id}')">${escapeHtml(f.nume_fisier)}</span>
             <span class="muted" style="font-size:11px;white-space:nowrap">${escapeHtml(f.creat_de_nume || "")} · ${formatDate(f.creat_la)}</span>
             ${potSterge ? `<button class="icon-btn danger" title="Șterge" onclick="stergeFisierDauna('${f.id}')">${ICON_CLOSE}</button>` : ""}
           </div>`).join("") : '<div class="dn-fisier-empty">Niciun fișier încă.</div>'}
@@ -5243,7 +5398,7 @@ async function closeDaunaModal() {
 }
 
 // Bifele „Constatare"/„Reconstatare" din formular sunt salvate în baza de date abia la „Salvează" —
-// dar secțiunile de poze (📷 Poze Constatare / 📷 Poze Reconstatare) trebuie arătate/ascunse pe loc,
+// dar secțiunile de poze (Poze Constatare / Poze Reconstatare) trebuie arătate/ascunse pe loc,
 // după starea LIVE a bifelor din ecran, nu după ce scrie încă în baza de date. Orice re-randare a
 // secțiunilor de fișiere (după bifă, după încărcare, după ștergere) trebuie să treacă prin acest
 // helper, altfel o secțiune cu poze proaspăt încărcate poate „dispărea" până la următoarea bifare —
@@ -5315,7 +5470,7 @@ function openPredareDaunaModal(id) {
   const d = currentDaune.find(x => x.id === id);
   if (!d) return;
   const colegi = allProfiles.filter(p => p.id !== currentProfile.id && p.activ !== false);
-  const html = `<h3>➡️ Predă dosarul spre finalizare</h3>
+  const html = `<h3>Predă dosarul spre finalizare</h3>
     <div class="muted" style="font-size:12.5px">${escapeHtml(dauneClientLabel(d))} — alege colegul care va finaliza dosarul. Va primi o notificare.</div>
     <div class="field" style="margin-top:10px">
       <label>Coleg</label>
@@ -5493,7 +5648,7 @@ function openObservatiiDauna(id) {
 }
 function renderObservatiiDaunaModalContent(d) {
   const obs = (d.observatii || []).slice().sort((a, b) => (a.creat_la || "").localeCompare(b.creat_la || ""));
-  const html = `<h3>💬 Observații — ${escapeHtml(dauneClientLabel(d))}</h3>
+  const html = `<h3>Observații — ${escapeHtml(dauneClientLabel(d))}</h3>
     <div style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin:14px 0 10px">
       ${obs.length ? obs.map(o => `
         <div class="rz-hist-item" style="flex-direction:column;align-items:flex-start;gap:2px">
@@ -5596,7 +5751,7 @@ function extractImportIstoricAppointments(parsed) {
 function openImportIstoricModal() {
   if (!amAdmin()) { alert("Doar administratorul poate importa istoricul."); return; }
   pendingImportIstoric = null;
-  const html = `<h3>⬆️ Importă istoric programări</h3>
+  const html = `<h3>Importă istoric programări</h3>
     <div class="muted" style="font-size:12.5px">Încarcă fișierul JSON cu programările vechi. Cele importate se marchează cu sursa „istoric” și apar alături de cele noi, în Programator.</div>
     <div class="field" style="margin-top:12px">
       <label>Punct de lucru pentru istoricul importat</label>
@@ -5642,14 +5797,14 @@ async function handleImportIstoricFile(event) {
     });
 
     pendingImportIstoric = deduped;
-    statusEl.innerHTML = `✓ Găsite <b>${rawList.length}</b> programări în fișier` +
+    statusEl.innerHTML = `Găsite <b>${rawList.length}</b> programări în fișier` +
       (invalidCount ? `, <b>${invalidCount}</b> ignorate (fără dată/oră valabile)` : "") +
       (dupCount ? `, <b>${dupCount}</b> par deja existente (sărite)` : "") +
       `. Gata de import: <b>${deduped.length}</b>.`;
     const ph = deduped.slice(0, 30).map(a => `<div style="font-size:11.5px;padding:3px 0;border-bottom:1px solid #eee">${escapeHtml(a.data)} ${escapeHtml(a.ora_inceput)} — ${escapeHtml(a.nume_client)}${a.marca || a.model ? " (" + escapeHtml([a.marca, a.model].filter(Boolean).join(" ")) + ")" : ""}</div>`).join("");
     document.getElementById("ii-preview").innerHTML = deduped.length ? `<div style="max-height:220px;overflow-y:auto;margin-top:8px">${ph}${deduped.length > 30 ? `<div class="muted" style="padding:4px 0">...și încă ${deduped.length - 30}.</div>` : ""}</div>` : "";
     document.getElementById("ii-btns").innerHTML = deduped.length
-      ? `<button class="btn-secondary" onclick="rzCloseModal()">Anulează</button><button class="btn-primary" onclick="confirmImportIstoric()">✓ Importă ${deduped.length} programări</button>`
+      ? `<button class="btn-secondary" onclick="rzCloseModal()">Anulează</button><button class="btn-primary" onclick="confirmImportIstoric()">Importă ${deduped.length} programări</button>`
       : `<button class="btn-secondary" onclick="rzCloseModal()">Închide</button>`;
   } catch (e) {
     statusEl.innerHTML = '<span style="color:var(--danger)">Nu am putut citi fișierul: ' + escapeHtml(e.message) + '</span>';
@@ -6085,7 +6240,7 @@ document.addEventListener("click", function (e) {
   if (closer) closer();
 });
 
-// v51: meniu hamburger din antet (📍 Toate punctele / 👥 Useri & Roluri / 💰 Curs & Adaos / Log Out)
+// v51: meniu hamburger din antet (Toate punctele / Useri & Roluri / Curs & Adaos / Log Out)
 function toggleHamburgerMenu(e) {
   if (e) e.stopPropagation();
   const el = document.getElementById("hamburger-dropdown");
@@ -6208,7 +6363,7 @@ function rzCheckDNComplete(dn) {
   const allDone = dnItems.length > 0 && dnItems.every(it => it.cantitate_scanata >= it.cantitate);
   if (allDone && document.getElementById("rz-opt-fanfara").checked) {
     rzFanfara();
-    rzToast("🎉 Factura " + escapeHtml(dn) + " — COMPLETĂ!", "ok");
+    rzToast("Factura " + escapeHtml(dn) + " — COMPLETĂ!", "ok");
   }
 }
 
@@ -6287,7 +6442,7 @@ function rzEditQty(id) {
   const it = rzItems.find(x => x.id === id); if (!it) return;
   const cell = document.getElementById("rz-editcell-" + id);
   cell.innerHTML = `<input class="rz-inline-input" id="rz-qinput-${id}" type="number" min="0" value="${it.cantitate_scanata}" />
-    <button class="rz-mini-edit" onclick="rzSaveQty('${id}')">✓</button>`;
+    <button class="rz-mini-edit" onclick="rzSaveQty('${id}')">OK</button>`;
   const inp = document.getElementById("rz-qinput-" + id); inp.focus(); inp.select();
   inp.addEventListener("keydown", e => { if (e.key === "Enter") rzSaveQty(id); if (e.key === "Escape") rzRender(); });
 }
@@ -6408,7 +6563,7 @@ async function rzOpenHistory() {
   const { data, error } = await client.from("receptie_sesiuni").select("*").order("creat_la", { ascending: false }).limit(50);
   if (error) { rzToast("Eroare: " + error.message, "err"); return; }
   rzHistoryCache = data || [];
-  let html = "<h3>📦 Istoric sesiuni recepție</h3>";
+  let html = "<h3>Istoric sesiuni recepție</h3>";
   if (!rzHistoryCache.length) { html += `<p style="font-size:13px;color:var(--muted);margin-top:8px">Nu există sesiuni salvate.</p>`; }
   else {
     html += `<p style="font-size:12.5px;color:var(--muted);margin-bottom:8px">${rzHistoryCache.length} sesiuni salvate:</p><div style="max-height:340px;overflow-y:auto">`;
@@ -6426,7 +6581,7 @@ async function rzOpenHistory() {
     });
     html += "</div>";
   }
-  html += `<div class="modal-actions"><button class="btn-primary" onclick="rzSaveSession().then(rzOpenHistory)">💾 Salvează sesiunea curentă</button><button class="btn-secondary" onclick="rzCloseModal()">Închide</button></div>`;
+  html += `<div class="modal-actions"><button class="btn-primary" onclick="rzSaveSession().then(rzOpenHistory)">Salvează sesiunea curentă</button><button class="btn-secondary" onclick="rzCloseModal()">Închide</button></div>`;
   rzOpenModal(html);
 }
 function rzRestoreSession(id) {
@@ -6462,8 +6617,8 @@ function rzDeleteSessionAsk(id) {
 function rzOpenExportModal() {
   rzOpenModal(`<h3>Export raport</h3><p style="font-size:13px;color:var(--muted);margin:8px 0 12px">Alege formatul (exportă modul curent: ${rzMode === "inventar" ? "Inventar liber" : "Recepție factură"}):</p>
     <div class="modal-actions">
-      <button class="btn-primary" onclick="rzDoExport('excel')">📄 Excel (.xlsx)</button>
-      <button class="btn-primary" onclick="rzDoExport('pdf')">📄 PDF</button>
+      <button class="btn-primary" onclick="rzDoExport('excel')">Excel (.xlsx)</button>
+      <button class="btn-primary" onclick="rzDoExport('pdf')">PDF</button>
       <button class="btn-secondary" onclick="rzCloseModal()">Anulează</button>
     </div>`);
 }
@@ -6539,7 +6694,7 @@ if (typeof pdfjsLib !== "undefined") pdfjsLib.GlobalWorkerOptions.workerSrc = "h
 async function rzHandlePdfFile(event) {
   const file = event.target.files[0]; if (!file) return;
   const invoiceNo = file.name.replace(/\.pdf$/i, "");
-  rzOpenModal(`<h3>📄 Import factură PDF</h3>
+  rzOpenModal(`<h3>Import factură PDF</h3>
     <p style="font-size:13px;color:var(--muted);margin-top:4px">Fișier: <b>${escapeHtml(file.name)}</b></p>
     <p style="font-size:13px;color:var(--accent);margin-top:10px" id="rz-import-status">⏳ Se extrage textul din PDF...</p>
     <div id="rz-import-preview"></div>
@@ -6579,13 +6734,13 @@ async function rzHandlePdfFile(event) {
     if (pendingCode) results.push({ code: pendingCode, desc: pendingDesc || "", qty: 1 });
     results = results.filter(r => r.code && r.code.length >= 3 && r.qty > 0 && r.qty < 10000);
     if (!results.length) throw new Error("Nu au fost găsite produse. Verifică dacă PDF-ul conține text selectabil.");
-    document.getElementById("rz-import-status").innerHTML = `✓ Găsite <b>${results.length}</b> produse. Verifică și confirmă:`;
+    document.getElementById("rz-import-status").innerHTML = `Găsite <b>${results.length}</b> produse. Verifică și confirmă:`;
     let ph = '<div style="max-height:260px;overflow-y:auto;margin-top:8px;border:1.5px solid var(--border);border-radius:8px"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#f0f4f8"><th style="padding:5px 8px;text-align:left;border-bottom:1px solid var(--border);width:110px">Cod</th><th style="padding:5px 8px;text-align:left;border-bottom:1px solid var(--border)">Denumire</th><th style="padding:5px 8px;text-align:center;border-bottom:1px solid var(--border);width:50px">Cant.</th></tr></thead><tbody>';
     results.forEach(p => { ph += `<tr style="border-bottom:1px solid #eee"><td style="padding:4px 8px;font-family:monospace;font-size:11px;color:var(--accent)">${escapeHtml(p.code)}</td><td style="padding:4px 8px">${escapeHtml(p.desc)}</td><td style="padding:4px 8px;text-align:center;font-weight:700">${p.qty}</td></tr>`; });
     ph += "</tbody></table></div>";
     document.getElementById("rz-import-preview").innerHTML = ph;
     rzPendingImport = { parsed: results, invoiceNo };
-    document.getElementById("rz-import-btns").innerHTML = `<button class="btn-secondary" onclick="rzCloseModal()">Anulează</button><button class="btn-primary" onclick="rzConfirmImport()">✓ Importă ${results.length} produse</button>`;
+    document.getElementById("rz-import-btns").innerHTML = `<button class="btn-secondary" onclick="rzCloseModal()">Anulează</button><button class="btn-primary" onclick="rzConfirmImport()">Importă ${results.length} produse</button>`;
   } catch (err) {
     document.getElementById("rz-import-status").innerHTML = `<span style="color:var(--danger)">✕ Eroare: ${escapeHtml(err.message)}</span>`;
     document.getElementById("rz-import-btns").innerHTML = `<button class="btn-secondary" onclick="rzCloseModal()">Închide</button>`;
@@ -6615,12 +6770,12 @@ function rzOpenPriceImportModal() {
   const marcaOptions = marci.length
     ? marci.map(m => `<option value="${escapeHtml(m)}" ${m === "Triumph" ? "selected" : ""}>${escapeHtml(m)}</option>`).join("")
     : '<option value="">— adaugă mai întâi o marcă —</option>';
-  rzOpenModal(`<h3>📈 Încarcă listă prețuri</h3>
+  rzOpenModal(`<h3>Încarcă listă prețuri</h3>
     <p style="font-size:13px;color:var(--muted);margin:8px 0 12px">Alege marca, descarcă șablonul standard, modifică sau încarcă fișierul nou / modificat. <b>Format implicit</b>: coloana A = Cod piesă, coloana B = Denumire piesă, coloana C = Preț EUR (EUR, cu TVA inclus), coloana D = Preț RON (RON, fară TVA), coloana E = Preț RON TVA (RON, cu TVA inclus).</p>
     <div class="field">
       <label>Marcă</label>
       <select id="rz-price-marca">${marcaOptions}</select>
-      <div class="hint">Nu găsești marca? Se adaugă din „💰 Curs &amp; Adaos” → „Branduri moto”.</div>
+      <div class="hint">Nu găsești marca? Se adaugă din „Curs &amp; Adaos” → „Branduri moto”.</div>
     </div>
     <div class="field">
       <label>Format fișier (unde sunt codul, denumirea și prețul)</label>
@@ -6640,7 +6795,7 @@ function rzOpenPriceImportModal() {
       </select>
     </div>
     <div class="modal-actions">
-      <button class="btn-secondary" onclick="rzDownloadPriceTemplate()">⬇ Descarcă șablon Excel</button>
+      <button class="btn-secondary" onclick="rzDownloadPriceTemplate()">Descarcă șablon Excel</button>
       <button class="btn-secondary" onclick="rzCloseModal()">Anulează</button>
       <button class="btn-primary" onclick="document.getElementById('rz-price-file').click()">Alege fișierul Excel...</button>
     </div>`);
@@ -6743,15 +6898,15 @@ function rzOpenPriceSettings() {
   const rate = rzActiveEurRate();
   const rateSource = (parseFloat(rzSetari.curs_eur_manual) > 0) ? "manual" : (rzSetari.curs_bnr_eur ? "ultimul folosit" : "indisponibil");
   const marci = rzMarciDisponibile();
-  rzOpenModal(`<h3>💰 Curs EUR &amp; Adaos prețuri</h3>
+  rzOpenModal(`<h3>Curs EUR &amp; Adaos prețuri</h3>
     <div style="margin-top:10px;font-size:13px;line-height:1.7">
       ${amAdmin() ? `<div class="rz-price-settings-box">
         <div class="title">Branduri moto (folosite la lista de prețuri și catalog)</div>
         <div style="margin-bottom:8px">
           ${currentBranduriMoto.map(b => `<div class="rz-inline-row" style="margin-bottom:4px">
             <span style="min-width:120px">${escapeHtml(b.nume)}</span>
-            <button class="btn-secondary" style="padding:2px 8px;font-size:12px" onclick="rzRenameBrandMoto('${b.id}', ${jsStrAttr(b.nume)})">✎ Redenumește</button>
-            <button class="btn-secondary" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="rzDeleteBrandMoto('${b.id}', ${jsStrAttr(b.nume)})">🗑 Șterge</button>
+            <button class="btn-secondary" style="padding:2px 8px;font-size:12px" onclick="rzRenameBrandMoto('${b.id}', ${jsStrAttr(b.nume)})">Redenumește</button>
+            <button class="btn-secondary" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="rzDeleteBrandMoto('${b.id}', ${jsStrAttr(b.nume)})">Șterge</button>
           </div>`).join("") || '<div class="muted" style="font-size:12px">Niciun brand adăugat încă.</div>'}
         </div>
         <div class="rz-inline-row">
@@ -6763,9 +6918,9 @@ function rzOpenPriceSettings() {
       <div class="rz-price-settings-box">
         <div class="title">Curs EUR/RON</div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Curs activ: <b>${rate ? rate + " RON" : "—"}</b> (sursă: ${rateSource})</div>
-        ${rzSetari.curs_bnr_actualizat_la ? `<div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">🔄 Curs preluat automat (sursă: ${rzSetari.curs_bnr_sursa === "BCE" ? "BCE, rezervă — BNR indisponibil" : "BNR"}), ultima actualizare: ${formatDate(rzSetari.curs_bnr_actualizat_la)}</div>` : ""}
+        ${rzSetari.curs_bnr_actualizat_la ? `<div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">Curs preluat automat (sursă: ${rzSetari.curs_bnr_sursa === "BCE" ? "BCE, rezervă — BNR indisponibil" : "BNR"}), ultima actualizare: ${formatDate(rzSetari.curs_bnr_actualizat_la)}</div>` : ""}
         <div class="rz-inline-row" style="margin-bottom:6px">
-          <button class="btn-secondary" id="rz-btn-refresh-curs" onclick="rzRefreshCursBnr()">🔄 Interoghează BNR/BCE acum</button>
+          <button class="btn-secondary" id="rz-btn-refresh-curs" onclick="rzRefreshCursBnr()">Interoghează BNR/BCE acum</button>
         </div>
         <div class="rz-inline-row">
           <input id="rz-ps-eur" type="number" step="0.0001" min="0" value="${rzSetari.curs_eur_manual || ""}" placeholder="ex: 5.0850" style="width:100px" />
@@ -6856,7 +7011,7 @@ async function rzRefreshCursBnr() {
   } catch (e) {
     alert("Eroare la interogarea cursului BNR/BCE: " + e.message);
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = "🔄 Interoghează BNR/BCE acum"; }
+    if (btn) { btn.disabled = false; btn.textContent = "Interoghează BNR/BCE acum"; }
   }
 }
 async function rzPsSaveMarkup() {
@@ -6934,7 +7089,7 @@ function rzRenderReceptie() {
     const rows = byDN[dn];
     const tot = rows.reduce((s, i) => s + Number(i.cantitate), 0);
     const ok = rows.reduce((s, i) => s + Math.min(i.cantitate_scanata, i.cantitate), 0);
-    html += `<div class="rz-dn-section"><div class="rz-dn-header"><span class="dntitle">📄 ${escapeHtml(dn)}</span><span class="prog">${ok}/${tot} buc.</span>
+    html += `<div class="rz-dn-section"><div class="rz-dn-header"><span class="dntitle">${escapeHtml(dn)}</span><span class="prog">${ok}/${tot} buc.</span>
       <button class="icon-btn danger" onclick="rzDeleteDN('${dn.replace(/'/g, "\\'")}')" title="Șterge factura">${ICON_CLOSE}</button></div>`;
     html += `<div class="table-wrap"><table><thead><tr><th>Cod</th><th>Denumire</th><th>Cantitate</th><th>Destinatar</th><th>Preț</th><th>Fără TVA</th><th>Observații</th></tr></thead><tbody>`;
     rows.forEach(it => {
@@ -6946,11 +7101,11 @@ function rzRenderReceptie() {
       html += `<tr class="${rowClass}">
         <td style="font-family:monospace;font-size:11.5px;color:var(--accent)">${escapeHtml(it.cod)}</td>
         <td>${escapeHtml(it.denumire || "")}</td>
-        <td><div class="rz-qty-wrap" id="rz-editcell-${it.id}"><span style="font-weight:700">${it.cantitate_scanata}</span>/<span>${it.cantitate}</span><div class="rz-bar-bg"><div class="rz-bar-fg ${barClass}" style="width:${pct}%"></div></div><button class="rz-mini-edit" onclick="rzEditQty('${it.id}')">✎</button></div></td>
-        <td id="rz-dest-cell-${it.id}"><div style="display:flex;align-items:center;gap:4px"><span class="badge" style="background:#e3f2fd;color:#1565c0;font-size:10.5px;padding:2px 8px;border-radius:8px">${escapeHtml(it.destinatie || "")}</span><button class="rz-mini-edit" onclick="rzEditDest('${it.id}')">✎</button></div></td>
+        <td><div class="rz-qty-wrap" id="rz-editcell-${it.id}"><span style="font-weight:700">${it.cantitate_scanata}</span>/<span>${it.cantitate}</span><div class="rz-bar-bg"><div class="rz-bar-fg ${barClass}" style="width:${pct}%"></div></div><button class="rz-mini-edit" onclick="rzEditQty('${it.id}')">Edit</button></div></td>
+        <td id="rz-dest-cell-${it.id}"><div style="display:flex;align-items:center;gap:4px"><span class="badge" style="background:#e3f2fd;color:#1565c0;font-size:10.5px;padding:2px 8px;border-radius:8px">${escapeHtml(it.destinatie || "")}</span><button class="rz-mini-edit" onclick="rzEditDest('${it.id}')">Edit</button></div></td>
         <td style="font-size:11.5px">${rzFmtRON(ep)}</td>
         <td style="font-size:11.5px;color:var(--muted)">${ep ? rzFmtRON(rzPriceNoVat(ep)) : "—"}</td>
-        <td id="rz-obs-cell-${it.id}"><span class="rz-obs-text" onclick="rzEditObs('${it.id}')">${it.observatii ? ("⚠ " + escapeHtml(it.observatii)) : "+ obs."}</span></td>
+        <td id="rz-obs-cell-${it.id}"><span class="rz-obs-text" onclick="rzEditObs('${it.id}')">${it.observatii ? ("" + escapeHtml(it.observatii)) : "+ obs."}</span></td>
       </tr>`;
     });
     html += "</tbody></table></div></div>";
@@ -6975,7 +7130,7 @@ function rzRenderInventar() {
     }
   }
 
-  let h = `<div class="rz-dn-section"><div class="rz-dn-header"><span class="dntitle">📋 Inventar liber — ${list.length} coduri proprii${filterText && catalogRows.length ? " + " + catalogRows.length + " din lista de prețuri" : ""}</span>`;
+  let h = `<div class="rz-dn-section"><div class="rz-dn-header"><span class="dntitle">Inventar liber — ${list.length} coduri proprii${filterText && catalogRows.length ? " + " + catalogRows.length + " din lista de prețuri" : ""}</span>`;
   h += `<button class="icon-btn danger" onclick="rzClearInventar()" title="Golește inventarul">${ICON_CLOSE}</button></div>`;
   if (!list.length && !catalogRows.length) {
     h += `<div class="rz-no-items">${filterText ? "Niciun rezultat. Încearcă alt cod." : "Scanează primul cod sau caută o piesă din lista de prețuri după cod."}</div></div>`;
@@ -6986,11 +7141,11 @@ function rzRenderInventar() {
     h += `<tr id="rz-inv-row-${it.id}">
       <td style="font-family:monospace;font-size:11.5px;color:var(--accent)">${escapeHtml(it.cod)}</td>
       <td><span style="cursor:pointer;color:${it.denumire ? "var(--text)" : "var(--muted)"}" onclick="rzEditInvField('${it.id}','denumire')">${escapeHtml(it.denumire || "(click pentru denumire)")}</span></td>
-      <td><div class="rz-qty-wrap"><span style="font-weight:700" id="rz-inv-qty-${it.id}">${it.cantitate}</span><button class="rz-mini-edit" onclick="rzEditInvField('${it.id}','cantitate')">✎</button></div></td>
-      <td id="rz-inv-dest-cell-${it.id}"><div style="display:flex;align-items:center;gap:4px"><span class="badge" style="background:#dcfce7;color:#166534;font-size:10.5px;padding:2px 8px;border-radius:8px">${escapeHtml(it.destinatie || "")}</span><button class="rz-mini-edit" onclick="rzEditInvField('${it.id}','destinatie')">✎</button></div></td>
-      <td id="rz-inv-pret-${it.id}" style="font-size:11.5px">${rzFmtRON(it.pret_manual ? rzApplyMarkupManual(it.pret_manual, it.marca) : rzGetPrice(it.cod))} <button class="rz-mini-edit" onclick="rzEditInvField('${it.id}','pret_manual')">✎</button></td>
+      <td><div class="rz-qty-wrap"><span style="font-weight:700" id="rz-inv-qty-${it.id}">${it.cantitate}</span><button class="rz-mini-edit" onclick="rzEditInvField('${it.id}','cantitate')">Edit</button></div></td>
+      <td id="rz-inv-dest-cell-${it.id}"><div style="display:flex;align-items:center;gap:4px"><span class="badge" style="background:#dcfce7;color:#166534;font-size:10.5px;padding:2px 8px;border-radius:8px">${escapeHtml(it.destinatie || "")}</span><button class="rz-mini-edit" onclick="rzEditInvField('${it.id}','destinatie')">Edit</button></div></td>
+      <td id="rz-inv-pret-${it.id}" style="font-size:11.5px">${rzFmtRON(it.pret_manual ? rzApplyMarkupManual(it.pret_manual, it.marca) : rzGetPrice(it.cod))} <button class="rz-mini-edit" onclick="rzEditInvField('${it.id}','pret_manual')">Edit</button></td>
       <td id="rz-inv-novat-${it.id}" style="font-size:11.5px;color:var(--muted)">—</td>
-      <td id="rz-inv-obs-${it.id}"><span class="rz-obs-text" onclick="rzEditInvField('${it.id}','observatii')">${it.observatii ? ("⚠ " + escapeHtml(it.observatii)) : "+ obs."}</span></td>
+      <td id="rz-inv-obs-${it.id}"><span class="rz-obs-text" onclick="rzEditInvField('${it.id}','observatii')">${it.observatii ? ("" + escapeHtml(it.observatii)) : "+ obs."}</span></td>
       <td><button class="icon-btn danger" onclick="rzRemoveInvItem('${it.id}')">${ICON_CLOSE}</button></td>
     </tr>`;
   });
@@ -7128,7 +7283,7 @@ function msgRenderList() {
   const wrap = document.getElementById("msg-conv-list");
   if (!wrap) return;
   if (!msgConversations.length) {
-    wrap.innerHTML = '<div class="msg-empty">Nu ai nicio conversație încă.<br>Apasă ✎ pentru a scrie unui coleg.</div>';
+    wrap.innerHTML = '<div class="msg-empty">Nu ai nicio conversație încă.<br>Apasă „Nouă” pentru a scrie unui coleg.</div>';
     return;
   }
   wrap.innerHTML = msgConversations.map(c => {
@@ -7136,7 +7291,7 @@ function msgRenderList() {
     return `<div class="msg-conv-row" onclick="msgOpenConversation('${c.id}')">
       <div class="msg-conv-avatar">${escapeHtml(initiale || "?")}</div>
       <div class="msg-conv-info">
-        <div class="msg-conv-name">${c.tip === "grup" ? "👥 " : ""}${escapeHtml(c.nume)}</div>
+        <div class="msg-conv-name">${c.tip === "grup" ? "Grup: " : ""}${escapeHtml(c.nume)}</div>
         <div class="msg-conv-preview">${escapeHtml(c.lastMsg || "Fără mesaje încă")}</div>
       </div>
       <div class="msg-conv-meta">
@@ -7162,7 +7317,7 @@ async function msgOpenConversation(convId) {
   document.getElementById("msg-chat-view").style.display = "flex";
   document.getElementById("msg-back-btn").style.display = "inline-block";
   document.getElementById("msg-new-btn").style.display = "none";
-  document.getElementById("msg-panel-title").textContent = conv ? (conv.tip === "grup" ? "👥 " + conv.nume : conv.nume) : "Conversație";
+  document.getElementById("msg-panel-title").textContent = conv ? (conv.tip === "grup" ? "Grup: " + conv.nume : conv.nume) : "Conversație";
 
   const { data, error } = await client.from("mesaje").select("*").eq("conversatie_id", convId).order("creat_la", { ascending: true }).limit(2000);
   if (error) { console.error(error); return; }
@@ -7222,7 +7377,7 @@ async function msgOpenNewConversationModal() {
   const colegi = allProfiles.filter(p => p.id !== currentProfile.id && p.activ !== false);
   if (!colegi.length) { alert("Nu există alți angajați înregistrați în profiles."); return; }
   const initiale = nume => (nume || "?").trim().split(/\s+/).map(s => s[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
-  const html = `<h3>✎ Conversație nouă</h3>
+  const html = `<h3>Conversație nouă</h3>
     <div class="field">
       <label>Alege unul sau mai mulți colegi</label>
       <div class="msg-pick-list">
@@ -7300,7 +7455,7 @@ function msgSubscribeRealtime() {
           conv.unread = (conv.unread || 0) + 1;
           msgTotalUnread = msgConversations.reduce((s, c) => s + c.unread, 0);
           msgRenderBadge();
-          if (typeof rzToast === "function") rzToast("💬 " + escapeHtml(m.expeditor_nume || "Coleg") + ": " + escapeHtml(m.text.slice(0, 60)), "ok");
+          if (typeof rzToast === "function") rzToast("" + escapeHtml(m.expeditor_nume || "Coleg") + ": " + escapeHtml(m.text.slice(0, 60)), "ok");
         }
         msgConversations.sort((a, b) => new Date(b.lastMsgAt) - new Date(a.lastMsgAt));
         if (msgPanelOpen && msgActiveConvId === null) msgRenderList();
@@ -7454,7 +7609,7 @@ function renderPieseComandat() {
       <td><div class="piesa-line-cod">${escapeHtml(p.cod_piesa)}</div><div class="piesa-line-denumire">${escapeHtml(p.denumire_piesa || "")}</div></td>
       <td>${p.cantitate || 1}</td>
       <td class="pret-cell">${(p.pret_cu_tva !== null && p.pret_cu_tva !== undefined) ? roFmtNum(p.pret_cu_tva) + " " + escapeHtml(p.moneda || "RON") : '<span class="muted">—</span>'}
-        ${(canDo("perm_comenzi") || canDo("perm_piese_comandat")) ? `<button type="button" class="rz-mini-edit pret-edit-btn" onclick="openPiesaPretModal('${o.id}', '${p.id}')">✎</button>` : ""}
+        ${(canDo("perm_comenzi") || canDo("perm_piese_comandat")) ? `<button type="button" class="rz-mini-edit pret-edit-btn" onclick="openPiesaPretModal('${o.id}', '${p.id}')">Edit</button>` : ""}
       </td>
       <td class="furnizor-cell">${escapeHtml(o.furnizor || "—")}</td>
       <td>${o.atribuit_catre_nume ? escapeHtml(o.atribuit_catre_nume) : '<span class="muted">—</span>'}</td>
@@ -7495,11 +7650,11 @@ async function openUseriRoluriModal() {
 
 function renderUseriRoluriModal() {
   const rolNumeCh = Math.max(14, "Rol nou, ex: Vânzări".length, ...currentRoluri.map(r => (r.nume || "").length));
-  const html = `<h3>👥 Useri &amp; Roluri</h3>
+  const html = `<h3>Useri &amp; Roluri</h3>
     <div class="muted" style="font-size:12.5px">Rolurile controlează ce poate face un angajat necesar admin. Adminii au mereu acces la tot. Userii noi, fără rol asignat, nu au nicio permisiune până îi configurezi.</div>
 
     <div class="export-section-label" style="margin-top:16px">Puncte de lucru (orașe)</div>
-    <div class="muted" style="font-size:12.5px;margin-bottom:8px">Fiecare angajat obișnuit vede și lucrează doar în punctul lui de lucru. Tu, ca admin, vezi toate punctele și poți alege ce vrei să vezi din butonul 📍 din antet.</div>
+    <div class="muted" style="font-size:12.5px;margin-bottom:8px">Fiecare angajat obișnuit vede și lucrează doar în punctul lui de lucru. Tu, ca admin, vezi toate punctele și poți alege ce vrei să vezi din butonul din antet.</div>
     <div style="overflow-x:auto">
       <table class="roluri-table">
         <thead><tr><th>Nume</th><th>Adresă</th><th>Activ</th><th></th></tr></thead>
@@ -7527,8 +7682,8 @@ function renderUseriRoluriModal() {
     <div style="margin-bottom:8px">
       ${currentFurnizori.map(f => `<div class="rz-inline-row" style="margin-bottom:4px">
         <span style="min-width:160px">${escapeHtml(f.nume)}</span>
-        <button class="btn-secondary" style="padding:2px 8px;font-size:12px" onclick="rzRenameFurnizor('${f.id}', ${jsStrAttr(f.nume)})">✎ Redenumește</button>
-        <button class="btn-secondary" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="rzDeleteFurnizor('${f.id}', ${jsStrAttr(f.nume)})">🗑 Șterge</button>
+        <button class="btn-secondary" style="padding:2px 8px;font-size:12px" onclick="rzRenameFurnizor('${f.id}', ${jsStrAttr(f.nume)})">Redenumește</button>
+        <button class="btn-secondary" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="rzDeleteFurnizor('${f.id}', ${jsStrAttr(f.nume)})">Șterge</button>
       </div>`).join("") || '<div class="muted" style="font-size:12px">Niciun furnizor adăugat încă.</div>'}
     </div>
     <div class="rz-inline-row" style="margin-bottom:16px">
@@ -7592,16 +7747,16 @@ function renderUseriRoluriModal() {
                   <input type="checkbox" ${p.activ !== false ? "checked" : ""} onchange="toggleUserActiv('${p.id}', this.checked)" style="width:16px;height:16px" />`}
               </td>
               <td>
-                ${p.rol === "admin" ? "" : `<button class="btn-secondary" style="padding:4px 9px;font-size:11.5px;color:#b91c1c" onclick="stergeUserDefinitiv('${p.id}', ${jsStrAttr(p.nume)})">🗑 Șterge</button>`}
+                ${p.rol === "admin" ? "" : `<button class="btn-secondary" style="padding:4px 9px;font-size:11.5px;color:#b91c1c" onclick="stergeUserDefinitiv('${p.id}', ${jsStrAttr(p.nume)})">Șterge</button>`}
               </td>
             </tr>
           `).join("")}
         </tbody>
       </table>
     </div>
-    <div class="muted" style="font-size:11.5px;margin-top:6px">„🗑 Șterge” elimină definitiv contul (autentificare + profil) — nu poate fi anulat. Pentru o pauză temporară, folosește caseta „Activ”.</div>
+    <div class="muted" style="font-size:11.5px;margin-top:6px">„Șterge” elimină definitiv contul (autentificare + profil) — nu poate fi anulat. Pentru o pauză temporară, folosește caseta „Activ”.</div>
 
-    <div class="export-section-label" style="margin-top:16px">➕ Adaugă angajat nou</div>
+    <div class="export-section-label" style="margin-top:16px">Adaugă angajat nou</div>
     <div class="muted" style="font-size:12.5px;margin-bottom:8px">Creează direct de aici contul de autentificare și profilul angajatului — nu mai trebuie să faci nimic manual în Supabase.</div>
     <div class="modal-grid" style="margin-bottom:8px">
       <div class="field"><label>Nume și prenume</label><input id="au-nume" placeholder="ex: Ion Popescu" /></div>
@@ -7854,16 +8009,16 @@ function dvzRenderPreturiUzuale() {
   const rows = lista.map(p => `
     <tr data-id="${p.id}" ondragover="dvzPuRowDragOver(event)" ondragleave="dvzPuRowDragLeave(event)" ondrop="dvzPuRowDrop(event, '${p.id}')">
       <td class="dvz-pu-drag-cell"><span class="dvz-pu-drag-handle" draggable="true" title="Trage pentru a reordona" ondragstart="dvzPuRowDragStart(event, '${p.id}')" ondragend="dvzPuRowDragEnd(event)">⠿</span></td>
-      <td>${p.tip === "manopera" ? "🔧 Manoperă" : "⚙️ Piesă"}</td>
+      <td>${p.tip === "manopera" ? "Manoperă" : "Piesă"}</td>
       <td><input class="dvz-pu-cod" value="${escapeHtml(p.cod || "")}" style="width:100px" /></td>
       <td><input class="dvz-pu-nume" value="${escapeHtml(p.nume || "")}" style="min-width:180px" /></td>
       <td><input class="dvz-pu-pret" type="number" step="0.01" min="0" value="${p.pret_cu_tva ?? ""}" style="width:90px" /></td>
       <td style="white-space:nowrap">
-        <button class="btn-secondary dvz-pu-save-btn" style="padding:2px 8px;font-size:12px" onclick="dvzSavePreturiUzualeRow('${p.id}')">💾 Salvează</button>
-        <button class="btn-secondary dvz-pu-delete-btn" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="dvzDeletePreturiUzualeRow('${p.id}', ${jsStrAttr(p.nume || "")})">🗑</button>
+        <button class="btn-secondary dvz-pu-save-btn" style="padding:2px 8px;font-size:12px" onclick="dvzSavePreturiUzualeRow('${p.id}')">Salvează</button>
+        <button class="btn-secondary dvz-pu-delete-btn" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="dvzDeletePreturiUzualeRow('${p.id}', ${jsStrAttr(p.nume || "")})">Șterge</button>
       </td>
     </tr>`).join("");
-  rzOpenModal(`<h3>⚙️ Produse / Manopere uzuale</h3>
+  rzOpenModal(`<h3>Produse / Manopere uzuale</h3>
     <div style="margin-top:6px;font-size:13px">
       <div class="hint">Lista de mai jos alimentează sugestiile (autocomplete) care apar când completezi denumirea unei piese sau a unei operații de manoperă într-un deviz. E complet separată de „Inventar liber" (care ține evidența stocului fizic scanat) — aici păstrezi doar o listă de prețuri „standard" pentru ce folosești des. Trage de mânerul ⠿ ca să reordonezi — cele mai folosite le poți pune primele.</div>
       <div class="rz-inline-row" style="margin:10px 0">
@@ -7883,7 +8038,7 @@ function dvzRenderPreturiUzuale() {
       <div class="rz-price-settings-box" style="margin-top:12px">
         <div class="title">+ Adaugă intrare nouă</div>
         <div class="rz-inline-row" style="flex-wrap:wrap">
-          <select id="dvz-pu-new-tip" style="width:auto"><option value="piesa">⚙️ Piesă</option><option value="manopera">🔧 Manoperă</option></select>
+          <select id="dvz-pu-new-tip" style="width:auto"><option value="piesa">Piesă</option><option value="manopera">Manoperă</option></select>
           <input id="dvz-pu-new-cod" placeholder="Cod" style="width:100px" />
           <input id="dvz-pu-new-nume" placeholder="Denumire" style="min-width:180px" />
           <input id="dvz-pu-new-pret" type="number" step="0.01" min="0" placeholder="Preț cu TVA" style="width:110px" />
@@ -8169,7 +8324,7 @@ async function dvzDeleteAllDevize() {
 // primește opțional câte rânduri să genereze (implicit tot 20/5, ca să nu schimbe aspectul unui
 // deviz obișnuit), dvzBuildPartRowHtml/dvzBuildOpRowHtml construiesc câte UN rând (refolosite și
 // la generarea inițială, și la butonul "+ Adaugă rând"), iar fiecare rând (cu excepția rândului 1
-// de manoperă, care ține mecanicul/tariful și nu se poate șterge) are un buton 🗑 de ștergere.
+// de manoperă, care ține mecanicul/tariful și nu se poate șterge) are un buton de ștergere.
 // Coloana de acțiuni e marcată "dvz-no-print" ca să nu apară la Print/Export PDF.
 function dvzBuildPartRowHtml(nr) {
   return `<tr>
@@ -8950,7 +9105,7 @@ async function dvzExportPDF() {
 }
 
 // ---------- Import istoric — fișiere .html exportate anterior (Print / Save) ----------
-// v39: Andrei are pe calculator devize vechi, exportate cu "🖨️ Print / Save" înainte să
+// v39: Andrei are pe calculator devize vechi, exportate cu "Print / Save" înainte să
 // existe modulul "Devize" în CRM — cerere: să le poată importa, pentru o centralizare în sistem.
 // v41: fișierele reale ale lui Andrei NU sunt toate exportate de aplicația curentă — o parte
 // (probabil cele mai vechi) provin dintr-un generator de deviz de sine-stătător, anterior
@@ -9339,7 +9494,7 @@ function dvzOpenImportFromProgramari() {
   }).join("");
 
   rzOpenModal(`
-    <h2>🧾 Creează devize din programările zilei — ${formatDate(data)}</h2>
+    <h2>Creează devize din programările zilei — ${formatDate(data)}</h2>
     <div class="muted" style="font-size:12.5px;margin-bottom:8px">Se creează câte un deviz nou (draft, gol la piese/manoperă) pentru fiecare programare bifată. Poți reimporta oricând — nu există protecție la duplicate.</div>
     <div style="margin-bottom:8px;">
       <button type="button" class="btn-secondary" onclick="dvzImportSelectAll(true)">Selectează tot</button>
