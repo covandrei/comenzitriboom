@@ -152,7 +152,10 @@
   .login-legal-links a:hover { color: var(--accent); }
 
   /* ---------- APP SHELL ---------- */
-  #app-screen { display: none; min-height: 100vh; }
+  /* v54: coloană flex pe toată înălțimea ferestrei — main se întinde (flex: 1 0 auto) și împinge
+     footer-ul mereu jos de tot, chiar și pe ecrane cu puțin conținut (ex: „Nicio comandă găsită”),
+     în loc să rămână „lipit” imediat sub conținutul scurt, la mijlocul ecranului. */
+  #app-screen { display: none; min-height: 100vh; flex-direction: column; }
   /* v52: redesign corporate, la cererea lui Andrei — antet + navigare pe un fond antracit închis
      (era albastru plin), accent Triumph rezervat pentru stări/acțiuni, fără emoji/iconițe. */
   header {
@@ -233,7 +236,7 @@
   .nav-dropdown-item:hover { background: var(--border-soft); }
   .nav-dropdown-item.active { color: var(--accent); font-weight: 700; background: var(--accent-soft); }
 
-  main { padding: 22px 26px 60px; max-width: 1880px; margin: 0 auto; }
+  main { padding: 22px 26px 60px; max-width: 1880px; margin: 0 auto; flex: 1 0 auto; width: 100%; }
 
   /* v51: footer nou — „Legal" și statusul listei de prețuri, mutate din antet la cererea lui
      Andrei, ca să nu mai ocupe loc sus, vizibile tot timpul din orice tab, la baza paginii.
@@ -242,8 +245,8 @@
      (56px + 20px margine) când se dă scroll jos de tot. */
   #app-footer {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 16px 26px; padding-right: 110px; margin-top: 8px;
-    background: var(--ink-950); flex-wrap: wrap;
+    padding: 16px 26px; padding-right: 110px;
+    background: var(--ink-950); flex-wrap: wrap; flex-shrink: 0;
   }
   #app-footer .rz-badge { font-size: 12px; }
   #app-footer .footer-legal-links { display: flex; gap: 18px; flex-wrap: wrap; }
@@ -562,7 +565,8 @@
   .msg-bubble-time { font-size: 9.5px; opacity: .7; margin-top: 2px; text-align: right; color: var(--muted); }
   .msg-input-row { display: flex; gap: 6px; padding: 8px 10px; border-top: 1px solid var(--border); flex-shrink: 0; }
   .msg-input-row input { flex: 1; border: 1.5px solid var(--border); border-radius: 20px; padding: 8px 12px; font-size: 12.5px; outline: none; }
-  .msg-input-row button { background: var(--accent); color: #fff; border: none; border-radius: 50%; width: 34px; height: 34px; cursor: pointer; font-size: 14px; flex-shrink: 0; }
+  .msg-input-row button { background: var(--accent); color: #fff; border: none; border-radius: 50%; width: 34px; height: 34px; cursor: pointer; font-size: 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: background-color .15s var(--ease), transform .15s var(--ease); }
+  .msg-input-row button:hover { background: var(--accent-dark); transform: scale(1.05); }
   .msg-empty { padding: 24px 16px; text-align: center; color: var(--muted); font-size: 12.5px; }
   .msg-pick-list { max-height: 260px; overflow-y: auto; border: 1.5px solid var(--border); border-radius: 10px; padding: 4px; }
   .msg-pick-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
@@ -783,8 +787,8 @@
     <h1 class="login-title">Bine ai venit!</h1>
     <div class="login-subtitle">Autentificare</div>
     <div class="field">
-      <label>Email</label>
-      <input type="email" id="login-email" autocomplete="username" />
+      <label>Email sau username</label>
+      <input type="text" id="login-email" autocomplete="username" />
     </div>
     <div class="field">
       <label>Parolă</label>
@@ -2134,7 +2138,7 @@
     <div id="msg-messages"></div>
     <div class="msg-input-row">
       <input type="text" id="msg-input" placeholder="Scrie un mesaj..." />
-      <button onclick="msgSendMessage()">Trimite</button>
+      <button onclick="msgSendMessage()" title="Trimite" aria-label="Trimite mesaj"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
     </div>
   </div>
 </div>
@@ -2539,12 +2543,29 @@ async function legalSaveEdit(cheie) {
 }
 
 // ---------- LOGIN / SESIUNE ----------
+// v54: la cererea lui Andrei — logare fie cu email, fie cu username (setat opțional de admin, la
+// fiecare angajat, din „Useri & Roluri”). Câmpul unic de pe ecran acceptă ambele: dacă valoarea
+// conține "@", e tratată direct ca email; altfel, e un username, tradus întâi la emailul real de
+// autentificare printr-un apel RPC (`fn_email_by_username`, funcție SQL cu drepturi ridicate —
+// necesară pentru că un username NU e o metodă de autentificare nativă în Supabase Auth, doar
+// email/telefon sunt — vezi migrarea `migrare-v54.sql`). Dacă username-ul nu există deloc, arătăm
+// același mesaj generic ca la parolă greșită, ca să nu dezvăluim dacă un cont există sau nu.
 async function doLogin() {
-  const email = document.getElementById("login-email").value.trim();
+  const raw = document.getElementById("login-email").value.trim();
   const password = document.getElementById("login-pass").value;
   const errEl = document.getElementById("error-msg");
   errEl.textContent = "";
+  if (!raw) { errEl.textContent = "Completează emailul sau username-ul."; return; }
   try {
+    let email = raw;
+    if (!raw.includes("@")) {
+      const { data: emailGasit, error: errLookup } = await client.rpc("fn_email_by_username", { p_username: raw });
+      if (errLookup || !emailGasit) {
+        errEl.textContent = "Autentificare eșuată: date de conectare incorecte.";
+        return;
+      }
+      email = emailGasit;
+    }
     const { data, error } = await client.auth.signInWithPassword({ email, password });
     if (error) {
       errEl.textContent = "Autentificare eșuată: " + error.message + (error.status ? " (cod " + error.status + ")" : "");
@@ -2581,7 +2602,7 @@ function runEntranceSequence(nume) {
     const appScreen = document.getElementById("app-screen");
     if (!overlay || !nameEl || !loginScreen || !appScreen) {
       if (loginScreen) loginScreen.style.display = "none";
-      if (appScreen) appScreen.style.display = "block";
+      if (appScreen) appScreen.style.display = "flex";
       rzShowMsgBubble();
       resolve();
       return;
@@ -2599,7 +2620,7 @@ function runEntranceSequence(nume) {
       clearTimeout(autoTimer);
 
       loginScreen.style.display = "none";
-      appScreen.style.display = "block";
+      appScreen.style.display = "flex";
       rzShowMsgBubble();
       appScreen.classList.add("app-entering");
       appScreen.addEventListener("animationend", () => appScreen.classList.remove("app-entering"), { once: true });
@@ -2643,7 +2664,7 @@ async function afterLogin(freshLogin) {
     await runEntranceSequence(profile.nume);
   } else {
     document.getElementById("login-screen").style.display = "none";
-    document.getElementById("app-screen").style.display = "block";
+    document.getElementById("app-screen").style.display = "flex";
     rzShowMsgBubble();
   }
 
@@ -3694,7 +3715,7 @@ function confirmBulkDeleteComenzi() {
 }
 
 async function loadAllProfiles() {
-  const { data, error } = await client.from("profiles").select("id,nume,rol,rol_id,punct_lucru_id,activ").order("nume");
+  const { data, error } = await client.from("profiles").select("id,nume,rol,rol_id,punct_lucru_id,activ,username").order("nume");
   if (error) { console.error(error); return; }
   allProfiles = data || [];
 }
@@ -4703,11 +4724,17 @@ async function loadSarcini() {
 }
 
 function populateSarciniFiltruAtribuit() {
+  // v54: un coleg fără `perm_sarcini_toate` (și fără admin) vede oricum STRICT propriile task-uri
+  // (vezi matchesSarciniVizibilitate) — filtrul "vezi task-urile lui X" n-ar mai avea niciun rost
+  // pentru el (ar arăta mereu listă goală pentru orice alt coleg ales), așa că e ascuns complet.
+  const vedeTot = amAdmin() || canDo("perm_sarcini_toate");
   const opts = '<option value="">— toți colegii —</option>' + '<option value="__neatribuite__">— neatribuite —</option>' +
     allProfiles.map(p => `<option value="${p.id}">${escapeHtml(p.nume)}${p.id === (currentProfile && currentProfile.id) ? " (tu)" : ""}</option>`).join("");
   ["sar-filtru-atribuit-zi", "sar-filtru-atribuit-luna", "sar-filtru-atribuit-perioada"].forEach(elId => {
     const el = document.getElementById(elId);
     if (!el) return;
+    el.style.display = vedeTot ? "" : "none";
+    if (!vedeTot) { sarciniFiltruAtribuit = ""; return; }
     el.innerHTML = opts;
     el.value = sarciniFiltruAtribuit;
   });
@@ -4723,6 +4750,22 @@ function matchesSarciniFiltruAtribuit(t) {
   if (!sarciniFiltruAtribuit) return true;
   if (sarciniFiltruAtribuit === "__neatribuite__") return !t.atribuit_catre;
   return t.atribuit_catre === sarciniFiltruAtribuit;
+}
+
+// v54: la cererea lui Andrei — un coleg care nu e manager/admin trebuie să-și vadă STRICT propriile
+// task-uri, nu și pe ale colegilor. Admin vede mereu tot; un rol de permisiuni cu `perm_sarcini_toate`
+// bifat (de ex. un rol nou, "Manager") vede și el tot — restul văd doar task-urile unde apar ca
+// autor (`creat_de`) SAU ca persoană atribuită (`atribuit_catre`). Filtru JS, ca protecție dublă pe
+// lângă restricția reală de la nivel de bază de date (RLS, `migrare-v54.sql`), care e cea care
+// contează efectiv — filtrul de mai jos evită doar un fulger vizual al task-urilor altcuiva înainte
+// ca `loadSarcini()` să se reîncarce, și e o plasă de siguranță dacă RLS n-a fost încă rulat.
+function matchesSarciniVizibilitate(t) {
+  if (amAdmin() || canDo("perm_sarcini_toate")) return true;
+  const myId = currentProfile && currentProfile.id;
+  if (t.creat_de === myId || t.atribuit_catre === myId) return true;
+  // rămâne vizibilă și dacă i s-a cerut explicit ajutor pe ea (altfel "Cere ajutor" ar trimite
+  // notificarea, dar colegul n-ar mai putea deschide task-ul de la care a pornit cererea)
+  return (t.ajutor || []).some(a => a.coleg_id === myId);
 }
 
 // o sarcina nerezolvata "se muta" automat pe ziua curenta daca a ramas in urma,
@@ -4802,7 +4845,7 @@ function sarciniSortComparator(a, b) {
 async function sarciniMutaOrdine(id, dir) {
   const dataSel = document.getElementById("sar-data").value;
   const list = currentSarcini.filter(t => effectiveSarcinaData(t) === dataSel && t.stare === "De făcut")
-    .filter(matchesLocationFilter).filter(matchesSarciniFiltruAtribuit).sort(sarciniSortComparator);
+    .filter(matchesLocationFilter).filter(matchesSarciniFiltruAtribuit).filter(matchesSarciniVizibilitate).sort(sarciniSortComparator);
   const idx = list.findIndex(t => t.id === id);
   if (idx === -1) return;
   const t = list[idx];
@@ -4873,7 +4916,7 @@ function renderSarciniZi() {
   const container = document.getElementById("sarcini-day-list");
   if (!container) return;
   const data = document.getElementById("sar-data").value;
-  const list = currentSarcini.filter(t => effectiveSarcinaData(t) === data).filter(matchesLocationFilter).filter(matchesSarciniFiltruAtribuit).sort(sarciniSortComparator);
+  const list = currentSarcini.filter(t => effectiveSarcinaData(t) === data).filter(matchesLocationFilter).filter(matchesSarciniFiltruAtribuit).filter(matchesSarciniVizibilitate).sort(sarciniSortComparator);
   container.innerHTML = list.length ? list.map(t => renderSarcinaCard(t, { reorder: true })).join("") : '<div class="appt-empty">Niciun task în ziua aleasă.</div>';
 }
 
@@ -4882,7 +4925,7 @@ function renderSarciniLuna() {
   if (!container) return;
   const ym = document.getElementById("sar-luna").value;
   if (!ym) { container.innerHTML = '<div class="appt-empty">Alege o lună.</div>'; return; }
-  const list = currentSarcini.filter(t => effectiveSarcinaData(t).slice(0, 7) === ym).filter(matchesLocationFilter).filter(matchesSarciniFiltruAtribuit);
+  const list = currentSarcini.filter(t => effectiveSarcinaData(t).slice(0, 7) === ym).filter(matchesLocationFilter).filter(matchesSarciniFiltruAtribuit).filter(matchesSarciniVizibilitate);
   if (!list.length) { container.innerHTML = '<div class="appt-empty">Nicio sarcină în luna aleasă.</div>'; return; }
   const byDay = {};
   list.forEach(t => { const d = effectiveSarcinaData(t); (byDay[d] = byDay[d] || []).push(t); });
@@ -4904,7 +4947,7 @@ function renderSarciniPerioada() {
   const end = (document.getElementById("sar-per-end") || {}).value;
   if (!start || !end) { container.innerHTML = '<div class="appt-empty">Alege perioada (de la / până la) sau un an întreg.</div>'; if (summaryEl) summaryEl.innerHTML = ""; return; }
   if (start > end) { container.innerHTML = '<div class="appt-empty">Data de început e după data de sfârșit.</div>'; if (summaryEl) summaryEl.innerHTML = ""; return; }
-  const list = currentSarcini.filter(t => { const d = effectiveSarcinaData(t); return d >= start && d <= end; }).filter(matchesLocationFilter).filter(matchesSarciniFiltruAtribuit);
+  const list = currentSarcini.filter(t => { const d = effectiveSarcinaData(t); return d >= start && d <= end; }).filter(matchesLocationFilter).filter(matchesSarciniFiltruAtribuit).filter(matchesSarciniVizibilitate);
   if (summaryEl) {
     const byStare = {};
     list.forEach(t => { byStare[t.stare] = (byStare[t.stare] || 0) + 1; });
@@ -4931,7 +4974,7 @@ function sarExportPerioadaExcel() {
   const start = (document.getElementById("sar-per-start") || {}).value;
   const end = (document.getElementById("sar-per-end") || {}).value;
   if (!start || !end) { alert("Alege perioada (sau un an întreg) înainte de export."); return; }
-  const list = currentSarcini.filter(t => { const d = effectiveSarcinaData(t); return d >= start && d <= end; }).filter(matchesLocationFilter).filter(matchesSarciniFiltruAtribuit)
+  const list = currentSarcini.filter(t => { const d = effectiveSarcinaData(t); return d >= start && d <= end; }).filter(matchesLocationFilter).filter(matchesSarciniFiltruAtribuit).filter(matchesSarciniVizibilitate)
     .sort((a, b) => effectiveSarcinaData(a).localeCompare(effectiveSarcinaData(b)) || sarciniSortComparator(a, b));
   if (!list.length) { alert("Niciun task în perioada aleasă."); return; }
   const aoa = [["Data curentă", "Data creării", "Nume task", "Descriere", "Prioritate", "Termen limită", "Stare", "Creat de", "Atribuit", "Ajutor cerut", "Rezolvat de", "Rezolvat la"]];
@@ -7917,6 +7960,7 @@ const PERMISIUNI_DEF = [
   { key: "perm_piese_comandat", label: "Piese de comandat (preț)" },
   { key: "perm_clienti", label: "Clienți (editare/ștergere)" },
   { key: "perm_sarcini", label: "Task-uri" },
+  { key: "perm_sarcini_toate", label: "Task-uri — vede toate (nu doar ale sale)" },
   { key: "perm_garantii", label: "Garanții" },
   { key: "perm_daune", label: "Daune" },
   { key: "perm_devize_service", label: "Devize (fișă service)" },
@@ -8002,11 +8046,12 @@ function renderUseriRoluriModal() {
     <div class="muted" style="font-size:12.5px;margin-bottom:8px">Contul principal este mereu <b>covoran.andrei@gmail.com</b>. Poți schimba oricând numele sau tipul de cont al unui angajat direct în tabel — tipul „admin” oferă acces total, la fel ca la contul principal, așa că folosește-l cu grijă; pentru accesul obișnuit, un rol de permisiuni cu toate bifele puse e suficient (poți crea unul numit „Manager" mai sus, la „Roluri").</div>
     <div style="overflow-x:auto">
       <table class="roluri-table">
-        <thead><tr><th>Nume</th><th>Punct de lucru</th><th>Cont</th><th>Rol permisiuni</th><th>Activ</th><th></th></tr></thead>
+        <thead><tr><th>Nume</th><th>Username</th><th>Punct de lucru</th><th>Cont</th><th>Rol permisiuni</th><th>Activ</th><th></th></tr></thead>
         <tbody>
           ${allProfiles.map(p => `
             <tr>
               <td><input type="text" value="${escapeHtml(p.nume)}" onchange="salveazaNumeUser('${p.id}', this.value)" style="font-size:12.5px;padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;width:100%;min-width:120px" /></td>
+              <td><input type="text" value="${escapeHtml(p.username || "")}" placeholder="—" onchange="salveazaUsernameUser('${p.id}', this.value)" style="font-size:12.5px;padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;width:100%;min-width:110px" /></td>
               <td>
                 ${p.rol === "admin" ? '<span class="muted" style="font-size:11.5px">toate</span>' : `
                   <select onchange="assignUserPunctLucru('${p.id}', this.value)" style="font-size:12px;padding:5px 8px;border-radius:6px;border:1.5px solid var(--border)">
@@ -8047,6 +8092,7 @@ function renderUseriRoluriModal() {
     <div class="modal-grid" style="margin-bottom:8px">
       <div class="field"><label>Nume și prenume</label><input id="au-nume" placeholder="ex: Ion Popescu" /></div>
       <div class="field"><label>Email</label><input type="email" id="au-email" placeholder="ex: ion.popescu@exemplu.ro" /></div>
+      <div class="field"><label>Username (opțional)</label><input type="text" id="au-username" placeholder="ex: ion.popescu" /></div>
       <div class="field"><label>Parolă (temporară)</label><input type="text" id="au-parola" placeholder="minim 6 caractere" /></div>
       <div class="field">
         <label>Punct de lucru</label>
@@ -8079,14 +8125,29 @@ async function invokeAdminUsers(body) {
 async function creeazaAngajatNou() {
   const nume = document.getElementById("au-nume").value.trim();
   const email = document.getElementById("au-email").value.trim();
+  const username = document.getElementById("au-username").value.trim();
   const parola = document.getElementById("au-parola").value.trim();
   const punctLucruId = document.getElementById("au-punct-lucru").value || null;
   const rolId = document.getElementById("au-rol").value || null;
   if (!nume || !email || !parola) { alert("Completează nume, email și parolă."); return; }
+  // v54: username-ul NU e trimis la Edge Function-ul „admin-users” (neschimbat, nu știe de el) —
+  // e scris direct pe rândul din `profiles`, printr-un update separat, imediat după creare, ca la
+  // celelalte câmpuri deja editabile direct din acest ecran (nume, punct de lucru, rol). Ca să
+  // găsim exact rândul nou creat (edge function-ul nu ne întoarce id-ul lui), comparăm lista de
+  // profiluri de dinainte și de după creare — id-ul apărut nou e contul proaspăt creat.
+  const idsInainte = new Set(allProfiles.map(p => p.id));
   const { data, error } = await invokeAdminUsers({ action: "create", nume, email, password: parola, punct_lucru_id: punctLucruId, rol_id: rolId });
   const rezultat = data || {};
   if (error || !rezultat.ok) { alert("Eroare la crearea contului: " + (rezultat.error || (error && error.message) || "eroare necunoscută")); return; }
   await loadAllProfiles();
+  if (username) {
+    const profilNou = allProfiles.find(p => !idsInainte.has(p.id));
+    if (profilNou) {
+      const { error: errUsername } = await client.from("profiles").update({ username }).eq("id", profilNou.id);
+      if (errUsername) alert("Contul a fost creat, dar username-ul nu s-a putut salva (poate fi deja folosit de alt cont): " + errUsername.message);
+      await loadAllProfiles();
+    }
+  }
   renderUseriRoluriModal();
   if (typeof rzToast === "function") rzToast("Cont creat: " + email, "ok");
 }
@@ -8158,6 +8219,18 @@ async function salveazaNumeUser(userId, nume) {
   await loadAllProfiles();
   renderUseriRoluriModal();
   if (typeof rzToast === "function") rzToast("Nume actualizat", "ok");
+}
+// v54: username opțional, pe lângă email — folosit de coleg la logare (vezi doLogin()) prin funcția
+// SQL fn_email_by_username(), care îl traduce înapoi la emailul real de autentificare. Unicitate
+// (case-insensitive) impusă la nivel de bază de date (index unic, migrare-v54.sql) — orice eroare
+// de conflict de la Supabase e afișată direct, ca mesajul lui Postgres să fie clar pentru Andrei.
+async function salveazaUsernameUser(userId, username) {
+  username = (username || "").trim();
+  const { error } = await client.from("profiles").update({ username: username || null }).eq("id", userId);
+  if (error) { alert("Eroare la salvarea username-ului (poate fi deja folosit de alt cont): " + error.message); await loadAllProfiles(); renderUseriRoluriModal(); return; }
+  await loadAllProfiles();
+  renderUseriRoluriModal();
+  if (typeof rzToast === "function") rzToast("Username actualizat", "ok");
 }
 
 async function assignUserTipCont(userId, rol) {
