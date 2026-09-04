@@ -65,7 +65,7 @@
   @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 
   /* ---------- LOGIN ---------- */
-  #login-screen {
+  #login-screen, #reset-parola-screen {
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -77,6 +77,7 @@
       radial-gradient(800px 460px at 108% 112%, rgba(255,255,255,.05), transparent 60%),
       linear-gradient(160deg, var(--ink-950), var(--ink-900) 55%, var(--ink-950));
   }
+  #login-screen { flex-direction: column; gap: 14px; }
   .login-box {
     background: var(--card);
     padding: 40px 36px 34px;
@@ -87,6 +88,8 @@
     animation: pop .35s var(--ease);
   }
   @keyframes pop { from { opacity:0; transform: translateY(10px) scale(.97);} to {opacity:1; transform:none;} }
+  /* v56: mesaj informativ (nu de eroare) pe ecranele de autentificare — ex. "am trimis emailul" */
+  .auth-note { color: var(--muted); font-size: 12.5px; margin-top: 12px; text-align: center; }
 
   /* ---------- INTRARE ÎN APLICAȚIE (v52) ---------- */
   .entrance-overlay {
@@ -185,6 +188,35 @@
   header .btn-secondary:hover { background: rgba(255,255,255,.16); }
   .notif-btn { position: relative; }
   .notif-badge { position: absolute; top: -6px; right: -6px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 800; border-radius: 10px; padding: 1px 5px; display: none; min-width: 16px; text-align: center; }
+  /* v55: la cererea lui Andrei — butonul „Notificări” rămâne exact unde e (lângă meniu), dar
+     capătă un mic panel plutitor cu ultimele notificări, la hover — un preview rapid, fără să mai
+     fie nevoie de click doar ca să vezi dacă ai ceva nou. Click rămâne disponibil, neschimbat,
+     pentru lista completă (openNotifPanel(), modalul mare, cu acțiuni). La o notificare nouă
+     (Realtime), iconița pulsează vizual câteva secunde (.notif-btn.pulse), ca semnalul să nu
+     depindă doar de bulina roșie/textul din toast. */
+  .notif-wrap { position: relative; }
+  .notif-float {
+    display: none; position: absolute; top: calc(100% + 8px); right: 0; width: 320px;
+    max-height: 420px; background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: var(--shadow-pop); z-index: 700; flex-direction: column; overflow: hidden; color: var(--text);
+  }
+  .notif-wrap:hover .notif-float, .notif-wrap:focus-within .notif-float { display: flex; animation: slideDown .18s var(--ease); }
+  .notif-float-header { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; padding: 10px 12px 6px; flex-shrink: 0; }
+  .notif-float-list { overflow-y: auto; display: flex; flex-direction: column; }
+  .notif-float-item { padding: 8px 12px; border-top: 1px solid var(--border-soft); cursor: pointer; transition: background-color .12s var(--ease); }
+  .notif-float-item:hover { background: var(--border-soft); }
+  .notif-float-item.unread { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+  .notif-float-msg { font-size: 12.5px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .notif-float-meta { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+  .notif-float-empty { padding: 14px 12px; font-size: 12.5px; color: var(--muted); }
+  .notif-float-footer { padding: 8px; border-top: 1px solid var(--border-soft); flex-shrink: 0; }
+  .notif-float-footer button { width: 100%; }
+  @keyframes notifPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+    50% { transform: scale(1.08); box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 35%, transparent); }
+  }
+  .notif-btn.pulse { animation: notifPulse .7s ease-in-out 3; }
+  .notif-badge.pulse { animation: notifPulse .7s ease-in-out 3; }
   /* v51: la cererea lui Andrei — „Toate punctele"/„Useri & Roluri"/„Curs & Adaos"/„Log Out" mutate
      dintr-un antet aglomerat într-un meniu hamburger (dropdown), ca să elibereze spațiu din bara de sus. */
   .hamburger-wrap { position: relative; }
@@ -783,7 +815,7 @@
 
 <!-- ============ ECRAN LOGIN ============ -->
 <div id="login-screen">
-  <div class="login-box">
+  <div class="login-box" id="login-box-normal">
     <h1 class="login-title">Bine ai venit!</h1>
     <div class="login-subtitle">Autentificare</div>
     <div class="field">
@@ -795,6 +827,9 @@
       <input type="password" id="login-pass" autocomplete="current-password" />
     </div>
     <button class="btn-primary full-width" onclick="doLogin()">Autentificare</button>
+    <div style="text-align:center;margin-top:10px">
+      <a href="#" onclick="showForgotParolaBox(); return false;" style="font-size:12.5px;color:var(--muted)">Am uitat parola</a>
+    </div>
     <div id="error-msg"></div>
     <div class="login-footer">
       Toate drepturile rezervate.
@@ -803,6 +838,44 @@
         <a href="#" onclick="openLegalModal('gdpr'); return false;">GDPR</a>
       </div>
     </div>
+  </div>
+
+  <!-- v56: "Am uitat parola" — trimite un email de resetare prin Supabase Auth (vezi
+       trimiteResetareParola()); un link separat, în afara #app-screen, ca să fie disponibil chiar
+       și cu nimeni logat. -->
+  <div class="login-box" id="login-box-forgot" style="display:none">
+    <h1 class="login-title">Resetează parola</h1>
+    <div class="login-subtitle">Îți trimitem un link pe email</div>
+    <div class="field">
+      <label>Email sau username</label>
+      <input type="text" id="forgot-email" autocomplete="username" />
+    </div>
+    <button class="btn-primary full-width" onclick="trimiteResetareParola()">Trimite link de resetare</button>
+    <div id="forgot-msg" class="auth-note"></div>
+    <div class="login-footer">
+      <a href="#" onclick="showLoginBox(); return false;">← Înapoi la autentificare</a>
+    </div>
+  </div>
+</div>
+
+<!-- v56: ecran separat, arătat automat când userul deschide link-ul de resetare primit pe email
+     (Supabase Auth marchează sesiunea ca "PASSWORD_RECOVERY" — vezi onAuthStateChange mai jos) —
+     nu ecranul normal de login, nici aplicația, ca userul să nu ajungă din greșeală în cont înainte
+     să-și fi ales o parolă nouă. -->
+<div id="reset-parola-screen" style="display:none">
+  <div class="login-box">
+    <h1 class="login-title">Setează o parolă nouă</h1>
+    <div class="login-subtitle">Ultimul pas — alege o parolă nouă pentru contul tău</div>
+    <div class="field">
+      <label>Parolă nouă</label>
+      <input type="password" id="rp-parola-noua" autocomplete="new-password" />
+    </div>
+    <div class="field">
+      <label>Confirmă parola nouă</label>
+      <input type="password" id="rp-parola-confirma" autocomplete="new-password" />
+    </div>
+    <button class="btn-primary full-width" onclick="confirmaParolaNoua()">Salvează parola nouă</button>
+    <div id="rp-error-msg"></div>
   </div>
 </div>
 
@@ -830,7 +903,14 @@
     </div>
     <div class="header-right">
       <span class="user-info" id="user-info"></span>
-      <button class="btn-secondary notif-btn" onclick="openNotifPanel()">Notificări<span class="notif-badge" id="notif-badge"></span></button>
+      <div class="notif-wrap" id="notif-wrap">
+        <button class="btn-secondary notif-btn" id="notif-btn" onclick="openNotifPanel()">Notificări<span class="notif-badge" id="notif-badge"></span></button>
+        <div class="notif-float" id="notif-float">
+          <div class="notif-float-header">Notificări recente</div>
+          <div class="notif-float-list" id="notif-float-list"></div>
+          <div class="notif-float-footer"><button type="button" class="btn-secondary" onclick="openNotifPanel()">Vezi toate</button></div>
+        </div>
+      </div>
       <div class="hamburger-wrap">
         <button class="btn-secondary hamburger-btn" id="btn-hamburger" onclick="toggleHamburgerMenu(event)" aria-label="Meniu" title="Meniu">Meniu</button>
         <div class="hamburger-dropdown" id="hamburger-dropdown">
@@ -854,6 +934,7 @@
           <button class="nav-dropdown-item active" id="tab-group-comenzi" onclick="switchTab('toate')">Comenzi</button>
           <button class="nav-dropdown-item" id="tab-clienti" onclick="switchTab('clienti')">Clienți</button>
           <button class="nav-dropdown-item" id="tab-piese-vanzari" onclick="switchTab('catalog')">Piese</button>
+          <button class="nav-dropdown-item" id="tab-test-ride" onclick="switchTab('test-ride')">Test Rides</button>
         </div>
       </div>
       <div class="nav-group" id="navgrp-service">
@@ -888,6 +969,11 @@
       <button class="subtab-btn active" id="tab-prog-zi" onclick="setProgramatorMode('zi')">Programator Zi</button>
       <button class="subtab-btn" id="tab-prog-luna" onclick="setProgramatorMode('luna')">Raport lunar</button>
       <button class="subtab-btn" id="tab-prog-perioada" onclick="setProgramatorMode('perioada')">Raport anual / perioadă</button>
+    </div>
+    <div class="subtabs" id="subtabs-test-ride">
+      <button class="subtab-btn active" id="tab-tr-zi" onclick="setTestRideMode('zi')">Test Rides Zi</button>
+      <button class="subtab-btn" id="tab-tr-luna" onclick="setTestRideMode('luna')">Raport lunar</button>
+      <button class="subtab-btn" id="tab-tr-perioada" onclick="setTestRideMode('perioada')">Raport anual / perioadă</button>
     </div>
     <div class="subtabs" id="subtabs-sarcini">
       <button class="subtab-btn active" id="tab-sar-zi" onclick="setSarciniMode('zi')">Task-uri Zi</button>
@@ -1028,6 +1114,45 @@
         </div>
         <div class="rz-stats" id="programator-perioada-summary" style="margin-top:12px"></div>
         <div id="programator-perioada-list"></div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW TEST RIDES (v55) ===== -->
+    <div id="test-ride-view" style="display:none;">
+      <div id="tr-import-istoric-bar" style="display:none;text-align:right;margin-bottom:10px;">
+        <button class="btn-secondary" onclick="openImportIstoricTestRideModal()">Importă istoric (JSON)</button>
+      </div>
+      <div id="tr-zi-panel">
+        <div class="programator-toolbar">
+          <input type="date" id="tr-data-filtru" onchange="onTestRideDataChanged()" />
+          <button class="btn-secondary" onclick="trGoToday()">Azi</button>
+          <button class="btn-primary" onclick="openTestRideModal()">+ Test Ride nou</button>
+          <button class="btn-secondary" onclick="trExportZiExcel()">Exportă Excel (ziua asta)</button>
+        </div>
+        <div id="test-ride-day-list"></div>
+      </div>
+
+      <div id="tr-luna-panel" style="display:none;">
+        <div class="programator-toolbar">
+          <input type="month" id="tr-luna" onchange="onTestRideLunaChanged()" />
+          <button class="btn-primary" onclick="renderTestRideLuna()">Afișează raport</button>
+        </div>
+        <div id="test-ride-luna-list"></div>
+      </div>
+
+      <div id="tr-perioada-panel" style="display:none;">
+        <div class="programator-toolbar">
+          <label class="muted" style="font-size:12px">De la</label>
+          <input type="date" id="tr-per-start" />
+          <label class="muted" style="font-size:12px">Până la</label>
+          <input type="date" id="tr-per-end" />
+          <input type="number" id="tr-per-an" placeholder="An" style="width:80px" min="2000" max="2100" />
+          <button class="btn-secondary" onclick="trSetAn()">An întreg</button>
+          <button class="btn-primary" onclick="renderTestRidePerioada()">Afișează raport</button>
+          <button class="btn-secondary" onclick="trExportPerioadaExcel()">Exportă Excel</button>
+        </div>
+        <div class="rz-stats" id="test-ride-perioada-summary" style="margin-top:12px"></div>
+        <div id="test-ride-perioada-list"></div>
       </div>
     </div>
 
@@ -1917,6 +2042,64 @@
   </div>
 </div>
 
+<!-- ============ MODAL TEST RIDE (v55) ============ -->
+<div class="modal-overlay" id="test-ride-modal-overlay">
+  <div class="modal wide">
+    <button type="button" class="rz-modal-x" onclick="closeTestRideModal()" aria-label="Închide" title="Închide">✕</button>
+    <h2 id="test-ride-modal-title">Test Ride nou</h2>
+    <input type="hidden" id="tr-id" />
+    <div class="modal-grid">
+      <div class="field">
+        <label>Motocicletă testată *</label>
+        <input id="tr-moto" placeholder="ex: Trident 660" />
+      </div>
+      <div class="field">
+        <label>Stare</label>
+        <select id="tr-stare"><option value="Programat & Neconfirmat">Programat & Neconfirmat</option><option value="Confirmat">Confirmat</option><option value="Efectuat">Efectuat</option></select>
+      </div>
+      <div class="field">
+        <label>Data *</label>
+        <input type="date" id="tr-data" onchange="renderTrSlotGrid()" />
+      </div>
+      <div class="field">
+        <label>Ora început *</label>
+        <select id="tr-ora-inceput" onchange="syncTrOraSfarsitOptions(); renderTrSlotGrid()"></select>
+      </div>
+      <div class="field">
+        <label>Ora sfârșit *</label>
+        <select id="tr-ora-sfarsit"></select>
+      </div>
+      <div class="field span-2 muted" style="font-size:11.5px;margin-top:-6px">
+        Sloturile sunt din 30 în 30 de minute, între 10:00 și 18:00. Intervalul 13:00–13:30 este <b>pauza de masă</b>.
+      </div>
+      <div class="field span-2" style="margin-top:-4px">
+        <label>Ore ocupate pentru ACEASTĂ motocicletă, în ziua aleasă — click pe un slot verde ca să-l alegi</label>
+        <div id="tr-slot-grid"></div>
+      </div>
+      <div class="field">
+        <label>Nume client *</label>
+        <input id="tr-nume" />
+      </div>
+      <div class="field">
+        <label>Contact (telefon/email)</label>
+        <input id="tr-contact" />
+      </div>
+      <div class="field">
+        <label>Vânzător</label>
+        <select id="tr-vanzator"><option value="">— neasignat —</option></select>
+      </div>
+      <div class="field span-2">
+        <label>Observații</label>
+        <textarea id="tr-obs" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeTestRideModal()">Anulează</button>
+      <button class="btn-primary" onclick="saveTestRide()">Salvează</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ MODAL SARCINA (adaugare/editare) ============ -->
 <div class="modal-overlay" id="sarcina-modal-overlay">
   <div class="modal wide">
@@ -1959,6 +2142,11 @@
       <div class="field">
         <label>Anunță pe cineva când e rezolvată (opțional)</label>
         <select id="sa-notifica"></select>
+      </div>
+      <div class="field span-2">
+        <label>Colegi care lucrează și ei la acest task (opțional)</label>
+        <select id="sa-colaboratori" multiple size="4"></select>
+        <div class="muted" style="font-size:11px;margin-top:2px;">Ține Ctrl/Cmd apăsat ca să alegi mai mulți. Fiecare coleg ales vede task-ul integral și poate acționa pe el (rezolvă, adaugă observații etc.) — la fel ca „Cere ajutor” de pe cardul task-ului, doar ales direct de-aici, de la creare sau editare. Poți scoate pe cineva oricând, revenind în acest formular.</div>
       </div>
       <div class="field">
         <label>Stare</label>
@@ -2200,6 +2388,32 @@ const ICON_VIEW = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" s
 
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// v56: "Am uitat parola" — detectăm chiar de la încărcarea paginii dacă userul a ajuns aici prin
+// link-ul de resetare primit pe email (Supabase Auth adaugă "type=recovery" în URL — la hash,
+// implicit, sau la query, dacă vreodată se schimbă modul de autentificare la "pkce"). Verificăm
+// SINCRON, imediat, ca initSession() de mai jos să nu apuce să bage userul direct în aplicație cu
+// sesiunea temporară de recuperare — trebuie mai întâi să-și pună o parolă nouă, pe
+// #reset-parola-screen. `onAuthStateChange` de mai jos e o a doua plasă de siguranță: Supabase
+// trimite explicit evenimentul "PASSWORD_RECOVERY" când procesează efectiv link-ul, indiferent
+// de modul de autentificare folosit.
+let rzInPasswordRecovery = /type=recovery/.test(location.hash) || /type=recovery/.test(location.search);
+
+function rzShowResetParolaScreen() {
+  rzInPasswordRecovery = true;
+  const loginScreen = document.getElementById("login-screen");
+  const appScreen = document.getElementById("app-screen");
+  const resetScreen = document.getElementById("reset-parola-screen");
+  if (loginScreen) loginScreen.style.display = "none";
+  if (appScreen) appScreen.style.display = "none";
+  if (resetScreen) resetScreen.style.display = "flex";
+}
+
+client.auth.onAuthStateChange((event) => {
+  if (event === "PASSWORD_RECOVERY") rzShowResetParolaScreen();
+});
+
+if (rzInPasswordRecovery) rzShowResetParolaScreen();
+
 let currentProfile = null;
 let currentOrders = [];
 let currentClients = [];
@@ -2335,8 +2549,10 @@ function applyPermissionsToUI() {
   const isAdmin = currentProfile.rol === "admin";
   document.getElementById("btn-useri-roluri").style.display = isSuperAdminEmail() ? "inline-flex" : "none";
   document.getElementById("prog-import-istoric-bar").style.display = isAdmin ? "block" : "none";
+  document.getElementById("tr-import-istoric-bar").style.display = isAdmin ? "block" : "none";
   document.getElementById("tab-group-comenzi").style.display = canDo("perm_comenzi") ? "" : "none";
   document.getElementById("tab-programator").style.display = canDo("perm_programator") ? "" : "none";
+  document.getElementById("tab-test-ride").style.display = canDo("perm_test_ride") ? "" : "none";
   document.getElementById("tab-group-service").style.display = canDo("perm_devize") ? "" : "none"; // perm_devize gateste acum accesul la catalogul de piese (deviz a fost eliminat)
   document.getElementById("tab-receptie").style.display = canDo("perm_receptie") ? "" : "none";
   document.getElementById("tab-inventar").style.display = canDo("perm_inventar") ? "" : "none";
@@ -2351,6 +2567,7 @@ function applyPermissionsToUI() {
   const tabDisponibil =
     canDo("perm_comenzi") ? "toate" :
     canDo("perm_programator") ? "programator" :
+    canDo("perm_test_ride") ? "test-ride" :
     true ? "clienti" :
     canDo("perm_devize") ? "catalog" :
     canDo("perm_receptie") ? "receptie" :
@@ -2362,6 +2579,7 @@ function applyPermissionsToUI() {
     (canDo("perm_comenzi") || canDo("perm_piese_comandat")) ? "piese-comandat" : "clienti";
   if ((activeTab === "toate" || activeTab === "termene") && !canDo("perm_comenzi")) switchTab(tabDisponibil);
   else if (activeTab === "programator" && !canDo("perm_programator")) switchTab(tabDisponibil);
+  else if (activeTab === "test-ride" && !canDo("perm_test_ride")) switchTab(tabDisponibil);
   else if (activeTab === "catalog" && !canDo("perm_devize")) switchTab(tabDisponibil);
   else if (activeTab === "receptie" && !canDo("perm_receptie")) switchTab(tabDisponibil);
   else if (activeTab === "inventar" && !canDo("perm_inventar")) switchTab(tabDisponibil);
@@ -2582,6 +2800,64 @@ async function doLogout() {
   location.reload();
 }
 
+// v56: "Am uitat parola" — comută vizual între cutia de login și cutia de resetare, pe același
+// ecran (#login-screen); nu foloseam rzOpenModal() aici pentru că modalul generic trăiește în
+// interiorul #app-screen (ascuns înainte de logare), deci n-ar fi fost vizibil.
+function showForgotParolaBox() {
+  document.getElementById("login-box-normal").style.display = "none";
+  document.getElementById("login-box-forgot").style.display = "block";
+  document.getElementById("forgot-msg").textContent = "";
+  document.getElementById("forgot-email").value = "";
+}
+function showLoginBox() {
+  document.getElementById("login-box-forgot").style.display = "none";
+  document.getElementById("login-box-normal").style.display = "block";
+}
+
+// v56: trimite un email de resetare prin Supabase Auth (resetPasswordForEmail) — link-ul din email
+// aduce userul înapoi chiar în acest index.html, cu un token de recuperare în URL, unde
+// #reset-parola-screen preia automat controlul (vezi onAuthStateChange/rzInPasswordRecovery mai
+// sus). Mesaj generic indiferent dacă emailul/username-ul există sau nu — ca să nu dezvăluim dacă
+// un cont există (același principiu ca la doLogin()); acceptă și username, rezolvat la fel ca la
+// login, prin fn_email_by_username().
+async function trimiteResetareParola() {
+  const raw = document.getElementById("forgot-email").value.trim();
+  const msgEl = document.getElementById("forgot-msg");
+  if (!raw) { msgEl.textContent = "Completează emailul sau username-ul."; return; }
+  msgEl.textContent = "Se trimite...";
+  let email = raw;
+  if (!raw.includes("@")) {
+    const { data: emailGasit } = await client.rpc("fn_email_by_username", { p_username: raw });
+    email = emailGasit || null;
+  }
+  if (email) {
+    const redirectTo = location.origin + location.pathname;
+    try { await client.auth.resetPasswordForEmail(email, { redirectTo }); } catch (e) { /* ignorat intenționat — mesaj generic mai jos, oricum */ }
+  }
+  msgEl.textContent = "Dacă acest cont există, a fost trimis un email cu un link de resetare a parolei. Verifică și folderul de spam — link-ul e valabil o perioadă limitată.";
+}
+
+// v56: ecranul #reset-parola-screen — apare automat după ce userul deschide link-ul de resetare.
+// Sesiunea temporară de recuperare (stabilită automat de Supabase la detectarea link-ului) e
+// suficientă ca updateUser({password}) să funcționeze — nu mai cerem parola veche.
+async function confirmaParolaNoua() {
+  const p1 = document.getElementById("rp-parola-noua").value;
+  const p2 = document.getElementById("rp-parola-confirma").value;
+  const errEl = document.getElementById("rp-error-msg");
+  errEl.textContent = "";
+  if (!p1 || p1.length < 6) { errEl.textContent = "Parola trebuie să aibă cel puțin 6 caractere."; return; }
+  if (p1 !== p2) { errEl.textContent = "Parolele nu coincid."; return; }
+  const { error } = await client.auth.updateUser({ password: p1 });
+  if (error) { errEl.textContent = "Eroare la salvarea parolei noi: " + error.message; return; }
+  history.replaceState(null, "", location.pathname);
+  await client.auth.signOut();
+  rzInPasswordRecovery = false;
+  document.getElementById("reset-parola-screen").style.display = "none";
+  document.getElementById("login-screen").style.display = "flex";
+  showLoginBox();
+  alert("Parola a fost schimbată. Te poți autentifica acum cu parola nouă.");
+}
+
 // v52: tranziția "Enjoy The Ride, <nume>!" — vezi Entrance.dc.html din mockup-ul aprobat.
 // Ține ecranul de intrare acoperit sub un ecran de bun venit ~0.75s, apoi trece la aplicație
 // printr-un blur-reveal, cu un toast mic în colț. Poate fi sărită oricând (click sau tastă).
@@ -2674,7 +2950,7 @@ async function afterLogin(freshLogin) {
   // allSettled, nu all: daca UNA din aceste incarcari esueaza sau ia mult (ex. o lista de preturi
   // foarte mare), restul aplicatiei (inclusiv butoanele de admin de mai jos) tot trebuie sa apara —
   // o singura incarcare stricata nu are voie sa blocheze tot ecranul dupa login.
-  const initResults = await Promise.allSettled([loadOrders(), rzLoadSetari(), rzLoadAdaosuri(), rzLoadPriceListFull(), loadAllProfiles(), loadProgramari(), loadRampaInchideri(), loadPuncteLucru(), loadBranduriMoto(), loadFurnizori(), loadSarcini()]);
+  const initResults = await Promise.allSettled([loadOrders(), rzLoadSetari(), rzLoadAdaosuri(), rzLoadPriceListFull(), loadAllProfiles(), loadProgramari(), loadRampaInchideri(), loadPuncteLucru(), loadBranduriMoto(), loadFurnizori(), loadSarcini(), loadTestRide()]);
   initResults.forEach(r => { if (r.status === "rejected") console.error("Eroare la încărcarea inițială:", r.reason); });
   applyPermissionsToUI();
   restoreLocationPrefsFromStorage();
@@ -2690,6 +2966,7 @@ async function afterLogin(freshLogin) {
 }
 
 (async function initSession() {
+  if (rzInPasswordRecovery) return; // v56: nu băga userul direct în aplicație cu sesiunea de recuperare
   const { data: { session } } = await client.auth.getSession();
   if (session) await afterLogin();
 })();
@@ -2713,6 +2990,7 @@ function switchTab(tab) {
   document.getElementById("tab-garantii").classList.toggle("active", tab === "garantii");
   document.getElementById("tab-daune").classList.toggle("active", tab === "daune");
   document.getElementById("tab-devize").classList.toggle("active", tab === "devize");
+  document.getElementById("tab-test-ride").classList.toggle("active", tab === "test-ride");
   updateNavGroupActiveStates(tab, inComenziGroup);
   closeAllNavDropdowns();
 
@@ -2722,11 +3000,13 @@ function switchTab(tab) {
 
   document.getElementById("subtabs-comenzi").classList.toggle("open", inComenziGroup);
   document.getElementById("subtabs-programator").classList.toggle("open", tab === "programator");
+  document.getElementById("subtabs-test-ride").classList.toggle("open", tab === "test-ride");
   document.getElementById("subtabs-sarcini").classList.toggle("open", tab === "sarcini");
 
   document.getElementById("stats-bar").style.display = showComenziStats ? "flex" : "none";
   document.getElementById("orders-view").style.display = showComenziStats ? "block" : "none";
   document.getElementById("programator-view").style.display = (tab === "programator") ? "block" : "none";
+  document.getElementById("test-ride-view").style.display = (tab === "test-ride") ? "block" : "none";
   document.getElementById("clients-view").style.display = (tab === "clienti") ? "block" : "none";
   document.getElementById("catalog-view").style.display = (tab === "catalog") ? "block" : "none";
   document.getElementById("receptie-view").style.display = (tab === "receptie" || tab === "inventar") ? "block" : "none";
@@ -2739,6 +3019,7 @@ function switchTab(tab) {
 
   if (tab === "clienti") loadClients();
   else if (tab === "programator") initProgramatorViewIfNeeded();
+  else if (tab === "test-ride") initTestRideViewIfNeeded();
   else if (tab === "catalog") renderCatalogTable();
   else if (tab === "devize") initDevizeTabIfNeeded();
   else if (tab === "receptie") { rzSetMode("receptie"); rzInitIfNeeded(); }
@@ -3779,11 +4060,52 @@ function updateNotifBadge(count) {
   el.textContent = count > 0 ? String(count) : "";
   el.style.display = count > 0 ? "inline-block" : "none";
 }
+
+// ---------- v55: panel plutitor la hover (preview rapid) + pulsare la notificare nouă ----------
+let currentNotifPreview = [];
+async function loadNotifPreview() {
+  const { data, error } = await client.from("notificari")
+    .select("id,mesaj,creat_de_nume,creat_la,citita")
+    .eq("destinatar_id", currentProfile.id)
+    .order("creat_la", { ascending: false })
+    .limit(8);
+  if (error) { console.error(error); return; }
+  currentNotifPreview = data || [];
+  renderNotifFloat();
+}
+function renderNotifFloat() {
+  const el = document.getElementById("notif-float-list");
+  if (!el) return;
+  if (!currentNotifPreview.length) {
+    el.innerHTML = '<div class="notif-float-empty">Nicio notificare.</div>';
+    return;
+  }
+  el.innerHTML = currentNotifPreview.map(n => `
+    <div class="notif-float-item${n.citita ? "" : " unread"}" onclick="openNotifPanel()" title="Deschide toate notificările">
+      <div class="notif-float-msg">${escapeHtml(n.mesaj)}</div>
+      <div class="notif-float-meta">${escapeHtml(n.creat_de_nume || "—")} · ${formatDate(n.creat_la)}</div>
+    </div>`).join("");
+}
+function rzPulseNotifBtn() {
+  const btn = document.getElementById("notif-btn");
+  const badge = document.getElementById("notif-badge");
+  [btn, badge].forEach(el => {
+    if (!el) return;
+    el.classList.remove("pulse");
+    void el.offsetWidth; // forțează reflow, ca animația să pornească din nou dacă mai pulsa încă
+    el.classList.add("pulse");
+  });
+  clearTimeout(rzPulseNotifBtn._t);
+  rzPulseNotifBtn._t = setTimeout(() => { [btn, badge].forEach(el => el && el.classList.remove("pulse")); }, 2200);
+}
+
 function subscribeNotifRealtime() {
   try {
     client.channel("notif-sync-" + currentProfile.id)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "notificari", filter: "destinatar_id=eq." + currentProfile.id }, payload => {
         loadNotifCount();
+        loadNotifPreview();
+        rzPulseNotifBtn();
         if (typeof rzToast === "function") rzToast("Notificare nouă: " + escapeHtml(payload.new.mesaj), "ok");
       })
       .subscribe();
@@ -3805,6 +4127,7 @@ async function openNotifPanel() {
     currentNotifications.forEach(n => { n.citita = true; });
     updateNotifBadge(0);
   }
+  await loadNotifPreview();
 }
 function renderNotifPanel() {
   let html = "<h3>Notificările tale</h3>";
@@ -4706,6 +5029,520 @@ async function stergeProgramare(id) {
 }
 
 // ======================================================
+// TEST RIDES (v55) — la cererea lui Andrei, un modul nou la Vânzări, cu aceeași structură
+// Zi/Lună/Perioadă ca Programatorul, dar pe o tabelă separată (`test_ride_uri`), fără să atingă
+// `programari`. Diferența cheie față de Programator: acolo se rezervă o "rampă" (doar 2, fixe);
+// aici se rezervă o MOTOCICLETĂ DE TEST, al cărei set se schimbă în timp — ținută ca text liber
+// (`motocicleta`), nu ca o listă fixă de opțiuni. Ca să nu existe două test ride-uri suprapuse pe
+// aceeași motocicletă, salvarea BLOCHEAZĂ dur (ca la „Rampă închisă” din v53), nu doar avertizează
+// — comparând textul normalizat (trim + minuscule) al motocicletei și intervalul orar.
+let currentTestRide = [];
+let testRideMode = "zi";
+let testRideInited = false;
+
+async function loadTestRide() {
+  const { data, error } = await client.from("test_ride_uri").select("*").order("data", { ascending: true }).order("ora_inceput", { ascending: true });
+  if (error) { console.error(error); return; }
+  currentTestRide = data || [];
+  const view = document.getElementById("test-ride-view");
+  if (view && view.style.display !== "none") renderTestRideModCurent();
+}
+
+function initTestRideViewIfNeeded() {
+  if (!testRideInited) {
+    testRideInited = true;
+    document.getElementById("tr-data-filtru").value = todayISODate();
+    document.getElementById("tr-luna").value = currentYYYYMM();
+    renderTestRideZi();
+    return;
+  }
+  renderTestRideModCurent();
+}
+
+function renderTestRideModCurent() {
+  if (testRideMode === "zi") renderTestRideZi();
+  else if (testRideMode === "luna") renderTestRideLuna();
+  else renderTestRidePerioada();
+}
+
+function setTestRideMode(mode) {
+  testRideMode = mode;
+  document.getElementById("tab-tr-zi").classList.toggle("active", mode === "zi");
+  document.getElementById("tab-tr-luna").classList.toggle("active", mode === "luna");
+  document.getElementById("tab-tr-perioada").classList.toggle("active", mode === "perioada");
+  document.getElementById("tr-zi-panel").style.display = mode === "zi" ? "block" : "none";
+  document.getElementById("tr-luna-panel").style.display = mode === "luna" ? "block" : "none";
+  document.getElementById("tr-perioada-panel").style.display = mode === "perioada" ? "block" : "none";
+  if (mode === "perioada" && !document.getElementById("tr-per-start").value) {
+    const y = new Date().getFullYear();
+    document.getElementById("tr-per-start").value = y + "-01-01";
+    document.getElementById("tr-per-end").value = y + "-12-31";
+    document.getElementById("tr-per-an").value = String(y);
+  }
+  renderTestRideModCurent();
+}
+
+function trSetAn() {
+  const an = parseInt(document.getElementById("tr-per-an").value);
+  if (!an) { alert("Introdu anul (ex: 2026)."); return; }
+  document.getElementById("tr-per-start").value = an + "-01-01";
+  document.getElementById("tr-per-end").value = an + "-12-31";
+  renderTestRidePerioada();
+}
+
+function trGoToday() {
+  document.getElementById("tr-data-filtru").value = todayISODate();
+  renderTestRideZi();
+}
+function onTestRideDataChanged() { renderTestRideZi(); }
+function onTestRideLunaChanged() { /* afisarea se actualizeaza la apasarea butonului "Afișează raport" */ }
+
+// text normalizat (trim + minuscule), ca "Trident 660" și " trident 660 " să conteze ca aceeași
+// motocicletă la verificarea de suprapunere.
+function trNormMoto(s) { return (s || "").trim().toLowerCase(); }
+
+function testRideEndLabel(t) {
+  const parts = fmtOra(t.ora_inceput).split(":").map(Number);
+  const h = parts[0] || 0, m = parts[1] || 0;
+  const total = h * 60 + m + (t.durata_minute || 30);
+  return String(Math.floor(total / 60) % 24).padStart(2, "0") + ":" + String(total % 60).padStart(2, "0");
+}
+
+function renderTestRideCard(t) {
+  const stCls = t.stare === "Anulat" ? "st-anulat" : (t.stare === "Confirmat" || t.stare === "Efectuat" ? "st-programat" : "st-neconfirmat");
+  let actions = "";
+  if (t.stare !== "Anulat") {
+    if (t.stare === "Programat & Neconfirmat") actions += `<button type="button" class="btn-secondary" onclick="confirmaTestRide('${t.id}')">Confirmă clientul</button>`;
+    if (t.stare !== "Efectuat") actions += `<button type="button" class="btn-secondary" onclick="efectuatTestRide('${t.id}')">Marchează efectuat</button>`;
+    actions += `<button type="button" class="btn-secondary" onclick="openTestRideModal('${t.id}')">Reprogramează</button>`;
+    actions += `<button type="button" class="btn-secondary" onclick="anuleazaTestRide('${t.id}')">✕ Anulează</button>`;
+  }
+  if (amAdmin()) actions += `<button type="button" class="btn-secondary" style="color:#b91c1c" onclick="stergeTestRide('${t.id}')">Șterge definitiv</button>`;
+  return `<div class="appt-card ${stCls}">
+    <div class="prog-card-clickable" style="cursor:pointer" onclick="openTestRideModal('${t.id}')" title="Click pentru a edita test ride-ul">
+      <div class="appt-time">${fmtOra(t.ora_inceput)}–${testRideEndLabel(t)} <span class="badge" style="background:#eef0f4;color:var(--muted);font-size:10px">${escapeHtml(t.motocicleta)}</span> <span class="badge" style="background:#eef0f4;color:var(--muted);font-size:10px">${escapeHtml(t.stare)}</span></div>
+      <div class="appt-client">${escapeHtml(t.nume_client)}${t.contact ? " — " + escapeHtml(t.contact) : ""}</div>
+      ${t.vanzator_nume ? `<div class="appt-moto">Vânzător: ${escapeHtml(t.vanzator_nume)}</div>` : ""}
+      ${t.observatii ? `<div class="appt-obs">Obs: ${escapeHtml(t.observatii)}</div>` : ""}
+    </div>
+    <div class="appt-actions">${actions}</div>
+  </div>`;
+}
+
+function renderTestRideZi() {
+  const list = document.getElementById("test-ride-day-list");
+  if (!list) return;
+  const data = document.getElementById("tr-data-filtru").value;
+  const items = currentTestRide.filter(t => t.data === data).filter(matchesLocationFilter).sort((a, b) => a.ora_inceput.localeCompare(b.ora_inceput));
+  list.innerHTML = items.length ? items.map(renderTestRideCard).join("") : '<div class="appt-empty">Niciun test ride programat în ziua aleasă.</div>';
+}
+
+function renderTestRideLuna() {
+  const container = document.getElementById("test-ride-luna-list");
+  if (!container) return;
+  const ym = document.getElementById("tr-luna").value;
+  if (!ym) { container.innerHTML = '<div class="appt-empty">Alege o lună.</div>'; return; }
+  const list = currentTestRide.filter(t => t.data.slice(0, 7) === ym).filter(matchesLocationFilter);
+  if (!list.length) { container.innerHTML = '<div class="appt-empty">Niciun test ride în luna aleasă.</div>'; return; }
+  const byDay = {};
+  list.forEach(t => { (byDay[t.data] = byDay[t.data] || []).push(t); });
+  const days = Object.keys(byDay).sort();
+  container.innerHTML = days.map(d => {
+    const items = byDay[d].sort((a, b) => a.ora_inceput.localeCompare(b.ora_inceput));
+    return `<div class="month-daygroup">
+      <div class="month-day-header">${new Date(d + "T00:00:00").toLocaleDateString("ro-RO", { weekday: "long", day: "numeric", month: "long" })}</div>
+      <div class="month-day-body">${items.map(renderTestRideCard).join("")}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderTestRidePerioada() {
+  const container = document.getElementById("test-ride-perioada-list");
+  const summaryEl = document.getElementById("test-ride-perioada-summary");
+  if (!container) return;
+  const start = (document.getElementById("tr-per-start") || {}).value;
+  const end = (document.getElementById("tr-per-end") || {}).value;
+  if (!start || !end) { container.innerHTML = '<div class="appt-empty">Alege perioada (de la / până la) sau un an întreg.</div>'; if (summaryEl) summaryEl.innerHTML = ""; return; }
+  if (start > end) { container.innerHTML = '<div class="appt-empty">Data de început e după data de sfârșit.</div>'; if (summaryEl) summaryEl.innerHTML = ""; return; }
+  const list = currentTestRide.filter(t => t.data >= start && t.data <= end).filter(matchesLocationFilter);
+  if (summaryEl) {
+    const byStare = {};
+    list.forEach(t => { byStare[t.stare] = (byStare[t.stare] || 0) + 1; });
+    summaryEl.innerHTML = `
+      <div class="rz-stat"><div class="num">${list.length}</div><div class="lbl">Total test ride-uri</div></div>
+      <div class="rz-stat ok"><div class="num">${byStare["Efectuat"] || 0}</div><div class="lbl">Efectuate</div></div>
+      <div class="rz-stat ok"><div class="num">${byStare["Confirmat"] || 0}</div><div class="lbl">Confirmate</div></div>
+      <div class="rz-stat"><div class="num">${byStare["Programat & Neconfirmat"] || 0}</div><div class="lbl">Neconfirmate</div></div>
+      <div class="rz-stat miss"><div class="num">${byStare["Anulat"] || 0}</div><div class="lbl">Anulate</div></div>`;
+  }
+  if (!list.length) { container.innerHTML = '<div class="appt-empty">Niciun test ride în perioada aleasă.</div>'; return; }
+  const byDay = {};
+  list.forEach(t => { (byDay[t.data] = byDay[t.data] || []).push(t); });
+  const days = Object.keys(byDay).sort();
+  container.innerHTML = days.map(d => {
+    const items = byDay[d].sort((a, b) => a.ora_inceput.localeCompare(b.ora_inceput));
+    return `<div class="month-daygroup">
+      <div class="month-day-header">${new Date(d + "T00:00:00").toLocaleDateString("ro-RO", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</div>
+      <div class="month-day-body">${items.map(renderTestRideCard).join("")}</div>
+    </div>`;
+  }).join("");
+}
+
+function trExportZiExcel() {
+  const data = document.getElementById("tr-data-filtru").value;
+  if (!data) { alert("Alege ziua înainte de export."); return; }
+  const list = currentTestRide.filter(t => t.data === data).filter(matchesLocationFilter).sort((a, b) => a.ora_inceput.localeCompare(b.ora_inceput));
+  if (!list.length) { alert("Niciun test ride în ziua aleasă."); return; }
+  trWriteExcel(list, "test_ride_" + data + ".xlsx");
+}
+
+function trExportPerioadaExcel() {
+  const start = (document.getElementById("tr-per-start") || {}).value;
+  const end = (document.getElementById("tr-per-end") || {}).value;
+  if (!start || !end) { alert("Alege perioada (sau un an întreg) înainte de export."); return; }
+  const list = currentTestRide.filter(t => t.data >= start && t.data <= end).filter(matchesLocationFilter)
+    .sort((a, b) => a.data.localeCompare(b.data) || a.ora_inceput.localeCompare(b.ora_inceput));
+  if (!list.length) { alert("Niciun test ride în perioada aleasă."); return; }
+  trWriteExcel(list, "test_ride_" + start + "_" + end + ".xlsx");
+}
+
+function trWriteExcel(list, filename) {
+  const aoa = [["Data", "Ora", "Durata (min)", "Motocicletă", "Client", "Contact", "Vânzător", "Stare", "Observații"]];
+  list.forEach(t => aoa.push([t.data, fmtOra(t.ora_inceput), t.durata_minute || 30, t.motocicleta || "", t.nume_client || "", t.contact || "", t.vanzator_nume || "", t.stare, t.observatii || ""]));
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Test Rides");
+  XLSX.writeFile(wb, filename);
+}
+
+// ---------- SELECT-URI ORA INCEPUT / ORA SFARSIT — reutilizeaza sloturile din 30 in 30 (PROG_SLOT_STEP_MIN) ----------
+function populateTrOraInceputSelect(selectedValue) {
+  const sel = document.getElementById("tr-ora-inceput");
+  const slots = progSlotStarts();
+  let options = '<option value="">— alege —</option>' + slots.map(t => {
+    const hhmm = progMinToHHMM(t);
+    const inPauza = t >= PROG_PAUZA_START_MIN && t < PROG_PAUZA_END_MIN;
+    return `<option value="${hhmm}">${hhmm}${inPauza ? " (pauză de masă)" : ""}</option>`;
+  }).join("");
+  if (selectedValue && !slots.some(t => progMinToHHMM(t) === selectedValue)) {
+    options += `<option value="${selectedValue}">${selectedValue} (oră existentă)</option>`;
+  }
+  sel.innerHTML = options;
+  sel.value = selectedValue || "";
+}
+
+function populateTrOraSfarsitSelect(startValue, selectedValue) {
+  const sel = document.getElementById("tr-ora-sfarsit");
+  if (!startValue) { sel.innerHTML = '<option value="">— alege ora de început întâi —</option>'; sel.value = ""; return; }
+  const startMin = progHHMMToMin(startValue);
+  const out = [];
+  for (let t = startMin + PROG_SLOT_STEP_MIN; t <= PROG_SLOT_END_H * 60; t += PROG_SLOT_STEP_MIN) out.push(t);
+  let options = out.map(t => { const hhmm = progMinToHHMM(t); return `<option value="${hhmm}">${hhmm}</option>`; }).join("");
+  const validValues = out.map(progMinToHHMM);
+  if (selectedValue && !validValues.includes(selectedValue) && progHHMMToMin(selectedValue) > startMin) {
+    options += `<option value="${selectedValue}">${selectedValue} (oră existentă)</option>`;
+  }
+  sel.innerHTML = options;
+  if (selectedValue && (validValues.includes(selectedValue) || progHHMMToMin(selectedValue) > startMin)) {
+    sel.value = selectedValue;
+  } else {
+    const implicit = Math.min(startMin + PROG_SLOT_STEP_MIN, PROG_SLOT_END_H * 60);
+    sel.value = progMinToHHMM(implicit);
+  }
+}
+
+function syncTrOraSfarsitOptions() {
+  const startValue = document.getElementById("tr-ora-inceput").value;
+  populateTrOraSfarsitSelect(startValue, null);
+}
+
+function populateTrVanzatorSelect(selectedId) {
+  const sel = document.getElementById("tr-vanzator");
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— neasignat —</option>' + (allProfiles || []).map(p => `<option value="${p.id}">${escapeHtml(p.nume)}</option>`).join("");
+  sel.value = selectedId || "";
+}
+
+// grilă vizuală, în modal — arată orele deja ocupate pentru ACEEAȘI motocicletă (text normalizat),
+// în ziua aleasă, excluzând (la reprogramare) propriul test ride editat.
+function renderTrSlotGrid() {
+  const wrap = document.getElementById("tr-slot-grid");
+  if (!wrap) return;
+  const moto = trNormMoto(document.getElementById("tr-moto").value);
+  const data = document.getElementById("tr-data").value;
+  const editId = document.getElementById("tr-id").value;
+  if (!data) { wrap.innerHTML = '<div class="muted" style="font-size:12px">Alege data, ca să vezi orele ocupate.</div>'; return; }
+  if (!moto) { wrap.innerHTML = '<div class="muted" style="font-size:12px">Scrie motocicleta testată, ca să vezi orele deja ocupate pentru ea.</div>'; return; }
+
+  const items = currentTestRide.filter(t =>
+    t.data === data && trNormMoto(t.motocicleta) === moto && t.stare !== "Anulat" && t.id !== editId
+  ).filter(matchesLocationFilter);
+
+  const selectedStart = document.getElementById("tr-ora-inceput").value;
+  const slots = progSlotStarts();
+  let cellsHtml = "";
+  for (const t of slots) {
+    if (t >= PROG_PAUZA_START_MIN && t < PROG_PAUZA_END_MIN) {
+      cellsHtml += `<div class="slot-cell pauza" title="Pauză de masă">${progMinToHHMM(t)}</div>`;
+      continue;
+    }
+    const hhmm = progMinToHHMM(t);
+    const occ = items.find(x => {
+      const xStart = progHHMMToMin(fmtOra(x.ora_inceput));
+      const xEnd = xStart + (x.durata_minute || 30);
+      return t >= xStart && t < xEnd;
+    });
+    if (occ) {
+      const cls = occ.stare === "Confirmat" || occ.stare === "Efectuat" ? "slot-cell busy" : "slot-cell busy neconfirmat";
+      cellsHtml += `<div class="${cls}" title="Ocupat: ${escapeHtml(occ.nume_client)} — ${fmtOra(occ.ora_inceput)}–${testRideEndLabel(occ)}">${hhmm}</div>`;
+      continue;
+    }
+    const isSel = hhmm === selectedStart;
+    cellsHtml += `<div class="slot-cell free${isSel ? " selected" : ""}" title="Alege ora ${hhmm}" onclick="trPickSlot('${hhmm}')">${hhmm}</div>`;
+  }
+  wrap.innerHTML = `<div class="slot-strip">${cellsHtml}</div>`;
+}
+
+function trPickSlot(hhmm) {
+  document.getElementById("tr-ora-inceput").value = hhmm;
+  syncTrOraSfarsitOptions();
+  renderTrSlotGrid();
+}
+
+function openTestRideModal(id) {
+  document.getElementById("tr-id").value = id || "";
+  populateTrVanzatorSelect(null);
+  if (id) {
+    const t = currentTestRide.find(x => x.id === id);
+    if (!t) return;
+    document.getElementById("test-ride-modal-title").textContent = "Editează Test Ride";
+    document.getElementById("tr-moto").value = t.motocicleta || "";
+    document.getElementById("tr-stare").value = (t.stare === "Anulat") ? "Programat & Neconfirmat" : t.stare;
+    document.getElementById("tr-data").value = t.data;
+    const startVal = fmtOra(t.ora_inceput);
+    populateTrOraInceputSelect(startVal);
+    const endVal = progMinToHHMM(progHHMMToMin(startVal) + (t.durata_minute || 30));
+    populateTrOraSfarsitSelect(startVal, endVal);
+    document.getElementById("tr-nume").value = t.nume_client || "";
+    document.getElementById("tr-contact").value = t.contact || "";
+    populateTrVanzatorSelect(t.vanzator_id);
+    document.getElementById("tr-obs").value = t.observatii || "";
+  } else {
+    document.getElementById("test-ride-modal-title").textContent = "Test Ride nou";
+    document.getElementById("tr-moto").value = "";
+    document.getElementById("tr-stare").value = "Programat & Neconfirmat";
+    document.getElementById("tr-data").value = document.getElementById("tr-data-filtru").value || todayISODate();
+    populateTrOraInceputSelect("");
+    populateTrOraSfarsitSelect("", null);
+    document.getElementById("tr-nume").value = "";
+    document.getElementById("tr-contact").value = "";
+    document.getElementById("tr-obs").value = "";
+  }
+  renderTrSlotGrid();
+  document.getElementById("test-ride-modal-overlay").classList.add("open");
+}
+function closeTestRideModal() { document.getElementById("test-ride-modal-overlay").classList.remove("open"); }
+
+async function saveTestRide() {
+  const id = document.getElementById("tr-id").value;
+  const moto = document.getElementById("tr-moto").value.trim();
+  const nume = document.getElementById("tr-nume").value.trim();
+  const data = document.getElementById("tr-data").value;
+  const ora = document.getElementById("tr-ora-inceput").value;
+  const oraSfarsit = document.getElementById("tr-ora-sfarsit").value;
+  if (!moto) { alert("Motocicleta testată este obligatorie."); return; }
+  if (!nume) { alert("Numele clientului este obligatoriu."); return; }
+  if (!data || !ora || !oraSfarsit) { alert("Data, ora de început și ora de sfârșit sunt obligatorii."); return; }
+  const durata = progHHMMToMin(oraSfarsit) - progHHMMToMin(ora);
+  if (durata <= 0) { alert("Ora de sfârșit trebuie să fie după ora de început."); return; }
+
+  // Blocaj DUR — la cererea lui Andrei, nu se poate rezerva a doua oară aceeași motocicletă în
+  // același interval (spre deosebire de avertismentul soft de la Programator, la suprapunerea a
+  // două programări pe aceeași rampă).
+  const motoNorm = trNormMoto(moto);
+  const conflict = currentTestRide.find(t =>
+    t.id !== id && t.data === data && trNormMoto(t.motocicleta) === motoNorm && t.stare !== "Anulat" &&
+    programariSeSuprapun(ora, durata, fmtOra(t.ora_inceput), t.durata_minute || 30)
+  );
+  if (conflict) {
+    alert(`„${moto}” este deja rezervată în acest interval (${fmtOra(conflict.ora_inceput)}–${testRideEndLabel(conflict)} — ${conflict.nume_client}). Alege altă oră sau altă motocicletă.`);
+    return;
+  }
+
+  const vanzatorSel = document.getElementById("tr-vanzator");
+  const vanzatorId = vanzatorSel.value || null;
+  const vanzatorNume = vanzatorId ? (vanzatorSel.selectedOptions[0] || {}).textContent : null;
+
+  const payload = {
+    motocicleta: moto, data, ora_inceput: ora, durata_minute: durata,
+    nume_client: nume,
+    contact: document.getElementById("tr-contact").value.trim() || null,
+    vanzator_id: vanzatorId,
+    vanzator_nume: vanzatorNume,
+    observatii: document.getElementById("tr-obs").value.trim() || null,
+    stare: document.getElementById("tr-stare").value,
+  };
+
+  let error;
+  if (id) {
+    ({ error } = await client.from("test_ride_uri").update(payload).eq("id", id));
+  } else {
+    payload.creat_de = currentProfile.id;
+    payload.creat_de_nume = currentProfile.nume;
+    payload.punct_lucru_id = getMyCreateLocationId();
+    ({ error } = await client.from("test_ride_uri").insert(payload));
+  }
+  if (error) { alert("Eroare la salvare: " + error.message); return; }
+  closeTestRideModal();
+  await loadTestRide();
+  if (typeof rzToast === "function") rzToast("Test Ride salvat", "ok");
+}
+
+async function confirmaTestRide(id) {
+  const { error } = await client.from("test_ride_uri").update({ stare: "Confirmat" }).eq("id", id);
+  if (error) { alert("Eroare: " + error.message); return; }
+  await loadTestRide();
+}
+async function efectuatTestRide(id) {
+  const { error } = await client.from("test_ride_uri").update({ stare: "Efectuat" }).eq("id", id);
+  if (error) { alert("Eroare: " + error.message); return; }
+  await loadTestRide();
+  if (typeof rzToast === "function") rzToast("Test Ride marcat ca efectuat", "ok");
+}
+async function anuleazaTestRide(id) {
+  if (!confirm("Anulezi acest test ride?")) return;
+  const { error } = await client.from("test_ride_uri").update({ stare: "Anulat" }).eq("id", id);
+  if (error) { alert("Eroare: " + error.message); return; }
+  await loadTestRide();
+}
+async function stergeTestRide(id) {
+  if (!amAdmin()) { alert("Doar administratorul poate șterge definitiv un test ride."); return; }
+  if (!confirm("Ștergi DEFINITIV acest test ride? Acțiunea nu poate fi anulată.")) return;
+  const { error } = await client.from("test_ride_uri").delete().eq("id", id);
+  if (error) { alert("Eroare: " + error.message); return; }
+  await loadTestRide();
+  if (typeof rzToast === "function") rzToast("Test Ride șters definitiv.", "ok");
+}
+
+// ---------- IMPORT ISTORIC TEST RIDE (JSON, din vechiul site extern) — mirror pe importul de Programator ----------
+let pendingImportIstoricTestRide = null;
+
+function normalizeImportIstoricTestRide(ap) {
+  const get = (...keys) => { for (const k of keys) { if (ap[k] !== undefined && ap[k] !== null && ap[k] !== "") return ap[k]; } return ""; };
+  let data = String(get("data", "date", "ziua") || "").trim();
+  const dmy = data.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
+  if (dmy) data = dmy[3] + "-" + dmy[2].padStart(2, "0") + "-" + dmy[1].padStart(2, "0");
+  let ora = String(get("ora", "ora_inceput", "time", "ora_programare") || "").trim();
+  const oraMatch = ora.match(/^(\d{1,2}):(\d{2})/);
+  ora = oraMatch ? oraMatch[1].padStart(2, "0") + ":" + oraMatch[2] : "";
+  const nume = String(get("nume", "nume_client", "client", "client_nume") || "").trim();
+  const stareRaw = String(get("stare", "status") || "").toLowerCase();
+  const stare = stareRaw.includes("anul") ? "Anulat"
+    : stareRaw.includes("efectuat") || stareRaw.includes("done") ? "Efectuat"
+    : (stareRaw.includes("neconf") || stareRaw.includes("pending")) ? "Programat & Neconfirmat"
+    : stareRaw.includes("confirm") ? "Confirmat"
+    : "Programat & Neconfirmat";
+  return {
+    data, ora_inceput: ora,
+    durata_minute: parseInt(get("durata_minute", "durata")) || 30,
+    motocicleta: String(get("motocicleta", "moto", "model", "vehicul") || "").trim() || "Motocicletă necunoscută",
+    nume_client: nume || "Client necunoscut",
+    contact: String(get("telefon", "contact", "phone") || "").trim() || null,
+    vanzator_nume: String(get("vanzator", "seller", "agent") || "").trim() || null,
+    observatii: String(get("observatii", "obs", "note", "notes") || "").trim() || null,
+    stare,
+  };
+}
+
+function openImportIstoricTestRideModal() {
+  if (!amAdmin()) { alert("Doar administratorul poate importa istoricul."); return; }
+  pendingImportIstoricTestRide = null;
+  const html = `<h3>Importă istoric Test Rides</h3>
+    <div class="muted" style="font-size:12.5px">Încarcă fișierul JSON cu test ride-urile vechi (din vechiul programator extern). Cele importate se marchează cu sursa „istoric” și apar alături de cele noi.</div>
+    <div class="field" style="margin-top:12px">
+      <label>Punct de lucru pentru istoricul importat</label>
+      <select id="iitr-punct-lucru">
+        ${currentPuncteLucru.map(p => `<option value="${p.id}" ${getMyCreateLocationId() === p.id ? "selected" : ""}>${escapeHtml(p.nume)}</option>`).join("")}
+      </select>
+    </div>
+    <div class="field">
+      <label>Fișier JSON</label>
+      <input type="file" id="iitr-file-input" accept=".json,application/json" onchange="handleImportIstoricTestRideFile(event)" />
+    </div>
+    <div id="iitr-status" style="font-size:12.5px;margin-top:8px"></div>
+    <div id="iitr-preview"></div>
+    <div class="modal-actions" id="iitr-btns"><button class="btn-secondary" onclick="rzCloseModal()">Închide</button></div>`;
+  rzOpenModal(html);
+}
+
+async function handleImportIstoricTestRideFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById("iitr-status");
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const rawList = extractImportIstoricAppointments(parsed);
+    if (!rawList.length) {
+      statusEl.innerHTML = '<span style="color:var(--danger)">Nu am găsit test ride-uri în fișier. Formate acceptate: array, {appointments:[...]}, {day:{appointments:[...]}} sau {days:[{appointments:[...]}]}.</span>';
+      return;
+    }
+
+    const normalized = rawList.map(normalizeImportIstoricTestRide).filter(a => a.data && a.ora_inceput);
+    const invalidCount = rawList.length - normalized.length;
+
+    const existingKeys = new Set(currentTestRide.map(t => t.data + "|" + fmtOra(t.ora_inceput) + "|" + (t.nume_client || "").trim().toLowerCase()));
+    const seen = new Set();
+    const deduped = [];
+    let dupCount = 0;
+    normalized.forEach(a => {
+      const key = a.data + "|" + a.ora_inceput + "|" + a.nume_client.trim().toLowerCase();
+      if (existingKeys.has(key) || seen.has(key)) { dupCount++; return; }
+      seen.add(key);
+      deduped.push(a);
+    });
+
+    pendingImportIstoricTestRide = deduped;
+    statusEl.innerHTML = `Găsite <b>${rawList.length}</b> test ride-uri în fișier` +
+      (invalidCount ? `, <b>${invalidCount}</b> ignorate (fără dată/oră valabile)` : "") +
+      (dupCount ? `, <b>${dupCount}</b> par deja existente (sărite)` : "") +
+      `. Gata de import: <b>${deduped.length}</b>.`;
+    const ph = deduped.slice(0, 30).map(a => `<div style="font-size:11.5px;padding:3px 0;border-bottom:1px solid #eee">${escapeHtml(a.data)} ${escapeHtml(a.ora_inceput)} — ${escapeHtml(a.nume_client)} (${escapeHtml(a.motocicleta)})</div>`).join("");
+    document.getElementById("iitr-preview").innerHTML = deduped.length ? `<div style="max-height:220px;overflow-y:auto;margin-top:8px">${ph}${deduped.length > 30 ? `<div class="muted" style="padding:4px 0">...și încă ${deduped.length - 30}.</div>` : ""}</div>` : "";
+    document.getElementById("iitr-btns").innerHTML = deduped.length
+      ? `<button class="btn-secondary" onclick="rzCloseModal()">Anulează</button><button class="btn-primary" onclick="confirmImportIstoricTestRide()">Importă ${deduped.length} test ride-uri</button>`
+      : `<button class="btn-secondary" onclick="rzCloseModal()">Închide</button>`;
+  } catch (e) {
+    statusEl.innerHTML = '<span style="color:var(--danger)">Nu am putut citi fișierul: ' + escapeHtml(e.message) + '</span>';
+  }
+}
+
+async function confirmImportIstoricTestRide() {
+  if (!pendingImportIstoricTestRide || !pendingImportIstoricTestRide.length) return;
+  const punctLucruId = document.getElementById("iitr-punct-lucru").value || getMyCreateLocationId();
+  const rows = pendingImportIstoricTestRide.map(a => ({
+    ...a,
+    punct_lucru_id: punctLucruId,
+    sursa: "import_istoric",
+    creat_de: currentProfile.id,
+    creat_de_nume: currentProfile.nume,
+  }));
+  const CHUNK = 300;
+  let imported = 0;
+  document.getElementById("iitr-btns").innerHTML = `<span class="muted">Se importă...</span>`;
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    const slice = rows.slice(i, i + CHUNK);
+    const { error } = await client.from("test_ride_uri").insert(slice);
+    if (error) { alert("Eroare la import (după " + imported + " reușite): " + error.message); break; }
+    imported += slice.length;
+  }
+  pendingImportIstoricTestRide = null;
+  rzCloseModal();
+  await loadTestRide();
+  if (typeof rzToast === "function") rzToast("Import finalizat: " + imported + " test ride-uri istorice adăugate.", "ok");
+}
+
+// ======================================================
 // SARCINI — zona de task-uri pe zile, cu calendar Zi/Lună/Perioadă
 // (aceeași structură ca la Programator, dar pentru sarcini de lucru
 // interne, nu programări de service)
@@ -4886,6 +5723,7 @@ function renderSarcinaCard(t, opts) {
     }
     actions += `<button type="button" class="btn-secondary" onclick="rezolvaSarcina('${t.id}')">Rezolvat</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="openCereAjutorModal('${t.id}')">Cere ajutor</button>`;
+    actions += `<button type="button" class="btn-secondary" onclick="openPaseazaModal('${t.id}')">Pasează mai departe</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="openSarcinaModal('${t.id}')">Editează</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="anuleazaSarcina('${t.id}')">✕ Anulează</button>`;
   } else if (t.stare === "Rezolvat") {
@@ -4991,7 +5829,7 @@ function sarExportPerioadaExcel() {
 }
 
 // ---------- MODAL SARCINA (adaugare/editare) ----------
-function populateSarcinaColegSelects(selectedAtribuit, selectedNotifica) {
+function populateSarcinaColegSelects(selectedAtribuit, selectedNotifica, selectedColaboratori) {
   const colegi = allProfiles.filter(p => p.id !== (currentProfile && currentProfile.id) && p.activ !== false);
   const optsAtribuit = '<option value="">— niciunul —</option>' + colegi.map(p => `<option value="${p.id}" data-nume="${escapeHtml(p.nume)}">${escapeHtml(p.nume)}</option>`).join("");
   const selA = document.getElementById("sa-atribuit");
@@ -5003,6 +5841,15 @@ function populateSarcinaColegSelects(selectedAtribuit, selectedNotifica) {
   const selN = document.getElementById("sa-notifica");
   selN.innerHTML = optsNotifica;
   selN.value = selectedNotifica || "";
+
+  // v55: „Colegi care lucrează și ei la task” — mirror pe „Cere ajutor” (aceeași tabelă,
+  // `sarcini_ajutor`), doar ales direct din formular, nu doar dintr-o acțiune separată de pe card.
+  const selC = document.getElementById("sa-colaboratori");
+  if (selC) {
+    selC.innerHTML = colegi.map(p => `<option value="${p.id}" data-nume="${escapeHtml(p.nume)}">${escapeHtml(p.nume)}</option>`).join("");
+    const selSet = new Set(selectedColaboratori || []);
+    [...selC.options].forEach(o => { o.selected = selSet.has(o.value); });
+  }
 }
 
 function openSarcinaModal(id) {
@@ -5017,7 +5864,7 @@ function openSarcinaModal(id) {
     document.getElementById("sa-termen").value = t.termen_limita || "";
     document.getElementById("sa-stare").value = t.stare;
     document.getElementById("sa-prioritate").value = t.prioritate || "Normală";
-    populateSarcinaColegSelects(t.atribuit_catre, t.notifica_la_rezolvare);
+    populateSarcinaColegSelects(t.atribuit_catre, t.notifica_la_rezolvare, (t.ajutor || []).map(a => a.coleg_id));
   } else {
     document.getElementById("sarcina-modal-title").textContent = "Task nou";
     document.getElementById("sa-nume").value = "";
@@ -5027,7 +5874,7 @@ function openSarcinaModal(id) {
     document.getElementById("sa-termen").value = "";
     document.getElementById("sa-stare").value = "De făcut";
     document.getElementById("sa-prioritate").value = "Normală";
-    populateSarcinaColegSelects("", "");
+    populateSarcinaColegSelects("", "", []);
   }
   document.getElementById("sarcina-modal-overlay").classList.add("open");
 }
@@ -5090,7 +5937,7 @@ async function saveSarcina() {
     payload.rezolvat_de_nume = currentProfile.nume;
   }
 
-  let error;
+  let error, sarcinaId = id;
   if (id) {
     ({ error } = await client.from("sarcini").update(payload).eq("id", id));
   } else {
@@ -5103,9 +5950,11 @@ async function saveSarcina() {
     payload.ordine = grupSimilar.length ? Math.max(...grupSimilar.map(t => t.ordine || 0)) + 1 : 0;
     const res = await client.from("sarcini").insert(payload).select().single();
     error = res.error;
-    if (!error && atribuitCatre) await notificaAtribuireSarcina(res.data.id, atribuitCatre, atribuitCatreNume, nume);
+    sarcinaId = res.data && res.data.id;
+    if (!error && atribuitCatre) await notificaAtribuireSarcina(sarcinaId, atribuitCatre, atribuitCatreNume, nume);
   }
   if (error) { alert("Eroare la salvare: " + error.message); return; }
+  if (sarcinaId) await syncSarciniColaboratori(sarcinaId, nume, id ? (existingForStare && existingForStare.ajutor) || [] : []);
   if (id && tocmaiRezolvata && notificaLaRezolvare && notificaLaRezolvare !== currentProfile.id) {
     await client.from("notificari").insert({
       destinatar_id: notificaLaRezolvare, destinatar_nume: notificaLaRezolvareNume,
@@ -5212,6 +6061,90 @@ async function trimiteCereriAjutor(sarcinaId) {
   if (typeof rzToast === "function") rzToast("Cerere de ajutor trimisă.", "ok");
 }
 
+// ---------- COLABORATORI (v55) — alegere directă din formular, aceeași tabelă ca „Cere ajutor" ----------
+// La cererea lui Andrei — să poată împărți un task cu cineva, ca să lucreze simultan la el, nu
+// doar să-l atribuie unei singure persoane. „Cere ajutor" (mai sus) făcea deja exact asta la
+// nivel de date — colegul adăugat vede task-ul integral și poate acționa pe el, la fel ca autorul
+// sau persoana atribuită (`matchesSarciniVizibilitate`) — dar era disponibil DOAR ca acțiune
+// separată, după ce task-ul exista deja, și fără nicio cale de a scoate pe cineva odată adăugat.
+// Multi-select-ul nou din formularul de task (`sa-colaboratori`) scrie/șterge direct din
+// `sarcini_ajutor` — perfect interschimbabil cu „Cere ajutor", pot fi folosite oricare din ele.
+async function syncSarciniColaboratori(sarcinaId, numeSarcina, ajutorExistent) {
+  const selC = document.getElementById("sa-colaboratori");
+  if (!selC) return;
+  const selectate = new Map([...selC.selectedOptions].map(o => [o.value, o.dataset.nume]));
+  const existenteMap = new Map((ajutorExistent || []).map(a => [a.coleg_id, a.coleg_nume]));
+
+  const deAdaugat = [...selectate.keys()].filter(id => !existenteMap.has(id));
+  const deScos = [...existenteMap.keys()].filter(id => !selectate.has(id));
+
+  if (deAdaugat.length) {
+    const rows = deAdaugat.map(id => ({
+      sarcina_id: sarcinaId, coleg_id: id, coleg_nume: selectate.get(id),
+      cerut_de: currentProfile.id, cerut_de_nume: currentProfile.nume,
+    }));
+    const { error } = await client.from("sarcini_ajutor").insert(rows);
+    if (error) { alert("Eroare la adăugarea colaboratorilor: " + error.message); return; }
+    const notifRows = deAdaugat.map(id => ({
+      destinatar_id: id, destinatar_nume: selectate.get(id),
+      mesaj: `${currentProfile.nume} te-a adăugat ca și colaborator la task: ${numeSarcina}`,
+      sarcina_id: sarcinaId, creat_de: currentProfile.id, creat_de_nume: currentProfile.nume,
+    }));
+    await client.from("notificari").insert(notifRows);
+  }
+  if (deScos.length) {
+    const { error } = await client.from("sarcini_ajutor").delete().eq("sarcina_id", sarcinaId).in("coleg_id", deScos);
+    if (error) { alert("Eroare la scoaterea colaboratorilor: " + error.message); return; }
+  }
+}
+
+// ---------- PASEAZĂ MAI DEPARTE (v55) — reasignare rapidă către alt coleg ----------
+// Diferit de „Colaboratori"/„Cere ajutor" de mai sus (unde task-ul rămâne comun, vizibil tuturor
+// celor implicați) — aici responsabilitatea (`atribuit_catre`) TRECE integral la colegul ales.
+// Creatorul original tot vede task-ul mai departe (rămâne „creat_de"), dar nu mai apare ca
+// responsabil. Lasă și o observație automată, ca urmă clară a predării, vizibilă în istoricul
+// task-ului.
+function openPaseazaModal(id) {
+  const t = currentSarcini.find(x => x.id === id);
+  if (!t) return;
+  const colegi = allProfiles.filter(p => p.id !== currentProfile.id && p.activ !== false);
+  if (!colegi.length) { alert("Nu există alți colegi activi cărora să le pasezi task-ul."); return; }
+  const html = `<h3>Pasează mai departe — ${escapeHtml(t.nume)}</h3>
+    <div class="muted" style="font-size:12.5px">Task-ul devine responsabilitatea colegului ales — primește o notificare și task-ul apare la el ca „atribuit”. Tu rămâi vizibil ca cel care l-a creat inițial.</div>
+    <div class="field" style="margin-top:12px">
+      <label>Pasează către</label>
+      <select id="pas-coleg">${colegi.map(p => `<option value="${p.id}" data-nume="${escapeHtml(p.nume)}">${escapeHtml(p.nume)}</option>`).join("")}</select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="rzCloseModal()">Anulează</button>
+      <button class="btn-primary" onclick="confirmaPaseazaSarcina('${id}')">Pasează</button>
+    </div>`;
+  rzOpenModal(html);
+}
+
+async function confirmaPaseazaSarcina(id) {
+  const t = currentSarcini.find(x => x.id === id);
+  if (!t) return;
+  const sel = document.getElementById("pas-coleg");
+  const colegId = sel.value;
+  const colegNume = (sel.selectedOptions[0] && sel.selectedOptions[0].dataset.nume) || "";
+  if (!colegId) { alert("Alege un coleg."); return; }
+  const { error } = await client.from("sarcini").update({ atribuit_catre: colegId, atribuit_catre_nume: colegNume }).eq("id", id);
+  if (error) { alert("Eroare: " + error.message); return; }
+  await client.from("notificari").insert({
+    destinatar_id: colegId, destinatar_nume: colegNume,
+    mesaj: `${currentProfile.nume} ți-a pasat mai departe task-ul: ${t.nume}`,
+    sarcina_id: id, creat_de: currentProfile.id, creat_de_nume: currentProfile.nume,
+  });
+  await client.from("sarcini_observatii").insert({
+    sarcina_id: id, autor_id: currentProfile.id, autor_nume: currentProfile.nume,
+    text: `Task pasat mai departe de la ${currentProfile.nume} către ${colegNume}.`,
+  });
+  rzCloseModal();
+  await loadSarcini();
+  if (typeof rzToast === "function") rzToast("Task pasat către " + colegNume, "ok");
+}
+
 // ---------- DETALIU SARCINĂ (pop-up mărit: toate datele + observații) ----------
 // v31: la cererea lui Andrei — click pe o sarcină "s-o mareasca" ca sa vada mai clar
 // datele introduse, in acelasi pop-up cu observatiile (vechi + posibilitate de a nota altele noi).
@@ -5258,6 +6191,7 @@ function renderSarcinaDetaliuModalContent(t) {
     <div class="modal-actions">
       <button class="btn-secondary" onclick="rzCloseModal()">Închide</button>
       <button class="btn-secondary" onclick="rzCloseModal(); openSarcinaModal('${t.id}')">Editează task-ul</button>
+      ${t.stare === "De făcut" ? `<button class="btn-secondary" onclick="rzCloseModal(); openPaseazaModal('${t.id}')">Pasează mai departe</button>` : ""}
       <button class="btn-primary" onclick="adaugaObservatieSarcina('${t.id}')">Adaugă observație</button>
     </div>`;
   rzOpenModal(html);
@@ -6509,6 +7443,7 @@ const RZ_OVERLAY_CLOSERS = {
   "client-modal-overlay": () => closeClientModal(),
   "dup-overlay": () => cancelDuplicate(),
   "programare-modal-overlay": () => closeProgramareModal(),
+  "test-ride-modal-overlay": () => closeTestRideModal(),
   "rampa-inchideri-modal-overlay": () => closeRampaInchideriModal(),
   "sarcina-modal-overlay": () => closeSarcinaModal(),
   "garantie-modal-overlay": () => closeGarantieModal(),
@@ -6573,7 +7508,7 @@ document.addEventListener("keydown", function (e) {
 // Grupul de meniu e „activ” (accent + subliniere) dacă tab-ul curent e oriunde în interiorul lui —
 // ținut separat de starea individuală a fiecărui buton din dropdown.
 function updateNavGroupActiveStates(tab, inComenziGroup) {
-  const vanzariTabs = inComenziGroup || tab === "clienti" || tab === "catalog";
+  const vanzariTabs = inComenziGroup || tab === "clienti" || tab === "catalog" || tab === "test-ride";
   const serviceTabs = tab === "catalog" || tab === "programator" || tab === "devize" || tab === "daune" || tab === "garantii";
   const gestiuneTabs = tab === "inventar" || tab === "receptie";
   const vBtn = document.getElementById("navgrp-btn-vanzari"); if (vBtn) vBtn.classList.toggle("active", vanzariTabs);
@@ -7524,6 +8459,14 @@ function rzSubscribeRealtime() {
       .on("postgres_changes", { event: "*", schema: "public", table: "programari" }, () => { loadProgramari(); })
       .subscribe();
   } catch (e) { console.warn("realtime programari indisponibil", e); }
+  // v55: aceeași idee ca la programari (v50) — o rezervare de test ride făcută de un coleg apare
+  // aproape instant și la ceilalți, ca avertismentul de conflict (aici, blocajul dur) să nu
+  // "rateze" o rezervare foarte recentă de pe alt calculator.
+  try {
+    client.channel("rz-test-ride-sync")
+      .on("postgres_changes", { event: "*", schema: "public", table: "test_ride_uri" }, () => { loadTestRide(); })
+      .subscribe();
+  } catch (e) { console.warn("realtime test ride indisponibil", e); }
 }
 
 // ---------- SCAN INPUT: ENTER trimite scanarea ----------
@@ -7954,6 +8897,7 @@ function renderPieseComandat() {
 const PERMISIUNI_DEF = [
   { key: "perm_comenzi", label: "Comenzi clienți (creare/editare)" },
   { key: "perm_programator", label: "Programator" },
+  { key: "perm_test_ride", label: "Test Rides" },
   { key: "perm_devize", label: "Piese (listă prețuri)" },
   { key: "perm_receptie", label: "Recepție" },
   { key: "perm_inventar", label: "Inventar" },
@@ -8077,15 +9021,16 @@ function renderUseriRoluriModal() {
                 ${p.rol === "admin" ? '<span class="muted" style="font-size:11.5px">—</span>' : `
                   <input type="checkbox" ${p.activ !== false ? "checked" : ""} onchange="toggleUserActiv('${p.id}', this.checked)" style="width:16px;height:16px" />`}
               </td>
-              <td>
-                ${p.rol === "admin" ? "" : `<button class="btn-secondary" style="padding:4px 9px;font-size:11.5px;color:#b91c1c" onclick="stergeUserDefinitiv('${p.id}', ${jsStrAttr(p.nume)})">Șterge</button>`}
+              <td style="white-space:nowrap">
+                <button class="btn-secondary" style="padding:4px 9px;font-size:11.5px" onclick="openResetParolaModal('${p.id}', ${jsStrAttr(p.nume)})">Resetează parola</button>
+                ${p.rol === "admin" ? "" : ` <button class="btn-secondary" style="padding:4px 9px;font-size:11.5px;color:#b91c1c" onclick="stergeUserDefinitiv('${p.id}', ${jsStrAttr(p.nume)})">Șterge</button>`}
               </td>
             </tr>
           `).join("")}
         </tbody>
       </table>
     </div>
-    <div class="muted" style="font-size:11.5px;margin-top:6px">„Șterge” elimină definitiv contul (autentificare + profil) — nu poate fi anulat. Pentru o pauză temporară, folosește caseta „Activ”.</div>
+    <div class="muted" style="font-size:11.5px;margin-top:6px">„Șterge” elimină definitiv contul (autentificare + profil) — nu poate fi anulat. Pentru o pauză temporară, folosește caseta „Activ”. „Resetează parola” pune direct o parolă nouă unui cont, fără email — util când cineva e blocat sau nu mai are acces la emailul lui.</div>
 
     <div class="export-section-label" style="margin-top:16px">Adaugă angajat nou</div>
     <div class="muted" style="font-size:12.5px;margin-bottom:8px">Creează direct de aici contul de autentificare și profilul angajatului — nu mai trebuie să faci nimic manual în Supabase.</div>
@@ -8164,6 +9109,44 @@ async function toggleUserActiv(userId, activ) {
   await loadAllProfiles();
   renderUseriRoluriModal();
   if (typeof rzToast === "function") rzToast(activ ? "Cont activat" : "Cont dezactivat", "ok");
+}
+
+// v56: „Resetează parola” (admin) — funcție Edge NOUĂ, separată de „admin-users”
+// („admin-set-parola"), tocmai ca să nu riscăm să atingem deloc codul deja funcțional de
+// creare/dezactivare/ștergere cont. Setează direct o parolă nouă unui cont, fără email — util
+// pentru situația în care un cont e blocat (ex. eroare la link-ul de resetare din email) sau
+// colegul nu mai are acces la emailul lui.
+async function invokeAdminSetParola(userId, parolaNoua) {
+  const { data: sessionData } = await client.auth.getSession();
+  const accessToken = sessionData && sessionData.session && sessionData.session.access_token;
+  if (!accessToken) return { data: null, error: { message: "Nu ești autentificat — reîncarcă pagina și loghează-te din nou." } };
+  return client.functions.invoke("admin-set-parola", { body: { user_id: userId, new_password: parolaNoua }, headers: { Authorization: `Bearer ${accessToken}` } });
+}
+
+function openResetParolaModal(userId, nume) {
+  const html = `<h3>Resetează parola — ${escapeHtml(nume)}</h3>
+    <div class="muted" style="font-size:12.5px">Parola devine valabilă imediat, fără email — trebuie s-o comunici tu însuți colegului.</div>
+    <div class="modal-grid" style="margin-top:12px">
+      <div class="field"><label>Parolă nouă</label><input type="text" id="rpa-parola-noua" placeholder="minim 6 caractere" /></div>
+    </div>
+    <div id="rpa-err" style="color:var(--danger);font-size:12.5px;min-height:16px;margin-top:2px"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="rzCloseModal()">Anulează</button>
+      <button class="btn-primary" onclick="confirmaResetParolaAdmin('${userId}')">Setează parola</button>
+    </div>`;
+  rzOpenModal(html);
+}
+
+async function confirmaResetParolaAdmin(userId) {
+  const parolaNoua = document.getElementById("rpa-parola-noua").value.trim();
+  const errEl = document.getElementById("rpa-err");
+  if (!parolaNoua || parolaNoua.length < 6) { errEl.textContent = "Parola trebuie să aibă cel puțin 6 caractere."; return; }
+  const { data, error } = await invokeAdminSetParola(userId, parolaNoua);
+  const rezultat = data || {};
+  if (error || !rezultat.ok) { errEl.textContent = "Eroare: " + (rezultat.error || (error && error.message) || "eroare necunoscută"); return; }
+  rzCloseModal();
+  if (typeof rzToast === "function") rzToast("Parolă nouă setată", "ok");
+  else alert("Parolă nouă setată.");
 }
 
 async function stergeUserDefinitiv(userId, nume) {
