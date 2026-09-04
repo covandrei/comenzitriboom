@@ -882,6 +882,8 @@
           </select>
         </div>
         <div class="toolbar-actions">
+          <button class="btn-secondary" id="btn-gar-incarca-factura" style="display:none" onclick="document.getElementById('bulk-gar-factura-file').click()" title="Numele fișierului încărcat devine automat Nr. factură pentru toate dosarele bifate">📄 Încarcă factură</button>
+          <input type="file" id="bulk-gar-factura-file" style="display:none" onchange="garantiiSetFacturaFromFile(this.files)" />
           <button class="btn-secondary" onclick="exportGarantiiExcel()">Exportă Excel</button>
           <button class="btn-primary" onclick="openGarantieModal()">+ Garanție nouă</button>
         </div>
@@ -891,6 +893,7 @@
         <table>
           <thead>
             <tr>
+              <th style="width:30px"><input type="checkbox" id="select-all-garantii" onchange="toggleSelectAllGarantii(this)" title="Selectează tot" /></th>
               <th>Cod</th>
               <th>VIN</th>
               <th>Client</th>
@@ -971,6 +974,7 @@
             <button class="btn-secondary" onclick="document.getElementById('dvz-import-historic-file').click()" title="Importă fișiere .html exportate anterior (Print / Save), pentru o centralizare a devizelor vechi în sistem">📥 Importă istoric (.html)</button>
             <input type="file" id="dvz-import-historic-file" accept=".html,text/html" multiple style="display:none" onchange="dvzImportHistoricFiles(this.files); this.value='';" />
             <button class="btn-secondary" style="color:#b91c1c" onclick="dvzDeleteAllDevize()" title="Șterge definitiv TOATE devizele din sistem (doar admin)">🗑️ Șterge toate devizele</button>
+            <button class="btn-secondary" onclick="dvzOpenPreturiUzuale()" title="Gestionează lista de produse și manopere uzuale, folosită pentru sugestiile din meniul rapid (autocomplete) la completarea unui deviz">⚙️ Produse/Manopere uzuale</button>
             <button class="btn-primary" onclick="openDevizEditor(null)">+ Deviz nou</button>
           </div>
         </div>
@@ -1347,7 +1351,7 @@
         <input id="rz-scan-input" type="text" placeholder="Scanează sau scrie codul de bară..." autocomplete="off" />
         <button class="btn-primary" onclick="rzManualScan()">✓ OK</button>
       </div>
-      <div class="rz-scan-options">
+      <div class="rz-scan-options" id="rz-scan-options">
         <label><input type="checkbox" id="rz-opt-rapid" /> Mod rapid (bifează cantitatea completă la prima scanare)</label>
         <label><input type="checkbox" id="rz-opt-fanfara" checked /> Semnal sonor la completarea facturii</label>
       </div>
@@ -1947,6 +1951,9 @@ let sortState = { column: "termen_livrare", dir: "asc" };
 // proprie, nu refolosim "sortState"/"setSort" de mai sus, care e legat strict de tabelul de la
 // "Piese de comandat" (aceleași nume de funcție ar coliziona cu acel tabel).
 let dvzSortState = { column: "data", dir: "desc" };
+// v45: selecție multiplă la Garanții, pentru "Încarcă factură" în bulk (același tipar ca la
+// Comenzi/selectedOrderIds, dar separat — sunt liste diferite).
+let selectedGarantieIds = new Set();
 let statusFilter = null;
 let brandFilter = "";
 let selectedBrand = null;
@@ -2502,6 +2509,21 @@ function badgePlata(stare) {
   if (stare === "Daună asigurator") cls = "badge-plata-dauna";
   return `<span class="badge ${cls}">${escapeHtml(stare)}</span>`;
 }
+const STARI_PLATA = ["Neachitat", "Achitat parțial 50%", "Achitat integral", "Daună asigurator"];
+function plataStyleFor(stare) {
+  if (stare === "Achitat parțial 50%") return { bg: "#fef3c7", text: "#92400e" };
+  if (stare === "Achitat integral") return { bg: "#dcfce7", text: "#166534" };
+  if (stare === "Daună asigurator") return { bg: "#e0e7ff", text: "#3730a3" };
+  return { bg: "#fee2e2", text: "#991b1b" };
+}
+// v45: la cererea lui Andrei — starea plății editabilă direct din listă, cu dropdown colorat,
+// exact ca la renderStareSelect (stare_comanda) — nu mai e nevoie să deschizi editarea completă.
+function renderPlataSelect(o) {
+  const stare = o.stare_plata || "Neachitat";
+  const style = plataStyleFor(stare);
+  const options = STARI_PLATA.map(s => `<option value="${s}" ${s === stare ? "selected" : ""}>${s}</option>`).join("");
+  return `<select class="stare-select" style="background:${style.bg};color:${style.text}" onchange="updateField('${o.id}','stare_plata',this.value)">${options}</select>`;
+}
 
 function renderBrandBadge(brand) {
   if (!brand) return '<span class="muted">—</span>';
@@ -2661,7 +2683,7 @@ function renderTable() {
     const furnizorCell = `<td${rs}>${renderFurnizorCell(o)}</td>`;
     const facturaCell = `<td${rs}>${renderFacturaInput(o)}</td>`;
     const stareCell = `<td${rs}>${renderStareSelect(o)}</td>`;
-    const plataCell = `<td${rs}>${badgePlata(o.stare_plata)}</td>`;
+    const plataCell = `<td${rs}>${renderPlataSelect(o)}</td>`;
     const creatDeCell = `<td${rs}>${escapeHtml(o.creat_de_nume || "")}</td>`;
     const actionsCell = `<td${rs}>${renderActions(o)}</td>`;
     const editBtn = (canDo("perm_comenzi") || canDo("perm_piese_comandat"))
@@ -4672,12 +4694,13 @@ function renderGarantiiTable() {
     return hay.includes(cautare);
   });
   if (rows.length === 0) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="12">Niciun dosar de garanție înregistrat încă.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="13">Niciun dosar de garanție înregistrat încă.</td></tr>';
     return;
   }
   const poateEdita = amAdmin() || canDo("perm_garantii");
   tbody.innerHTML = rows.map(g => `
     <tr${poateEdita ? ` class="rz-row-clickable" onclick="if(event.target.closest('input,button,.actions-cell'))return; openGarantieModal('${g.id}')" title="Click pentru a deschide garanția"` : ""}>
+      <td><input type="checkbox" class="garantie-select-cb" value="${g.id}" onchange="updateGarantiiBulkButtons()" ${selectedGarantieIds.has(g.id) ? "checked" : ""} /></td>
       <td>${escapeHtml(g.cod || "—")}</td>
       <td>${escapeHtml(g.vin || "—")}</td>
       <td>${escapeHtml(g.client_nume || "")} ${escapeHtml(g.client_prenume || "")}</td>
@@ -4701,6 +4724,35 @@ function renderGarantiiTable() {
       </td>
     </tr>
   `).join("");
+}
+
+// v45: selecție multiplă + "Încarcă factură" în bulk, la cererea lui Andrei — același
+// mecanism ca la Comenzi (comenziSetFacturaFromFile), aplicat acum și la Garanții.
+function toggleSelectAllGarantii(cb) {
+  document.querySelectorAll(".garantie-select-cb").forEach(el => { el.checked = cb.checked; });
+  updateGarantiiBulkButtons();
+}
+function updateGarantiiBulkButtons() {
+  selectedGarantieIds = new Set([...document.querySelectorAll(".garantie-select-cb:checked")].map(el => el.value));
+  const btn = document.getElementById("btn-gar-incarca-factura");
+  if (btn) btn.style.display = selectedGarantieIds.size ? "inline-flex" : "none";
+}
+async function garantiiSetFacturaFromFile(fileList) {
+  const file = fileList && fileList[0];
+  const input = document.getElementById("bulk-gar-factura-file");
+  if (!file) return;
+  if (!selectedGarantieIds.size) { alert("Selectează cel puțin un dosar din tabel."); if (input) input.value = ""; return; }
+  const numeFaraExtensie = file.name.replace(/\.[^/.]+$/, "").trim() || file.name;
+  const ids = [...selectedGarantieIds];
+  const { error } = await client.from("garantii").update({ numar_factura: numeFaraExtensie }).in("id", ids);
+  if (input) input.value = "";
+  if (error) { alert("Eroare la actualizarea numărului de factură: " + error.message); return; }
+  await loadGarantii();
+  const selAll = document.getElementById("select-all-garantii"); if (selAll) selAll.checked = false;
+  selectedGarantieIds = new Set();
+  const btn = document.getElementById("btn-gar-incarca-factura"); if (btn) btn.style.display = "none";
+  const mesaj = `Nr. factură „${numeFaraExtensie}” aplicat la ${ids.length} dosar${ids.length === 1 ? "" : "e"} de garanție.`;
+  if (typeof rzToast === "function") rzToast(mesaj, "ok"); else alert(mesaj);
 }
 
 // editare directă din listă (fără să deschizi formularul) — ex: numărul de factură,
@@ -5865,6 +5917,10 @@ function rzSetMode(m) {
   document.getElementById("rz-legend").style.display = m === "receptie" ? "flex" : "none";
   document.getElementById("rz-filter-dn").style.display = m === "receptie" ? "" : "none";
   document.getElementById("rz-filter-status").style.display = m === "receptie" ? "" : "none";
+  // v45: la cererea lui Andrei — "Mod rapid"/"Semnal sonor" nu au oricum niciun efect în Inventar
+  // liber (rzScan iese direct spre rzScanInventar, înainte să le verifice) — rămân vizibile doar
+  // la Recepție factură, unde chiar contează.
+  const scanOpts = document.getElementById("rz-scan-options"); if (scanOpts) scanOpts.style.display = m === "receptie" ? "flex" : "none";
   document.getElementById("rz-filter-text").placeholder = m === "inventar" ? "Caută cod / denumire în inventar..." : "Caută cod / denumire / destinatar...";
   document.getElementById("rz-scan-input").placeholder = m === "receptie" ? "Scanează sau scrie codul de bară..." : "Scanează cod pentru inventar...";
   rzUpdateStats();
@@ -6513,12 +6569,15 @@ function rzOpenPriceSettings() {
         <div class="title">Curs EUR/RON</div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Curs activ: <b>${rate ? rate + " RON" : "—"}</b> (sursă: ${rateSource})</div>
         ${rzSetari.curs_bnr_actualizat_la ? `<div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">🔄 Curs preluat automat (sursă: ${rzSetari.curs_bnr_sursa === "BCE" ? "BCE, rezervă — BNR indisponibil" : "BNR"}), ultima actualizare: ${formatDate(rzSetari.curs_bnr_actualizat_la)}</div>` : ""}
+        <div class="rz-inline-row" style="margin-bottom:6px">
+          <button class="btn-secondary" id="rz-btn-refresh-curs" onclick="rzRefreshCursBnr()">🔄 Interoghează BNR/BCE acum</button>
+        </div>
         <div class="rz-inline-row">
           <input id="rz-ps-eur" type="number" step="0.0001" min="0" value="${rzSetari.curs_eur_manual || ""}" placeholder="ex: 5.0850" style="width:100px" />
           <button class="btn-secondary" onclick="rzPsSaveEur()">Salvează curs manual</button>
           <button class="btn-secondary" onclick="rzPsClearEur()">Șterge (folosește ultimul curs)</button>
         </div>
-        <div class="hint">Cursul manual are prioritate și oprește preluarea automată. La prețurile EUR se adaugă automat 1%. Fără curs manual, aplicația folosește cursul BNR preluat automat (vezi mai jos, INSTRUCTIUNI.md, „Curs BNR automat”).</div>
+        <div class="hint">Cursul manual are prioritate și oprește preluarea automată. La prețurile EUR se adaugă automat 1%. Fără curs manual, aplicația folosește cursul BNR preluat automat (vezi mai jos, INSTRUCTIUNI.md, „Curs BNR automat”) — sau apasă „Interoghează BNR/BCE acum” pentru o actualizare imediată.</div>
       </div>
       <div class="rz-price-settings-box markup">
         <div class="title">Adaos comercial (%) — pe fiecare marcă</div>
@@ -6557,6 +6616,27 @@ async function rzPsClearEur() {
   rzUpdateCursStatus(); rzRender();
   rzToast("Folosesc ultimul curs cunoscut", "ok");
   rzOpenPriceSettings();
+}
+// v45: la cererea lui Andrei — buton de interogare/actualizare manuală a cursului, pe lângă cel
+// automat (rulat de funcția Supabase "curs-bnr", care scrie direct în tabela "setari" — dacă acel
+// job programat se blochează sau eșuează, cursul afișat rămâne "înghețat" pe ultima valoare bună,
+// fără niciun semn în interfață; până acum n-a existat NICIUN mod de a forța o reîncercare din
+// aplicație). Butonul apelează aceeași funcție la cerere și arată explicit eroarea, dacă apare.
+async function rzRefreshCursBnr() {
+  const btn = document.getElementById("rz-btn-refresh-curs");
+  if (btn) { btn.disabled = true; btn.textContent = "⏳ Se interoghează..."; }
+  try {
+    const { error } = await client.functions.invoke("curs-bnr");
+    if (error) { alert("Eroare la interogarea cursului BNR/BCE: " + error.message); return; }
+    await rzLoadSetari();
+    rzRender();
+    if (typeof rzToast === "function") rzToast("Curs actualizat", "ok");
+    rzOpenPriceSettings();
+  } catch (e) {
+    alert("Eroare la interogarea cursului BNR/BCE: " + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "🔄 Interoghează BNR/BCE acum"; }
+  }
 }
 async function rzPsSaveMarkup() {
   const inputs = document.querySelectorAll(".rz-ps-adaos");
@@ -7505,6 +7585,98 @@ async function dvzLoadTarife() {
 async function dvzLoadPreturiUzuale() {
   const { data, error } = await client.from("preturi_uzuale").select("*").order("nume");
   if (!error) dvzPreturiUzuale = data || [];
+}
+
+// v45: la cererea lui Andrei — meniu de gestiune pentru "produse uzuale" / "manopere uzuale"
+// (tabela preturi_uzuale), folosită până acum DOAR ca sursă de sugestii (autocomplete) la completarea
+// unui deviz, fără nicio interfață de adăugat/scos/modificat prețuri. Andrei a întrebat dacă e mai bine
+// să unificăm asta cu "Inventar Liber" — nu: Inventar Liber e un jurnal de stoc fizic (scanezi ce a
+// intrat efectiv pe stoc, cu destinație), nu are deloc conceptul de "manoperă" și nu are sens ca sursă
+// stabilă de prețuri sugerate. Am făcut deci o listă dedicată, separată de Inventar Liber, care
+// alimentează direct meniul rapid din Deviz (dvzPreturiUzuale) — la fiecare adăugare/ștergere/modificare
+// se reîncarcă automat și sugestiile din deviz reflectă imediat schimbarea.
+let dvzPuFilterTip = "toate";
+function dvzOpenPreturiUzuale() {
+  dvzRenderPreturiUzuale();
+}
+function dvzRenderPreturiUzuale() {
+  const lista = dvzPreturiUzuale
+    .filter(p => dvzPuFilterTip === "toate" || p.tip === dvzPuFilterTip)
+    .slice()
+    .sort((a, b) => (a.nume || "").localeCompare(b.nume || "", "ro"));
+  const rows = lista.map(p => `
+    <tr data-id="${p.id}">
+      <td>${p.tip === "manopera" ? "🔧 Manoperă" : "⚙️ Piesă"}</td>
+      <td><input class="dvz-pu-cod" value="${escapeHtml(p.cod || "")}" style="width:100px" /></td>
+      <td><input class="dvz-pu-nume" value="${escapeHtml(p.nume || "")}" style="min-width:180px" /></td>
+      <td><input class="dvz-pu-pret" type="number" step="0.01" min="0" value="${p.pret_cu_tva ?? ""}" style="width:90px" /></td>
+      <td style="white-space:nowrap">
+        <button class="btn-secondary" style="padding:2px 8px;font-size:12px" onclick="dvzSavePreturiUzualeRow('${p.id}')">💾 Salvează</button>
+        <button class="btn-secondary" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="dvzDeletePreturiUzualeRow('${p.id}', ${JSON.stringify(p.nume || "")})">🗑</button>
+      </td>
+    </tr>`).join("");
+  rzOpenModal(`<h3>⚙️ Produse / Manopere uzuale</h3>
+    <div style="margin-top:6px;font-size:13px">
+      <div class="hint">Lista de mai jos alimentează sugestiile (autocomplete) care apar când completezi denumirea unei piese sau a unei operații de manoperă într-un deviz. E complet separată de „Inventar liber" (care ține evidența stocului fizic scanat) — aici păstrezi doar o listă de prețuri „standard" pentru ce folosești des.</div>
+      <div class="rz-inline-row" style="margin:10px 0">
+        <label style="font-size:12px">Filtru:</label>
+        <select id="dvz-pu-filter" onchange="dvzPuFilterTip=this.value; dvzRenderPreturiUzuale()" style="width:auto">
+          <option value="toate" ${dvzPuFilterTip === "toate" ? "selected" : ""}>Toate</option>
+          <option value="piesa" ${dvzPuFilterTip === "piesa" ? "selected" : ""}>Doar piese</option>
+          <option value="manopera" ${dvzPuFilterTip === "manopera" ? "selected" : ""}>Doar manoperă</option>
+        </select>
+      </div>
+      <div style="max-height:340px;overflow:auto;border:1px solid var(--border);border-radius:8px">
+        <table class="data-table" style="margin:0">
+          <thead><tr><th>Tip</th><th>Cod</th><th>Denumire</th><th>Preț (TVA inclus)</th><th></th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="5" class="muted" style="text-align:center;padding:14px">Nicio intrare încă.</td></tr>'}</tbody>
+        </table>
+      </div>
+      <div class="rz-price-settings-box" style="margin-top:12px">
+        <div class="title">+ Adaugă intrare nouă</div>
+        <div class="rz-inline-row" style="flex-wrap:wrap">
+          <select id="dvz-pu-new-tip" style="width:auto"><option value="piesa">⚙️ Piesă</option><option value="manopera">🔧 Manoperă</option></select>
+          <input id="dvz-pu-new-cod" placeholder="Cod" style="width:100px" />
+          <input id="dvz-pu-new-nume" placeholder="Denumire" style="min-width:180px" />
+          <input id="dvz-pu-new-pret" type="number" step="0.01" min="0" placeholder="Preț cu TVA" style="width:110px" />
+          <button class="btn-primary" onclick="dvzAddPreturiUzualeRow()">+ Adaugă</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions"><button class="btn-secondary" onclick="rzCloseModal()">Închide</button></div>`);
+}
+async function dvzAddPreturiUzualeRow() {
+  const tip = document.getElementById("dvz-pu-new-tip").value;
+  const cod = document.getElementById("dvz-pu-new-cod").value.trim();
+  const nume = document.getElementById("dvz-pu-new-nume").value.trim();
+  const pret = parseFloat(document.getElementById("dvz-pu-new-pret").value) || 0;
+  if (!nume) { alert("Completează denumirea."); return; }
+  const { error } = await client.from("preturi_uzuale").insert({ tip, cod: cod || null, nume, pret_cu_tva: pret });
+  if (error) { alert("Eroare la adăugare: " + error.message); return; }
+  await dvzLoadPreturiUzuale();
+  rzToast("Adăugat: " + nume, "ok");
+  dvzRenderPreturiUzuale();
+}
+async function dvzSavePreturiUzualeRow(id) {
+  const tr = document.querySelector(`#rz-modal-box tr[data-id="${id}"]`);
+  if (!tr) return;
+  const cod = tr.querySelector(".dvz-pu-cod").value.trim();
+  const nume = tr.querySelector(".dvz-pu-nume").value.trim();
+  const pret = parseFloat(tr.querySelector(".dvz-pu-pret").value) || 0;
+  if (!nume) { alert("Denumirea nu poate fi goală."); return; }
+  const { error } = await client.from("preturi_uzuale").update({ cod: cod || null, nume, pret_cu_tva: pret }).eq("id", id);
+  if (error) { alert("Eroare la salvare: " + error.message); return; }
+  await dvzLoadPreturiUzuale();
+  rzToast("Salvat", "ok");
+  dvzRenderPreturiUzuale();
+}
+async function dvzDeletePreturiUzualeRow(id, nume) {
+  if (!confirm(`Ștergi „${nume}" din lista de produse/manopere uzuale?`)) return;
+  const { error } = await client.from("preturi_uzuale").delete().eq("id", id);
+  if (error) { alert("Eroare la ștergere: " + error.message); return; }
+  await dvzLoadPreturiUzuale();
+  rzToast("Șters", "ok");
+  dvzRenderPreturiUzuale();
 }
 
 // ---------- LISTA DEVIZE ----------
