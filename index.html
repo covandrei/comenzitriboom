@@ -366,6 +366,20 @@
   .dvz-pu-drag-handle:active { cursor: grabbing; }
   tr.dvz-pu-row-dragging { opacity: .4; }
   tr.dvz-pu-row-dragover td { border-top: 2px solid var(--accent); }
+  /* v50: la cererea lui Andrei — rândurile din "Produse/Manopere uzuale" să se separe mai clar
+     între ele, hover mai vizibil, și feedback vizual direct pe rând la Salvează/Șterge (nu doar
+     prin toast-ul din colț). */
+  #dvz-pu-tbody tr { transition: background-color .2s ease; }
+  #dvz-pu-tbody tr:not(:last-child) td { border-bottom: 1px solid var(--border); }
+  #dvz-pu-tbody tr:hover { background-color: #f2f5fa; }
+  #dvz-pu-tbody tr:hover .dvz-pu-cod, #dvz-pu-tbody tr:hover .dvz-pu-nume, #dvz-pu-tbody tr:hover .dvz-pu-pret { border-color: var(--accent); }
+  .dvz-pu-save-btn { transition: background-color .15s ease, border-color .15s ease; }
+  .dvz-pu-save-btn:hover { background: #dcfce7; border-color: #86efac; color: #166534; }
+  .dvz-pu-delete-btn { transition: background-color .15s ease, border-color .15s ease; }
+  .dvz-pu-delete-btn:hover { background: #fee2e2; border-color: #fca5a5; }
+  tr.dvz-pu-row-saving { background-color: #eef2ff !important; }
+  tr.dvz-pu-row-saved { background-color: #dcfce7 !important; }
+  tr.dvz-pu-row-deleting { background-color: #fee2e2 !important; opacity: .55; }
   .rz-inline-row input, .rz-inline-row select { padding: 6px 9px; border-radius: 6px; border: 1.5px solid var(--border); font-size: 13px; font-family: inherit; }
   /* v40: notificările erau în colțul dreapta-jos, exact unde stă și bulina/panoul de chat
      (#msg-bubble/#msg-panel, care rămân la right:20px) — o notificare apărută cât timp chatul
@@ -675,8 +689,9 @@
       <button class="tab-btn" id="tab-programator" onclick="switchTab('programator')">📅 Programator</button>
       <button class="tab-btn" id="tab-clienti" onclick="switchTab('clienti')">Clienți</button>
       <button class="tab-btn" id="tab-group-service" onclick="switchTab('catalog')">Piese (listă prețuri)</button>
-      <button class="tab-btn" id="tab-receptie" onclick="switchTab('receptie')">Recepție &amp; Inventar</button>
-      <button class="tab-btn" id="tab-sarcini" onclick="switchTab('sarcini')">🗒️ Sarcini</button>
+      <button class="tab-btn" id="tab-receptie" onclick="switchTab('receptie')">📥 Recepție</button>
+      <button class="tab-btn" id="tab-inventar" onclick="switchTab('inventar')">📦 Inventar</button>
+      <button class="tab-btn" id="tab-sarcini" onclick="switchTab('sarcini')">🗒️ Task-uri</button>
       <button class="tab-btn" id="tab-garantii" onclick="switchTab('garantii')">🛡️ Garanții</button>
       <button class="tab-btn" id="tab-daune" onclick="switchTab('daune')">🚗 Daune</button>
       <button class="tab-btn" id="tab-devize" onclick="switchTab('devize')">🧾 Devize</button>
@@ -693,7 +708,7 @@
       <button class="subtab-btn" id="tab-prog-perioada" onclick="setProgramatorMode('perioada')">Raport anual / perioadă</button>
     </div>
     <div class="subtabs" id="subtabs-sarcini">
-      <button class="subtab-btn active" id="tab-sar-zi" onclick="setSarciniMode('zi')">Sarcini Zi</button>
+      <button class="subtab-btn active" id="tab-sar-zi" onclick="setSarciniMode('zi')">Task-uri Zi</button>
       <button class="subtab-btn" id="tab-sar-luna" onclick="setSarciniMode('luna')">Raport lunar</button>
       <button class="subtab-btn" id="tab-sar-perioada" onclick="setSarciniMode('perioada')">Raport anual / perioadă</button>
     </div>
@@ -840,9 +855,9 @@
           <input type="date" id="sar-data" onchange="onSarciniDataChanged()" />
           <button class="btn-secondary" onclick="sarGoToday()">Azi</button>
           <select id="sar-filtru-atribuit-zi" onchange="onSarciniFiltruAtribuitChanged(this.value)"></select>
-          <button class="btn-primary" onclick="openSarcinaModal()">+ Sarcină nouă</button>
+          <button class="btn-primary" onclick="openSarcinaModal()">+ Task nou</button>
         </div>
-        <div class="muted" style="font-size:11.5px;margin:2px 0 8px">Sarcinile sunt afișate în ordinea urgenței (prioritate, apoi ordinea stabilită manual cu ▲ / ▼). Filtrează după coleg ca să-i rearanjezi lista lui exact în ordinea în care vrei să le facă.</div>
+        <div class="muted" style="font-size:11.5px;margin:2px 0 8px">Task-urile sunt afișate în ordinea urgenței (prioritate, apoi ordinea stabilită manual cu ▲ / ▼). Filtrează după coleg ca să-i rearanjezi lista lui exact în ordinea în care vrei să le facă.</div>
         <div id="sarcini-day-list"></div>
       </div>
 
@@ -1325,22 +1340,29 @@
     </div>
 
     <!-- ===== VIEW RECEPTIE & INVENTAR ===== -->
+    <!-- v50: la cererea lui Andrei — Recepție și Inventar au devenit două categorii/taburi separate
+         în bara de sus (vezi tab-receptie / tab-inventar), fiecare cu propria permisiune
+         (perm_receptie / perm_inventar), în loc de un singur tab combinat cu un comutator intern.
+         Ecranul de dedesubt (#receptie-view) a rămas tehnic UNUL SINGUR, refolosit pentru ambele
+         taburi (aceeași logică de randare, deja condiționată de `rzMode`, evită o duplicare mare de
+         cod) — comutatorul intern vechi (.rz-submodes, mai jos) a rămas în pagină, dar ascuns, pentru
+         că acum tabul de sus e cel care schimbă modul (vezi switchTab). Linia de status
+         "Listă prețuri: N coduri · Curs EUR: ..." a fost eliminată de aici, tot la cererea lui Andrei
+         (rămâne vizibilă doar insigna din antet, #rz-pl-status-top, pe scurt, din orice tab). -->
     <div id="receptie-view" style="display:none;">
       <div class="rz-topbar">
-        <div class="rz-inline-row">
-          <span class="rz-badge no" id="rz-pl-status">Listă prețuri: 0 coduri</span>
-          <span id="rz-curs-status" style="font-size:11.5px;color:var(--muted)"></span>
-        </div>
-        <div class="toolbar-actions">
+        <div class="toolbar-actions" id="rz-receptie-only-actions">
           <input type="file" id="rz-pdf-file" accept="application/pdf" style="display:none" onchange="rzHandlePdfFile(event)" />
           <button class="btn-secondary" onclick="document.getElementById('rz-pdf-file').click()">Import factură PDF</button>
-          <button class="btn-secondary" onclick="rzOpenExportModal()">Exportă</button>
           <button class="btn-secondary" onclick="rzOpenHistory()">Istoric</button>
           <button class="btn-secondary" onclick="rzOpenReset()">Reset</button>
         </div>
+        <div class="toolbar-actions">
+          <button class="btn-secondary" onclick="rzOpenExportModal()">Exportă</button>
+        </div>
       </div>
 
-      <div class="rz-submodes">
+      <div class="rz-submodes" style="display:none">
         <button type="button" class="rz-submode-opt active" id="rz-mode-receptie" onclick="rzSetMode('receptie')">☑ Recepție factură</button>
         <button type="button" class="rz-submode-opt" id="rz-mode-inventar" onclick="rzSetMode('inventar')">📋 Inventar liber</button>
       </div>
@@ -1673,11 +1695,11 @@
 <div class="modal-overlay" id="sarcina-modal-overlay">
   <div class="modal wide">
     <button type="button" class="rz-modal-x" onclick="closeSarcinaModal()" aria-label="Închide" title="Închide">✕</button>
-    <h2 id="sarcina-modal-title">Sarcină nouă</h2>
+    <h2 id="sarcina-modal-title">Task nou</h2>
     <input type="hidden" id="sa-id" />
     <div class="modal-grid">
       <div class="field span-2">
-        <label>Nume sarcină *</label>
+        <label>Nume task *</label>
         <input id="sa-nume" placeholder="ex: Sună furnizorul pentru piesa X" />
       </div>
       <div class="field span-2">
@@ -1687,7 +1709,7 @@
       <div class="field">
         <label>Data *</label>
         <input type="date" id="sa-data" />
-        <div class="muted" style="font-size:11px;margin-top:2px;">Dacă sarcina nu e rezolvată până la sfârșitul zilei, se mută automat pe ziua următoare — data creării rămâne neschimbată.</div>
+        <div class="muted" style="font-size:11px;margin-top:2px;">Dacă task-ul nu e rezolvat până la sfârșitul zilei, se mută automat pe ziua următoare — data creării rămâne neschimbată.</div>
       </div>
       <div class="field">
         <label>Termen limită (opțional)</label>
@@ -1701,12 +1723,12 @@
           <option value="Normală" selected>🟡 Normală</option>
           <option value="Scăzută">⚪ Scăzută</option>
         </select>
-        <div class="muted" style="font-size:11px;margin-top:2px;">Sarcinile se afișează în listă sortate după prioritate; în cadrul aceleiași priorități poți schimba ordinea exactă din buton ▲ / ▼ (vizualizarea Zi).</div>
+        <div class="muted" style="font-size:11px;margin-top:2px;">Task-urile se afișează în listă sortate după prioritate; în cadrul aceleiași priorități poți schimba ordinea exactă din buton ▲ / ▼ (vizualizarea Zi).</div>
       </div>
       <div class="field">
-        <label>Atribuie sarcina unui coleg (opțional)</label>
+        <label>Atribuie task-ul unui coleg (opțional)</label>
         <select id="sa-atribuit"></select>
-        <div class="muted" style="font-size:11px;margin-top:2px;">Dacă nu alegi pe nimeni, sarcina rămâne atribuită automat ție (celui care a creat-o).</div>
+        <div class="muted" style="font-size:11px;margin-top:2px;">Dacă nu alegi pe nimeni, task-ul rămâne atribuit automat ție (celui care l-a creat).</div>
       </div>
       <div class="field">
         <label>Anunță pe cineva când e rezolvată (opțional)</label>
@@ -1982,7 +2004,7 @@ let selectedClientTip = "fizica";
 let allProfiles = [];
 let currentNotifications = [];
 
-let currentPermissions = { perm_comenzi: true, perm_devize: true, perm_receptie: true, perm_piese_comandat: true, perm_clienti: true, perm_programator: true, perm_sarcini: true, perm_devize_service: true };
+let currentPermissions = { perm_comenzi: true, perm_devize: true, perm_receptie: true, perm_inventar: true, perm_piese_comandat: true, perm_clienti: true, perm_programator: true, perm_sarcini: true, perm_devize_service: true };
 let currentRoluri = [];
 let pieseComandatTab = "toate";
 
@@ -2065,16 +2087,16 @@ function canDo(perm) {
 }
 async function loadMyPermissions() {
   if (currentProfile.rol === "admin") {
-    currentPermissions = { perm_comenzi: true, perm_devize: true, perm_receptie: true, perm_piese_comandat: true, perm_clienti: true, perm_programator: true, perm_sarcini: true, perm_garantii: true, perm_daune: true, perm_devize_service: true };
+    currentPermissions = { perm_comenzi: true, perm_devize: true, perm_receptie: true, perm_inventar: true, perm_piese_comandat: true, perm_clienti: true, perm_programator: true, perm_sarcini: true, perm_garantii: true, perm_daune: true, perm_devize_service: true };
     return;
   }
   if (!currentProfile.rol_id) {
-    currentPermissions = { perm_comenzi: false, perm_devize: false, perm_receptie: false, perm_piese_comandat: false, perm_clienti: false, perm_programator: false, perm_sarcini: false, perm_garantii: false, perm_daune: false, perm_devize_service: false };
+    currentPermissions = { perm_comenzi: false, perm_devize: false, perm_receptie: false, perm_inventar: false, perm_piese_comandat: false, perm_clienti: false, perm_programator: false, perm_sarcini: false, perm_garantii: false, perm_daune: false, perm_devize_service: false };
     return;
   }
   const { data, error } = await client.from("roluri").select("*").eq("id", currentProfile.rol_id).single();
   if (error || !data) {
-    currentPermissions = { perm_comenzi: false, perm_devize: false, perm_receptie: false, perm_piese_comandat: false, perm_clienti: false, perm_programator: false, perm_sarcini: false, perm_garantii: false, perm_daune: false, perm_devize_service: false };
+    currentPermissions = { perm_comenzi: false, perm_devize: false, perm_receptie: false, perm_inventar: false, perm_piese_comandat: false, perm_clienti: false, perm_programator: false, perm_sarcini: false, perm_garantii: false, perm_daune: false, perm_devize_service: false };
     return;
   }
   currentPermissions = data;
@@ -2087,6 +2109,7 @@ function applyPermissionsToUI() {
   document.getElementById("tab-programator").style.display = canDo("perm_programator") ? "" : "none";
   document.getElementById("tab-group-service").style.display = canDo("perm_devize") ? "" : "none"; // perm_devize gateste acum accesul la catalogul de piese (deviz a fost eliminat)
   document.getElementById("tab-receptie").style.display = canDo("perm_receptie") ? "" : "none";
+  document.getElementById("tab-inventar").style.display = canDo("perm_inventar") ? "" : "none";
   document.getElementById("tab-piese-comandat").style.display = (canDo("perm_comenzi") || canDo("perm_piese_comandat")) ? "" : "none";
   document.getElementById("tab-sarcini").style.display = canDo("perm_sarcini") ? "" : "none";
   document.getElementById("tab-garantii").style.display = canDo("perm_garantii") ? "" : "none";
@@ -2101,6 +2124,7 @@ function applyPermissionsToUI() {
     true ? "clienti" :
     canDo("perm_devize") ? "catalog" :
     canDo("perm_receptie") ? "receptie" :
+    canDo("perm_inventar") ? "inventar" :
     canDo("perm_sarcini") ? "sarcini" :
     canDo("perm_garantii") ? "garantii" :
     canDo("perm_daune") ? "daune" :
@@ -2110,6 +2134,7 @@ function applyPermissionsToUI() {
   else if (activeTab === "programator" && !canDo("perm_programator")) switchTab(tabDisponibil);
   else if (activeTab === "catalog" && !canDo("perm_devize")) switchTab(tabDisponibil);
   else if (activeTab === "receptie" && !canDo("perm_receptie")) switchTab(tabDisponibil);
+  else if (activeTab === "inventar" && !canDo("perm_inventar")) switchTab(tabDisponibil);
   else if (activeTab === "piese-comandat" && !canDo("perm_comenzi") && !canDo("perm_piese_comandat")) switchTab(tabDisponibil);
   else if (activeTab === "sarcini" && !canDo("perm_sarcini")) switchTab(tabDisponibil);
   else if (activeTab === "garantii" && !canDo("perm_garantii")) switchTab(tabDisponibil);
@@ -2368,6 +2393,7 @@ function switchTab(tab) {
   document.getElementById("tab-clienti").classList.toggle("active", tab === "clienti");
   document.getElementById("tab-group-service").classList.toggle("active", tab === "catalog");
   document.getElementById("tab-receptie").classList.toggle("active", tab === "receptie");
+  document.getElementById("tab-inventar").classList.toggle("active", tab === "inventar");
   document.getElementById("tab-sarcini").classList.toggle("active", tab === "sarcini");
   document.getElementById("tab-garantii").classList.toggle("active", tab === "garantii");
   document.getElementById("tab-daune").classList.toggle("active", tab === "daune");
@@ -2386,7 +2412,7 @@ function switchTab(tab) {
   document.getElementById("programator-view").style.display = (tab === "programator") ? "block" : "none";
   document.getElementById("clients-view").style.display = (tab === "clienti") ? "block" : "none";
   document.getElementById("catalog-view").style.display = (tab === "catalog") ? "block" : "none";
-  document.getElementById("receptie-view").style.display = (tab === "receptie") ? "block" : "none";
+  document.getElementById("receptie-view").style.display = (tab === "receptie" || tab === "inventar") ? "block" : "none";
   document.getElementById("piese-comandat-view").style.display = (tab === "piese-comandat") ? "block" : "none";
   document.getElementById("sarcini-view").style.display = (tab === "sarcini") ? "block" : "none";
   document.getElementById("garantii-view").style.display = (tab === "garantii") ? "block" : "none";
@@ -2398,7 +2424,8 @@ function switchTab(tab) {
   else if (tab === "programator") initProgramatorViewIfNeeded();
   else if (tab === "catalog") renderCatalogTable();
   else if (tab === "devize") initDevizeTabIfNeeded();
-  else if (tab === "receptie") rzInitIfNeeded();
+  else if (tab === "receptie") { rzSetMode("receptie"); rzInitIfNeeded(); }
+  else if (tab === "inventar") { rzSetMode("inventar"); rzInitIfNeeded(); }
   else if (tab === "piese-comandat") renderPieseComandat();
   else if (tab === "sarcini") initSarciniViewIfNeeded();
   else if (tab === "garantii") loadGarantii();
@@ -2597,12 +2624,17 @@ function renderFurnizorCell(o) {
   return `<span class="furnizor-cell">${escapeHtml(o.furnizor || "—")}</span>`;
 }
 
-async function openPiesaPretModal(comandaId) {
+async function openPiesaPretModal(comandaId, piesaId) {
   const o = currentOrders.find(x => x.id === comandaId);
   if (!o) return;
-  const piese = o.piese || [];
+  // v50: la cererea lui Andrei — click pe "✎ Preț" pe un rând arată acum DOAR piesa de pe acel
+  // rând, nu toate piesele comenzii (cum se întâmpla înainte, indiferent de rândul apăsat, pentru
+  // că butonul trimitea mereu doar id-ul comenzii). Când e dat un `piesaId`, filtrăm la piesa aia;
+  // fără el (apel vechi/generic), arătăm toate piesele comenzii, ca înainte.
+  const piese = piesaId ? (o.piese || []).filter(p => p.id === piesaId) : (o.piese || []);
   if (!piese.length) { alert("Această comandă nu are piese."); return; }
-  const html = `<h3>✎ Preț piese — ${escapeHtml(o.client_nume)} ${escapeHtml(o.client_prenume || "")}</h3>
+  const titluPiesa = piesaId ? `✎ Preț piesă — ${escapeHtml(piese[0].cod_piesa || "")}` : "✎ Preț piese";
+  const html = `<h3>${titluPiesa} — ${escapeHtml(o.client_nume)} ${escapeHtml(o.client_prenume || "")}</h3>
     <div style="max-height:400px;overflow-y:auto;margin-top:10px">
       ${piese.map(p => `
         <div class="linie-row" data-piesa-id="${p.id}" style="flex-wrap:wrap;border-bottom:1px dashed var(--border);padding-bottom:8px">
@@ -2711,9 +2743,7 @@ function renderTable() {
     const plataCell = `<td>${renderPlataSelect(o)}</td>`;
     const creatDeCell = `<td>${escapeHtml(o.creat_de_nume || "")}</td>`;
     const actionsCell = `<td>${renderActions(o)}</td>`;
-    const editBtn = (canDo("perm_comenzi") || canDo("perm_piese_comandat"))
-      ? `<button type="button" class="rz-mini-edit pret-edit-btn" onclick="openPiesaPretModal('${o.id}')">✎ Preț</button>`
-      : "";
+    const potFaceEditPret = canDo("perm_comenzi") || canDo("perm_piese_comandat");
 
     return piese.map((p, idx) => {
       const codCell = `<td class="wrap-cell">${p ? `<div class="piesa-line-cod">${escapeHtml(p.cod_piesa)}</div>` : '<span class="muted">—</span>'}</td>`;
@@ -2725,9 +2755,12 @@ function renderTable() {
           ? '<div class="muted">—</div>'
           : `<div>${roFmtNum(p.pret_cu_tva)} ${escapeHtml(p.moneda || "RON")} <span class="muted">(cu TVA)</span></div>`;
       }
-      // v47: la cererea lui Andrei — iconița "✎ Preț" apare acum pe FIECARE rând (nu doar pe primul
-      // cod al comenzii) — deschide același pop-up cu toate piesele comenzii, indiferent de rândul
-      // de pe care a fost apăsat.
+      // v47: iconița "✎ Preț" apare pe FIECARE rând (nu doar pe primul cod al comenzii). v50: la
+      // cererea lui Andrei — deschide acum DOAR piesa de pe rândul apăsat (trimite și `p.id`), nu
+      // mai toate piesele comenzii deodată; fără piesă (comandă goală) nu are ce edita, deci fără buton.
+      const editBtn = (p && potFaceEditPret)
+        ? `<button type="button" class="rz-mini-edit pret-edit-btn" onclick="openPiesaPretModal('${o.id}', '${p.id}')">✎ Preț</button>`
+        : "";
       const pretCell = `<td class="wrap-cell"><div class="pret-cell">${pretInner}${editBtn}</div></td>`;
       const facturaCell = `<td>${p ? renderPiesaFacturaInput(p) : renderFacturaInput(o)}</td>`;
 
@@ -3426,8 +3459,8 @@ function renderNotifPanel() {
         ${n.sarcina_id ? (sarc ? `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <span class="badge" style="background:#eef0f4;color:var(--muted)">${escapeHtml(sarc.stare)}</span>
           <span style="font-size:12.5px">${escapeHtml(sarc.nume)}</span>
-          <button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="deschideSarcinaDinNotificare('${sarc.id}')">Deschide sarcina</button>
-        </div>` : `<div class="hist-meta" style="font-style:italic">Sarcina a fost ștearsă între timp.</div>`) : ""}
+          <button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="deschideSarcinaDinNotificare('${sarc.id}')">Deschide task-ul</button>
+        </div>` : `<div class="hist-meta" style="font-style:italic">Task-ul a fost șters între timp.</div>`) : ""}
         ${n.dauna_id ? (dn ? `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <span class="badge" style="background:${(DAUNE_STARE_STYLE[dn.stare] || {}).bg || "#eef0f4"};color:${(DAUNE_STARE_STYLE[dn.stare] || {}).color || "var(--muted)"}">${escapeHtml(dn.stare)}</span>
           <span style="font-size:12.5px">${escapeHtml(dn.client_nume)} ${escapeHtml(dn.client_prenume || "")}</span>
@@ -4354,7 +4387,7 @@ function renderSarcinaCard(t, opts) {
       actions += `<button type="button" class="btn-secondary" title="Mai urgent" onclick="sarciniMutaOrdine('${t.id}','up')">▲</button>`;
       actions += `<button type="button" class="btn-secondary" title="Mai puțin urgent" onclick="sarciniMutaOrdine('${t.id}','down')">▼</button>`;
     }
-    actions += `<button type="button" class="btn-secondary" onclick="rezolvaSarcina('${t.id}')">✓ Rezolvată</button>`;
+    actions += `<button type="button" class="btn-secondary" onclick="rezolvaSarcina('${t.id}')">✓ Rezolvat</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="openCereAjutorModal('${t.id}')">🤝 Cere ajutor</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="openSarcinaModal('${t.id}')">✎ Editează</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="anuleazaSarcina('${t.id}')">✕ Anulează</button>`;
@@ -4376,7 +4409,7 @@ function renderSarcinaCard(t, opts) {
       ${mutata ? `<div class="appt-obs">⏳ Restantă din ${formatDate(t.data)}</div>` : ""}
       <div class="appt-moto">Creat de ${escapeHtml(t.creat_de_nume || "—")} pe ${formatDate(t.creat_la)}${t.atribuit_catre_nume ? " · Atribuit: " + escapeHtml(t.atribuit_catre_nume) : ""}${t.notifica_la_rezolvare_nume ? " · Anunță la rezolvare: " + escapeHtml(t.notifica_la_rezolvare_nume) : ""}</div>
       ${ajutorNume.length ? `<div class="appt-obs" style="color:#1e40af">🤝 Ajutor cerut: ${escapeHtml(ajutorNume.join(", "))}</div>` : ""}
-      ${t.stare === "Rezolvat" ? `<div class="appt-obs" style="color:#166534">✓ Rezolvată de ${escapeHtml(t.rezolvat_de_nume || "—")} pe ${formatDate(t.rezolvat_la)}</div>` : ""}
+      ${t.stare === "Rezolvat" ? `<div class="appt-obs" style="color:#166534">✓ Rezolvat de ${escapeHtml(t.rezolvat_de_nume || "—")} pe ${formatDate(t.rezolvat_la)}</div>` : ""}
     </div>
     <div class="appt-actions">${actions}</div>
   </div>`;
@@ -4387,7 +4420,7 @@ function renderSarciniZi() {
   if (!container) return;
   const data = document.getElementById("sar-data").value;
   const list = currentSarcini.filter(t => effectiveSarcinaData(t) === data).filter(matchesLocationFilter).filter(matchesSarciniFiltruAtribuit).sort(sarciniSortComparator);
-  container.innerHTML = list.length ? list.map(t => renderSarcinaCard(t, { reorder: true })).join("") : '<div class="appt-empty">Nicio sarcină în ziua aleasă.</div>';
+  container.innerHTML = list.length ? list.map(t => renderSarcinaCard(t, { reorder: true })).join("") : '<div class="appt-empty">Niciun task în ziua aleasă.</div>';
 }
 
 function renderSarciniLuna() {
@@ -4446,8 +4479,8 @@ function sarExportPerioadaExcel() {
   if (!start || !end) { alert("Alege perioada (sau un an întreg) înainte de export."); return; }
   const list = currentSarcini.filter(t => { const d = effectiveSarcinaData(t); return d >= start && d <= end; }).filter(matchesLocationFilter).filter(matchesSarciniFiltruAtribuit)
     .sort((a, b) => effectiveSarcinaData(a).localeCompare(effectiveSarcinaData(b)) || sarciniSortComparator(a, b));
-  if (!list.length) { alert("Nicio sarcină în perioada aleasă."); return; }
-  const aoa = [["Data curentă", "Data creării", "Nume sarcină", "Descriere", "Prioritate", "Termen limită", "Stare", "Creat de", "Atribuit", "Ajutor cerut", "Rezolvat de", "Rezolvat la"]];
+  if (!list.length) { alert("Niciun task în perioada aleasă."); return; }
+  const aoa = [["Data curentă", "Data creării", "Nume task", "Descriere", "Prioritate", "Termen limită", "Stare", "Creat de", "Atribuit", "Ajutor cerut", "Rezolvat de", "Rezolvat la"]];
   list.forEach(t => aoa.push([
     effectiveSarcinaData(t), formatDate(t.creat_la), t.nume || "", t.descriere || "", t.prioritate || "Normală",
     t.termen_limita ? formatDate(t.termen_limita) : "", t.stare,
@@ -4456,8 +4489,8 @@ function sarExportPerioadaExcel() {
   ]));
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Sarcini");
-  XLSX.writeFile(wb, "sarcini_" + start + "_" + end + ".xlsx");
+  XLSX.utils.book_append_sheet(wb, ws, "Task-uri");
+  XLSX.writeFile(wb, "task-uri_" + start + "_" + end + ".xlsx");
 }
 
 // ---------- MODAL SARCINA (adaugare/editare) ----------
@@ -4480,7 +4513,7 @@ function openSarcinaModal(id) {
   if (id) {
     const t = currentSarcini.find(x => x.id === id);
     if (!t) return;
-    document.getElementById("sarcina-modal-title").textContent = "Editează sarcină";
+    document.getElementById("sarcina-modal-title").textContent = "Editează task";
     document.getElementById("sa-nume").value = t.nume || "";
     document.getElementById("sa-descriere").value = t.descriere || "";
     document.getElementById("sa-data").value = t.data;
@@ -4489,7 +4522,7 @@ function openSarcinaModal(id) {
     document.getElementById("sa-prioritate").value = t.prioritate || "Normală";
     populateSarcinaColegSelects(t.atribuit_catre, t.notifica_la_rezolvare);
   } else {
-    document.getElementById("sarcina-modal-title").textContent = "Sarcină nouă";
+    document.getElementById("sarcina-modal-title").textContent = "Task nou";
     document.getElementById("sa-nume").value = "";
     document.getElementById("sa-descriere").value = "";
     const dataImpl = document.getElementById("sar-data");
@@ -4507,7 +4540,7 @@ async function notificaAtribuireSarcina(sarcinaId, colegId, colegNume, numeSarci
   if (!colegId || colegId === currentProfile.id) return;
   await client.from("notificari").insert({
     destinatar_id: colegId, destinatar_nume: colegNume,
-    mesaj: `Ți s-a atribuit o sarcină nouă: ${numeSarcina}`,
+    mesaj: `Ți s-a atribuit un task nou: ${numeSarcina}`,
     sarcina_id: sarcinaId, creat_de: currentProfile.id, creat_de_nume: currentProfile.nume,
   });
 }
@@ -4579,19 +4612,19 @@ async function saveSarcina() {
   if (id && tocmaiRezolvata && notificaLaRezolvare && notificaLaRezolvare !== currentProfile.id) {
     await client.from("notificari").insert({
       destinatar_id: notificaLaRezolvare, destinatar_nume: notificaLaRezolvareNume,
-      mesaj: `Sarcina „${nume}” a fost marcată ca rezolvată de ${currentProfile.nume}.`,
+      mesaj: `Task-ul „${nume}” a fost marcat ca rezolvat de ${currentProfile.nume}.`,
       sarcina_id: id, creat_de: currentProfile.id, creat_de_nume: currentProfile.nume,
     });
   }
   closeSarcinaModal();
   await loadSarcini();
-  if (typeof rzToast === "function") rzToast("Sarcină salvată", "ok");
+  if (typeof rzToast === "function") rzToast("Task salvat", "ok");
 }
 
 async function rezolvaSarcina(id) {
   const t = currentSarcini.find(x => x.id === id);
   if (!t) return;
-  if (!confirm("Marchezi această sarcină ca rezolvată?")) return;
+  if (!confirm("Marchezi acest task ca rezolvat?")) return;
   // data sarcinii devine ziua rezolvării (nu ziua originală la care fusese programată) —
   // altfel o sarcină restantă, mutată automat pe ziua curentă și rezolvată azi, ar "sări"
   // înapoi pe ziua ei veche în listă, de îndată ce nu mai e "De făcut"
@@ -4601,35 +4634,35 @@ async function rezolvaSarcina(id) {
   if (t.notifica_la_rezolvare && t.notifica_la_rezolvare !== currentProfile.id) {
     await client.from("notificari").insert({
       destinatar_id: t.notifica_la_rezolvare, destinatar_nume: t.notifica_la_rezolvare_nume,
-      mesaj: `Sarcina „${t.nume}” a fost marcată ca rezolvată de ${currentProfile.nume}.`,
+      mesaj: `Task-ul „${t.nume}” a fost marcat ca rezolvat de ${currentProfile.nume}.`,
       sarcina_id: id, creat_de: currentProfile.id, creat_de_nume: currentProfile.nume,
     });
   }
   await loadSarcini();
-  if (typeof rzToast === "function") rzToast("Sarcină marcată ca rezolvată", "ok");
+  if (typeof rzToast === "function") rzToast("Task marcat ca rezolvat", "ok");
 }
 async function redeschideSarcina(id) {
-  if (!confirm("Redeschizi această sarcină? Revine la starea „De făcut”, în ziua de azi.")) return;
+  if (!confirm("Redeschizi acest task? Revine la starea „De făcut”, în ziua de azi.")) return;
   const { error } = await client.from("sarcini").update({
     stare: "De făcut", data: todayISODate(), rezolvat_la: null, rezolvat_de: null, rezolvat_de_nume: null,
   }).eq("id", id);
   if (error) { alert("Eroare: " + error.message); return; }
   await loadSarcini();
-  if (typeof rzToast === "function") rzToast("Sarcină redeschisă", "ok");
+  if (typeof rzToast === "function") rzToast("Task redeschis", "ok");
 }
 async function anuleazaSarcina(id) {
-  if (!confirm("Anulezi această sarcină?")) return;
+  if (!confirm("Anulezi acest task?")) return;
   const { error } = await client.from("sarcini").update({ stare: "Anulat" }).eq("id", id);
   if (error) { alert("Eroare: " + error.message); return; }
   await loadSarcini();
 }
 async function stergeSarcina(id) {
-  if (!amAdmin()) { alert("Doar administratorul poate șterge definitiv o sarcină."); return; }
-  if (!confirm("Ștergi DEFINITIV această sarcină? Acțiunea nu poate fi anulată (spre deosebire de „Anulează”, care doar o marchează ca anulată).")) return;
+  if (!amAdmin()) { alert("Doar administratorul poate șterge definitiv un task."); return; }
+  if (!confirm("Ștergi DEFINITIV acest task? Acțiunea nu poate fi anulată (spre deosebire de „Anulează”, care doar îl marchează ca anulat).")) return;
   const { error } = await client.from("sarcini").delete().eq("id", id);
   if (error) { alert("Eroare: " + error.message); return; }
   await loadSarcini();
-  if (typeof rzToast === "function") rzToast("Sarcină ștearsă definitiv.", "ok");
+  if (typeof rzToast === "function") rzToast("Task șters definitiv.", "ok");
 }
 
 function deschideSarcinaDinNotificare(id) {
@@ -4645,7 +4678,7 @@ function openCereAjutorModal(id) {
   const deja = new Set((t.ajutor || []).map(a => a.coleg_id));
   const colegi = allProfiles.filter(p => p.id !== currentProfile.id && p.activ !== false);
   const html = `<h3>🤝 Cere ajutor — ${escapeHtml(t.nume)}</h3>
-    <div class="muted" style="font-size:12.5px">Alege unul sau mai mulți colegi cărora vrei să le ceri ajutor la această sarcină. Fiecare va primi o notificare.</div>
+    <div class="muted" style="font-size:12.5px">Alege unul sau mai mulți colegi cărora vrei să le ceri ajutor la acest task. Fiecare va primi o notificare.</div>
     <div id="sa-ajutor-list" style="display:flex;flex-direction:column;gap:6px;margin:12px 0">
       ${colegi.map(p => `
         <label style="display:flex;align-items:center;gap:8px;font-size:13px">
@@ -4673,7 +4706,7 @@ async function trimiteCereriAjutor(sarcinaId) {
   if (error) { alert("Eroare: " + error.message); return; }
   const notifRows = checked.map(cb => ({
     destinatar_id: cb.value, destinatar_nume: cb.dataset.nume,
-    mesaj: `${currentProfile.nume} ți-a cerut ajutor la sarcina: ${t.nume}`,
+    mesaj: `${currentProfile.nume} ți-a cerut ajutor la task: ${t.nume}`,
     sarcina_id: sarcinaId, creat_de: currentProfile.id, creat_de_nume: currentProfile.nume,
   }));
   await client.from("notificari").insert(notifRows);
@@ -4711,7 +4744,7 @@ function renderSarcinaDetaliuModalContent(t) {
       ${t.atribuit_catre_nume ? `<div><b>Atribuit:</b> ${escapeHtml(t.atribuit_catre_nume)}</div>` : ""}
       ${t.notifica_la_rezolvare_nume ? `<div><b>Anunță la rezolvare:</b> ${escapeHtml(t.notifica_la_rezolvare_nume)}</div>` : ""}
       ${ajutorNume.length ? `<div><b>🤝 Ajutor cerut:</b> ${escapeHtml(ajutorNume.join(", "))}</div>` : ""}
-      ${t.stare === "Rezolvat" ? `<div style="color:#166534"><b>✓ Rezolvată de</b> ${escapeHtml(t.rezolvat_de_nume || "—")} pe ${formatDate(t.rezolvat_la)}</div>` : ""}
+      ${t.stare === "Rezolvat" ? `<div style="color:#166534"><b>✓ Rezolvat de</b> ${escapeHtml(t.rezolvat_de_nume || "—")} pe ${formatDate(t.rezolvat_la)}</div>` : ""}
     </div>
     <div style="font-weight:700;font-size:13px;margin-bottom:8px">💬 Observații</div>
     <div style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
@@ -4727,7 +4760,7 @@ function renderSarcinaDetaliuModalContent(t) {
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="rzCloseModal()">Închide</button>
-      <button class="btn-secondary" onclick="rzCloseModal(); openSarcinaModal('${t.id}')">✎ Editează sarcina</button>
+      <button class="btn-secondary" onclick="rzCloseModal(); openSarcinaModal('${t.id}')">✎ Editează task-ul</button>
       <button class="btn-primary" onclick="adaugaObservatieSarcina('${t.id}')">Adaugă observație</button>
     </div>`;
   rzOpenModal(html);
@@ -6005,6 +6038,9 @@ function rzSetMode(m) {
   // liber (rzScan iese direct spre rzScanInventar, înainte să le verifice) — rămân vizibile doar
   // la Recepție factură, unde chiar contează.
   const scanOpts = document.getElementById("rz-scan-options"); if (scanOpts) scanOpts.style.display = m === "receptie" ? "flex" : "none";
+  // v50: "Import factură PDF"/"Istoric"/"Reset" au sens doar la Recepție factură (Inventar liber
+  // nu are facturi de importat, nici sesiuni de resetat) — ascunse automat pe tabul Inventar.
+  const recOnlyActions = document.getElementById("rz-receptie-only-actions"); if (recOnlyActions) recOnlyActions.style.display = m === "receptie" ? "flex" : "none";
   document.getElementById("rz-filter-text").placeholder = m === "inventar" ? "Caută cod / denumire în inventar..." : "Caută cod / denumire / destinatar...";
   document.getElementById("rz-scan-input").placeholder = m === "receptie" ? "Scanează sau scrie codul de bară..." : "Scanează cod pentru inventar...";
   rzUpdateStats();
@@ -6904,10 +6940,31 @@ function rzRenderInventar() {
 function rzSubscribeRealtime() {
   try {
     client.channel("rz-receptie-sync")
-      .on("postgres_changes", { event: "*", schema: "public", table: "receptie_articole" }, () => { if (document.getElementById("tab-receptie").classList.contains("active")) { rzLoadItems().then(() => { rzPopulateDNFilter(); rzUpdateStats(); rzRender(); }); } })
-      .on("postgres_changes", { event: "*", schema: "public", table: "inventar_articole" }, () => { if (document.getElementById("tab-receptie").classList.contains("active")) { rzLoadInvItems().then(() => { rzUpdateStats(); rzRender(); }); } })
+      // v50: ecranul (#receptie-view) e comun taburilor "Recepție" ȘI "Inventar" — verificăm dacă
+      // oricare din cele două e activ tabul curent, nu doar tab-receptie ca înainte de separare.
+      .on("postgres_changes", { event: "*", schema: "public", table: "receptie_articole" }, () => { if (document.getElementById("tab-receptie").classList.contains("active") || document.getElementById("tab-inventar").classList.contains("active")) { rzLoadItems().then(() => { rzPopulateDNFilter(); rzUpdateStats(); rzRender(); }); } })
+      .on("postgres_changes", { event: "*", schema: "public", table: "inventar_articole" }, () => { if (document.getElementById("tab-receptie").classList.contains("active") || document.getElementById("tab-inventar").classList.contains("active")) { rzLoadInvItems().then(() => { rzUpdateStats(); rzRender(); }); } })
       .subscribe();
   } catch (e) { console.warn("realtime indisponibil", e); }
+  // v50: la întrebarea lui Andrei — "colegii văd în timp real dacă alt cont a rezervat deja
+  // slotul?" — răspunsul, până acum, era NU: `programari` nu avea deloc sincronizare Realtime,
+  // doar `loadProgramari()` apelat după propriile acțiuni ale userului sau la login. Practic, dacă
+  // Andrei avea ecranul de Programator deschis de ceva vreme, o rezervare făcută între timp de un
+  // coleg nu-i apărea decât după un refresh manual — fereastră reală pentru suprapuneri, mai ales
+  // combinat cu faptul că avertismentul de conflict din `saveProgramare()` verifică doar datele
+  // locale, deja încărcate (`currentProgramari`), care puteau fi neactualizate exact în acel interval.
+  // Fix: canal Realtime nou pe `programari` — orice INSERT/UPDATE/DELETE (de la oricine, pe orice
+  // cont) reîncarcă automat `currentProgramari` și rerandă ecranul de Programator, dacă e deschis —
+  // `loadProgramari()` verifică deja intern vizibilitatea ecranului, deci nu trebuie dus manual ca
+  // la Recepție/Inventar mai sus. Asta NU blochează suprapunerea (avertismentul rămâne unul soft,
+  // cu opțiunea de a continua oricum — intenționat, ca la cazurile unde Andrei chiar vrea două
+  // programări pe aceeași rampă), dar acum orice coleg vede aproape instant o rezervare nouă a
+  // altcuiva, deci avertismentul de conflict e mult mai greu de "ratat".
+  try {
+    client.channel("rz-programari-sync")
+      .on("postgres_changes", { event: "*", schema: "public", table: "programari" }, () => { loadProgramari(); })
+      .subscribe();
+  } catch (e) { console.warn("realtime programari indisponibil", e); }
 }
 
 // ---------- SCAN INPUT: ENTER trimite scanarea ----------
@@ -7322,7 +7379,7 @@ function renderPieseComandat() {
       <td><div class="piesa-line-cod">${escapeHtml(p.cod_piesa)}</div><div class="piesa-line-denumire">${escapeHtml(p.denumire_piesa || "")}</div></td>
       <td>${p.cantitate || 1}</td>
       <td class="pret-cell">${(p.pret_cu_tva !== null && p.pret_cu_tva !== undefined) ? roFmtNum(p.pret_cu_tva) + " " + escapeHtml(p.moneda || "RON") : '<span class="muted">—</span>'}
-        ${(canDo("perm_comenzi") || canDo("perm_piese_comandat")) ? `<button type="button" class="rz-mini-edit pret-edit-btn" onclick="openPiesaPretModal('${o.id}')">✎</button>` : ""}
+        ${(canDo("perm_comenzi") || canDo("perm_piese_comandat")) ? `<button type="button" class="rz-mini-edit pret-edit-btn" onclick="openPiesaPretModal('${o.id}', '${p.id}')">✎</button>` : ""}
       </td>
       <td class="furnizor-cell">${escapeHtml(o.furnizor || "—")}</td>
       <td>${o.atribuit_catre_nume ? escapeHtml(o.atribuit_catre_nume) : '<span class="muted">—</span>'}</td>
@@ -7339,10 +7396,11 @@ const PERMISIUNI_DEF = [
   { key: "perm_comenzi", label: "Comenzi clienți (creare/editare)" },
   { key: "perm_programator", label: "Programator" },
   { key: "perm_devize", label: "Piese (listă prețuri)" },
-  { key: "perm_receptie", label: "Recepție & Inventar" },
+  { key: "perm_receptie", label: "Recepție" },
+  { key: "perm_inventar", label: "Inventar" },
   { key: "perm_piese_comandat", label: "Piese de comandat (preț)" },
   { key: "perm_clienti", label: "Clienți (editare/ștergere)" },
-  { key: "perm_sarcini", label: "Sarcini (task-uri)" },
+  { key: "perm_sarcini", label: "Task-uri" },
   { key: "perm_garantii", label: "Garanții" },
   { key: "perm_daune", label: "Daune" },
   { key: "perm_devize_service", label: "Devize (fișă service)" },
@@ -7726,8 +7784,8 @@ function dvzRenderPreturiUzuale() {
       <td><input class="dvz-pu-nume" value="${escapeHtml(p.nume || "")}" style="min-width:180px" /></td>
       <td><input class="dvz-pu-pret" type="number" step="0.01" min="0" value="${p.pret_cu_tva ?? ""}" style="width:90px" /></td>
       <td style="white-space:nowrap">
-        <button class="btn-secondary" style="padding:2px 8px;font-size:12px" onclick="dvzSavePreturiUzualeRow('${p.id}')">💾 Salvează</button>
-        <button class="btn-secondary" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="dvzDeletePreturiUzualeRow('${p.id}', ${jsStrAttr(p.nume || "")})">🗑</button>
+        <button class="btn-secondary dvz-pu-save-btn" style="padding:2px 8px;font-size:12px" onclick="dvzSavePreturiUzualeRow('${p.id}')">💾 Salvează</button>
+        <button class="btn-secondary dvz-pu-delete-btn" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="dvzDeletePreturiUzualeRow('${p.id}', ${jsStrAttr(p.nume || "")})">🗑</button>
       </td>
     </tr>`).join("");
   rzOpenModal(`<h3>⚙️ Produse / Manopere uzuale</h3>
@@ -7851,6 +7909,15 @@ async function dvzAddPreturiUzualeRow() {
   rzToast("Adăugat: " + nume, "ok");
   dvzRenderPreturiUzuale();
 }
+function dvzFlashRow(id, cls, durataMs) {
+  // v50: la cererea lui Andrei — feedback vizual scurt direct pe rând (fundal care se aprinde și
+  // se stinge), pe lângă toast-ul din colț — ca să fie clar, dintr-o privire, exact ce rând s-a
+  // salvat/șters, mai ales când sunt multe rânduri la rând.
+  const tr = document.querySelector(`#dvz-pu-tbody tr[data-id="${id}"]`);
+  if (!tr) return;
+  tr.classList.add(cls);
+  setTimeout(() => tr.classList.remove(cls), durataMs || 900);
+}
 async function dvzSavePreturiUzualeRow(id) {
   const tr = document.querySelector(`#rz-modal-box tr[data-id="${id}"]`);
   if (!tr) return;
@@ -7858,11 +7925,13 @@ async function dvzSavePreturiUzualeRow(id) {
   const nume = tr.querySelector(".dvz-pu-nume").value.trim();
   const pret = parseFloat(tr.querySelector(".dvz-pu-pret").value) || 0;
   if (!nume) { alert("Denumirea nu poate fi goală."); return; }
+  tr.classList.add("dvz-pu-row-saving");
   const { error } = await client.from("preturi_uzuale").update({ cod: cod || null, nume, pret_cu_tva: pret }).eq("id", id);
-  if (error) { alert("Eroare la salvare: " + error.message); return; }
+  if (error) { tr.classList.remove("dvz-pu-row-saving"); alert("Eroare la salvare: " + error.message); return; }
   await dvzLoadPreturiUzuale();
   rzToast("Salvat", "ok");
   dvzRenderPreturiUzuale();
+  dvzFlashRow(id, "dvz-pu-row-saved");
 }
 async function dvzDeletePreturiUzualeRow(id, nume) {
   if (!confirm(`Ștergi „${nume}" din lista de produse/manopere uzuale?`)) return;
@@ -7872,9 +7941,12 @@ async function dvzDeletePreturiUzualeRow(id, nume) {
   // arăta fals-pozitiv "Șters", cu rândul revenind după reîncărcare). Fix: cerem înapoi rândurile
   // efectiv șterse (.select()) și verificăm explicit că am șters ceva, cu mesaj clar dacă nu —
   // vezi „Adăugat v48" pentru migrarea care adaugă politica de ștergere lipsă.
+  const tr = document.querySelector(`#dvz-pu-tbody tr[data-id="${id}"]`);
+  if (tr) tr.classList.add("dvz-pu-row-deleting");
   const { data, error } = await client.from("preturi_uzuale").delete().eq("id", id).select();
-  if (error) { alert("Eroare la ștergere: " + error.message); return; }
+  if (error) { if (tr) tr.classList.remove("dvz-pu-row-deleting"); alert("Eroare la ștergere: " + error.message); return; }
   if (!data || !data.length) {
+    if (tr) tr.classList.remove("dvz-pu-row-deleting");
     alert(`Nu s-a șters „${nume}" — cel mai probabil lipsește o regulă de permisiune (RLS) de ștergere pe tabela „preturi_uzuale" în Supabase. Rulează migrarea „migrare-v48.sql" (adaugă politica de ștergere lipsă) și încearcă din nou.`);
     return;
   }
