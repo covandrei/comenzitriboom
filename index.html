@@ -2758,6 +2758,20 @@ function formatDateOra(d) {
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
 }
+// v48d: FIX CRITIC — un șir trecut ca argument JS într-un atribut HTML `onclick="..."` (delimitat
+// de ghilimele duble) trebuia dublu-încapsulat: `JSON.stringify()` îl face un literal JS valid, dar
+// rezultatul lui ÎNCEPE și SE TERMINĂ tot cu ghilimele duble — care, nefiind escapate pentru HTML,
+// închid atributul `onclick="..."` LA MIJLOCUL lui, indiferent ce conține numele (nu doar la nume
+// cu caractere speciale — se întâmplă mereu, la orice text). Rezultat: browserul trunchiază
+// `onclick` la un apel de funcție incomplet, iar la click aruncă "Uncaught SyntaxError: Unexpected
+// end of input" — butonul nu apelează NICIODATĂ funcția din spate (exact bug-ul raportat de Andrei
+// la ștergerea din „Produse/Manopere uzuale", prezent identic și la Branduri Moto/Furnizori/Useri).
+// Fix: `escapeHtml()` peste rezultatul `JSON.stringify()`, ca ghilimelele din el să ajungă `&quot;`
+// în HTML — browserul le convertește înapoi la `"` abia când citește atributul, moment în care JS-ul
+// devine din nou un literal de șir valid, cu conținutul deja escapat corect ca literal JS.
+function jsStrAttr(value) {
+  return escapeHtml(JSON.stringify(value == null ? "" : value));
+}
 
 // ---------- ACTUALIZARE RAPIDA (stare / factura) ----------
 async function updateField(id, field, value) {
@@ -6625,8 +6639,8 @@ function rzOpenPriceSettings() {
         <div style="margin-bottom:8px">
           ${currentBranduriMoto.map(b => `<div class="rz-inline-row" style="margin-bottom:4px">
             <span style="min-width:120px">${escapeHtml(b.nume)}</span>
-            <button class="btn-secondary" style="padding:2px 8px;font-size:12px" onclick="rzRenameBrandMoto('${b.id}', ${JSON.stringify(b.nume)})">✎ Redenumește</button>
-            <button class="btn-secondary" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="rzDeleteBrandMoto('${b.id}', ${JSON.stringify(b.nume)})">🗑 Șterge</button>
+            <button class="btn-secondary" style="padding:2px 8px;font-size:12px" onclick="rzRenameBrandMoto('${b.id}', ${jsStrAttr(b.nume)})">✎ Redenumește</button>
+            <button class="btn-secondary" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="rzDeleteBrandMoto('${b.id}', ${jsStrAttr(b.nume)})">🗑 Șterge</button>
           </div>`).join("") || '<div class="muted" style="font-size:12px">Niciun brand adăugat încă.</div>'}
         </div>
         <div class="rz-inline-row">
@@ -7380,8 +7394,8 @@ function renderUseriRoluriModal() {
     <div style="margin-bottom:8px">
       ${currentFurnizori.map(f => `<div class="rz-inline-row" style="margin-bottom:4px">
         <span style="min-width:160px">${escapeHtml(f.nume)}</span>
-        <button class="btn-secondary" style="padding:2px 8px;font-size:12px" onclick="rzRenameFurnizor('${f.id}', ${JSON.stringify(f.nume)})">✎ Redenumește</button>
-        <button class="btn-secondary" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="rzDeleteFurnizor('${f.id}', ${JSON.stringify(f.nume)})">🗑 Șterge</button>
+        <button class="btn-secondary" style="padding:2px 8px;font-size:12px" onclick="rzRenameFurnizor('${f.id}', ${jsStrAttr(f.nume)})">✎ Redenumește</button>
+        <button class="btn-secondary" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="rzDeleteFurnizor('${f.id}', ${jsStrAttr(f.nume)})">🗑 Șterge</button>
       </div>`).join("") || '<div class="muted" style="font-size:12px">Niciun furnizor adăugat încă.</div>'}
     </div>
     <div class="rz-inline-row" style="margin-bottom:16px">
@@ -7445,7 +7459,7 @@ function renderUseriRoluriModal() {
                   <input type="checkbox" ${p.activ !== false ? "checked" : ""} onchange="toggleUserActiv('${p.id}', this.checked)" style="width:16px;height:16px" />`}
               </td>
               <td>
-                ${p.rol === "admin" ? "" : `<button class="btn-secondary" style="padding:4px 9px;font-size:11.5px;color:#b91c1c" onclick="stergeUserDefinitiv('${p.id}', ${JSON.stringify(p.nume)})">🗑 Șterge</button>`}
+                ${p.rol === "admin" ? "" : `<button class="btn-secondary" style="padding:4px 9px;font-size:11.5px;color:#b91c1c" onclick="stergeUserDefinitiv('${p.id}', ${jsStrAttr(p.nume)})">🗑 Șterge</button>`}
               </td>
             </tr>
           `).join("")}
@@ -7713,7 +7727,7 @@ function dvzRenderPreturiUzuale() {
       <td><input class="dvz-pu-pret" type="number" step="0.01" min="0" value="${p.pret_cu_tva ?? ""}" style="width:90px" /></td>
       <td style="white-space:nowrap">
         <button class="btn-secondary" style="padding:2px 8px;font-size:12px" onclick="dvzSavePreturiUzualeRow('${p.id}')">💾 Salvează</button>
-        <button class="btn-secondary" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="dvzDeletePreturiUzualeRow('${p.id}', ${JSON.stringify(p.nume || "")})">🗑</button>
+        <button class="btn-secondary" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="dvzDeletePreturiUzualeRow('${p.id}', ${jsStrAttr(p.nume || "")})">🗑</button>
       </td>
     </tr>`).join("");
   rzOpenModal(`<h3>⚙️ Produse / Manopere uzuale</h3>
