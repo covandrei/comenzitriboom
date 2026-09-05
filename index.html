@@ -2832,7 +2832,16 @@ async function trimiteResetareParola() {
   }
   if (email) {
     const redirectTo = location.origin + location.pathname;
-    try { await client.auth.resetPasswordForEmail(email, { redirectTo }); } catch (e) { /* ignorat intenționat — mesaj generic mai jos, oricum */ }
+    try {
+      const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo });
+      // Eroarea reală (dacă există) NU se arată userului — mesajul generic de mai jos rămâne
+      // neschimbat intenționat, ca să nu dezvăluim dacă un cont există — dar apare în consola
+      // browserului, ca Andrei (sau oricine depanează) să poată vedea cauza exactă dacă emailul
+      // nu ajunge (ex. limită de emailuri/oră depășită, SMTP neconfigurat etc.).
+      if (error) console.error("[reset parolă] Supabase a răspuns cu eroare la resetPasswordForEmail:", error);
+    } catch (e) {
+      console.error("[reset parolă] eroare neașteptată la resetPasswordForEmail:", e);
+    }
   }
   msgEl.textContent = "Dacă acest cont există, a fost trimis un email cu un link de resetare a parolei. Verifică și folderul de spam — link-ul e valabil o perioadă limitată.";
 }
