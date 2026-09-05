@@ -1120,6 +1120,7 @@
     <!-- ===== VIEW TEST RIDES (v55) ===== -->
     <div id="test-ride-view" style="display:none;">
       <div id="tr-import-istoric-bar" style="display:none;text-align:right;margin-bottom:10px;">
+        <button class="btn-secondary" onclick="openTestRideMotoFlotaModal()">Motociclete disponibile</button>
         <button class="btn-secondary" onclick="openImportIstoricTestRideModal()">Importă istoric (JSON)</button>
       </div>
       <div id="tr-zi-panel">
@@ -1938,6 +1939,7 @@
   <div class="modal wide">
     <button type="button" class="rz-modal-x" onclick="closeProgramareModal()" aria-label="Închide" title="Închide">✕</button>
     <h2 id="programare-modal-title">Programare nouă</h2>
+    <div id="pr-creat-de-info" class="muted" style="font-size:11.5px;margin:-6px 0 10px"></div>
     <input type="hidden" id="pr-id" />
     <div class="modal-grid">
       <div class="field">
@@ -2051,7 +2053,7 @@
     <div class="modal-grid">
       <div class="field">
         <label>Motocicletă testată *</label>
-        <input id="tr-moto" placeholder="ex: Trident 660" />
+        <select id="tr-moto" onchange="renderTrSlotGrid()"></select>
       </div>
       <div class="field">
         <label>Stare</label>
@@ -2959,7 +2961,7 @@ async function afterLogin(freshLogin) {
   // allSettled, nu all: daca UNA din aceste incarcari esueaza sau ia mult (ex. o lista de preturi
   // foarte mare), restul aplicatiei (inclusiv butoanele de admin de mai jos) tot trebuie sa apara —
   // o singura incarcare stricata nu are voie sa blocheze tot ecranul dupa login.
-  const initResults = await Promise.allSettled([loadOrders(), rzLoadSetari(), rzLoadAdaosuri(), rzLoadPriceListFull(), loadAllProfiles(), loadProgramari(), loadRampaInchideri(), loadPuncteLucru(), loadBranduriMoto(), loadFurnizori(), loadSarcini(), loadTestRide()]);
+  const initResults = await Promise.allSettled([loadOrders(), rzLoadSetari(), rzLoadAdaosuri(), rzLoadPriceListFull(), loadAllProfiles(), loadProgramari(), loadRampaInchideri(), loadPuncteLucru(), loadBranduriMoto(), loadFurnizori(), loadSarcini(), loadTestRide(), loadTestRideMotociclete()]);
   initResults.forEach(r => { if (r.status === "rejected") console.error("Eroare la încărcarea inițială:", r.reason); });
   applyPermissionsToUI();
   restoreLocationPrefsFromStorage();
@@ -4642,6 +4644,7 @@ function renderApptCard(p) {
       ${moto.trim() ? `<div class="appt-moto">${escapeHtml(moto)}${p.vin ? " · VIN: " + escapeHtml(p.vin) : ""}</div>` : ""}
       ${p.servicii ? `<div class="appt-servicii">${escapeHtml(p.servicii)}</div>` : ""}
       ${p.observatii ? `<div class="appt-obs">Obs: ${escapeHtml(p.observatii)}</div>` : ""}
+      ${p.creat_de_nume ? `<div class="muted" style="font-size:11px;margin-top:2px">Programat de ${escapeHtml(p.creat_de_nume)}</div>` : ""}
     </div>
     <div class="appt-actions">${actions}</div>
   </div>`;
@@ -4923,6 +4926,7 @@ function openProgramareModal(id) {
     const p = currentProgramari.find(x => x.id === id);
     if (!p) return;
     document.getElementById("programare-modal-title").textContent = "Editează programare";
+    document.getElementById("pr-creat-de-info").textContent = p.creat_de_nume ? ("Programat de " + p.creat_de_nume + (p.creat_la ? (" pe " + formatDate(p.creat_la)) : "")) : "";
     document.getElementById("pr-rampa").value = p.rampa;
     document.getElementById("pr-stare").value = (p.stare === "Anulat") ? "Programat & Neconfirmat" : p.stare;
     document.getElementById("pr-data").value = p.data;
@@ -4940,6 +4944,7 @@ function openProgramareModal(id) {
     document.getElementById("pr-obs").value = p.observatii || "";
   } else {
     document.getElementById("programare-modal-title").textContent = "Programare nouă";
+    document.getElementById("pr-creat-de-info").textContent = "";
     document.getElementById("pr-rampa").value = "1";
     document.getElementById("pr-stare").value = "Programat & Neconfirmat";
     document.getElementById("pr-data").value = document.getElementById("prog-data").value || todayISODate();
@@ -5048,6 +5053,7 @@ async function stergeProgramare(id) {
 let currentTestRide = [];
 let testRideMode = "zi";
 let testRideInited = false;
+let currentTestRideMotociclete = []; // v57: flota gestionată de motociclete disponibile pentru Test Ride
 
 async function loadTestRide() {
   const { data, error } = await client.from("test_ride_uri").select("*").order("data", { ascending: true }).order("ora_inceput", { ascending: true });
@@ -5272,6 +5278,117 @@ function populateTrVanzatorSelect(selectedId) {
   sel.value = selectedId || "";
 }
 
+// v57: „Motociclete disponibile” — la cererea lui Andrei, flotă gestionată (marcă/model/serie
+// șasiu/nr. înmatriculare + activ/inactiv), în loc de textul complet liber din v55. Am ales să NU
+// schimb coloana `test_ride_uri.motocicleta` (rămâne text, ca înainte) — doar SURSA acelui text se
+// schimbă, de la tastare liberă la alegere dintr-un `<select>` populat cu unitățile active din
+// flotă; tot restul (blocajul dur de suprapunere din `saveTestRide()`, exportul Excel, randarea
+// listei, importul istoric) funcționează neschimbat, pentru că citesc în continuare un simplu text.
+function trMotoLabel(m) {
+  return [m.marca, m.model].filter(Boolean).join(" ") + (m.numar_inmatriculare ? " — " + m.numar_inmatriculare : "");
+}
+
+function populateTrMotoSelect(selectedText) {
+  const sel = document.getElementById("tr-moto");
+  if (!sel) return;
+  const active = (currentTestRideMotociclete || []).filter(m => m.activ !== false);
+  const labels = active.map(trMotoLabel);
+  let optsHtml = labels.map(label => `<option value="${escapeHtml(label)}">${escapeHtml(label)}</option>`).join("");
+  // Dacă motocicleta curentă (la reprogramare) nu mai e activă acum — dezactivată între timp, sau
+  // scrisă liber înainte să existe flota gestionată — o păstrăm ca opțiune suplimentară, ca
+  // reprogramarea să nu-i schimbe pe ascuns motocicleta rezervată inițial.
+  if (selectedText && !labels.includes(selectedText)) {
+    optsHtml = `<option value="${escapeHtml(selectedText)}">${escapeHtml(selectedText)} (indisponibilă acum)</option>` + optsHtml;
+  }
+  sel.innerHTML = optsHtml || '<option value="">— nicio motocicletă adăugată încă —</option>';
+  sel.value = selectedText || "";
+}
+
+async function loadTestRideMotociclete() {
+  const { data, error } = await client.from("test_ride_motociclete").select("*").order("marca").order("model");
+  if (error) { console.error("Eroare la încărcarea motocicletelor de test:", error); return; }
+  currentTestRideMotociclete = data || [];
+}
+
+function renderTestRideMotoFlotaModal() {
+  const box = document.getElementById("rz-modal-box");
+  if (!box) return;
+  const rows = (currentTestRideMotociclete || []);
+  box.innerHTML = `<h3>Motociclete disponibile pentru Test Ride</h3>
+    <div class="muted" style="font-size:12.5px;margin-bottom:10px">Doar motocicletele active apar de ales la un Test Ride nou. Dezactivează una temporar dacă nu e disponibilă o perioadă (vândută, în service etc.) — istoricul rezervărilor deja făcute nu se schimbă.</div>
+    <div style="overflow-x:auto">
+      <table class="roluri-table">
+        <thead><tr><th>Marcă</th><th>Model</th><th>Serie șasiu</th><th>Nr. înmatriculare</th><th>Activă</th><th></th></tr></thead>
+        <tbody>
+          ${rows.map(m => `
+            <tr>
+              <td><input type="text" value="${escapeHtml(m.marca || "")}" onchange="salveazaTestRideMotoCamp('${m.id}', 'marca', this.value)" style="font-size:12.5px;padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;width:100%;min-width:90px" /></td>
+              <td><input type="text" value="${escapeHtml(m.model || "")}" onchange="salveazaTestRideMotoCamp('${m.id}', 'model', this.value)" style="font-size:12.5px;padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;width:100%;min-width:110px" /></td>
+              <td><input type="text" value="${escapeHtml(m.serie_sasiu || "")}" onchange="salveazaTestRideMotoCamp('${m.id}', 'serie_sasiu', this.value)" style="font-size:12.5px;padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;width:100%;min-width:120px" /></td>
+              <td><input type="text" value="${escapeHtml(m.numar_inmatriculare || "")}" onchange="salveazaTestRideMotoCamp('${m.id}', 'numar_inmatriculare', this.value)" style="font-size:12.5px;padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;width:100%;min-width:100px" /></td>
+              <td style="text-align:center"><input type="checkbox" ${m.activ !== false ? "checked" : ""} onchange="salveazaTestRideMotoActiv('${m.id}', this.checked)" style="width:16px;height:16px" /></td>
+              <td><button class="btn-secondary" style="padding:4px 9px;font-size:11.5px;color:#b91c1c" onclick="stergeTestRideMoto('${m.id}', ${jsStrAttr(trMotoLabel(m))})">Șterge</button></td>
+            </tr>
+          `).join("") || '<tr><td colspan="6" class="muted">Nicio motocicletă adăugată încă.</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+    <div class="export-section-label" style="margin-top:16px">Adaugă motocicletă</div>
+    <div class="modal-grid" style="margin-bottom:8px">
+      <div class="field"><label>Marcă</label><input id="trm-marca" placeholder="ex: Triumph" /></div>
+      <div class="field"><label>Model</label><input id="trm-model" placeholder="ex: Trident 660" /></div>
+      <div class="field"><label>Serie șasiu</label><input id="trm-serie" placeholder="opțional" /></div>
+      <div class="field"><label>Nr. înmatriculare</label><input id="trm-plate" placeholder="opțional" /></div>
+    </div>
+    <button class="btn-primary" onclick="adaugaTestRideMoto()">+ Adaugă motocicletă</button>
+    <div class="modal-actions"><button class="btn-secondary" onclick="rzCloseModal()">Închide</button></div>`;
+}
+
+function openTestRideMotoFlotaModal() {
+  if (!amAdmin()) return;
+  rzOpenModal("<h3>Se încarcă...</h3>", "modal full");
+  renderTestRideMotoFlotaModal();
+}
+
+async function adaugaTestRideMoto() {
+  const marca = document.getElementById("trm-marca").value.trim();
+  const model = document.getElementById("trm-model").value.trim();
+  const serie_sasiu = document.getElementById("trm-serie").value.trim() || null;
+  const numar_inmatriculare = document.getElementById("trm-plate").value.trim() || null;
+  if (!marca && !model) { alert("Completează cel puțin marca sau modelul."); return; }
+  const { error } = await client.from("test_ride_motociclete").insert({
+    marca: marca || null, model: model || null, serie_sasiu, numar_inmatriculare,
+    punct_lucru_id: getMyCreateLocationId(), creat_de: currentProfile.id, creat_de_nume: currentProfile.nume,
+  });
+  if (error) { alert("Eroare la adăugare: " + error.message); return; }
+  await loadTestRideMotociclete();
+  renderTestRideMotoFlotaModal();
+  if (typeof rzToast === "function") rzToast("Motocicletă adăugată", "ok");
+}
+
+async function salveazaTestRideMotoCamp(id, camp, valoare) {
+  const payload = {}; payload[camp] = valoare.trim() || null;
+  const { error } = await client.from("test_ride_motociclete").update(payload).eq("id", id);
+  if (error) { alert("Eroare la salvare: " + error.message); await loadTestRideMotociclete(); renderTestRideMotoFlotaModal(); return; }
+  await loadTestRideMotociclete();
+}
+
+async function salveazaTestRideMotoActiv(id, activ) {
+  const { error } = await client.from("test_ride_motociclete").update({ activ }).eq("id", id);
+  if (error) { alert("Eroare: " + error.message); await loadTestRideMotociclete(); renderTestRideMotoFlotaModal(); return; }
+  await loadTestRideMotociclete();
+  if (typeof rzToast === "function") rzToast(activ ? "Motocicletă activată" : "Motocicletă dezactivată", "ok");
+}
+
+async function stergeTestRideMoto(id, nume) {
+  if (!confirm(`Ștergi definitiv „${nume}” din lista de motociclete disponibile? Rezervările deja făcute pentru ea NU sunt afectate — rămân neschimbate, ca text. Dacă vrei doar s-o marchezi temporar indisponibilă, folosește în schimb caseta „Activă”.`)) return;
+  const { error } = await client.from("test_ride_motociclete").delete().eq("id", id);
+  if (error) { alert("Eroare la ștergere: " + error.message); return; }
+  await loadTestRideMotociclete();
+  renderTestRideMotoFlotaModal();
+  if (typeof rzToast === "function") rzToast("Motocicletă ștearsă", "ok");
+}
+
 // grilă vizuală, în modal — arată orele deja ocupate pentru ACEEAȘI motocicletă (text normalizat),
 // în ziua aleasă, excluzând (la reprogramare) propriul test ride editat.
 function renderTrSlotGrid() {
@@ -5325,7 +5442,7 @@ function openTestRideModal(id) {
     const t = currentTestRide.find(x => x.id === id);
     if (!t) return;
     document.getElementById("test-ride-modal-title").textContent = "Editează Test Ride";
-    document.getElementById("tr-moto").value = t.motocicleta || "";
+    populateTrMotoSelect(t.motocicleta || "");
     document.getElementById("tr-stare").value = (t.stare === "Anulat") ? "Programat & Neconfirmat" : t.stare;
     document.getElementById("tr-data").value = t.data;
     const startVal = fmtOra(t.ora_inceput);
@@ -5338,7 +5455,7 @@ function openTestRideModal(id) {
     document.getElementById("tr-obs").value = t.observatii || "";
   } else {
     document.getElementById("test-ride-modal-title").textContent = "Test Ride nou";
-    document.getElementById("tr-moto").value = "";
+    populateTrMotoSelect("");
     document.getElementById("tr-stare").value = "Programat & Neconfirmat";
     document.getElementById("tr-data").value = document.getElementById("tr-data-filtru").value || todayISODate();
     populateTrOraInceputSelect("");
@@ -5732,7 +5849,7 @@ function renderSarcinaCard(t, opts) {
     }
     actions += `<button type="button" class="btn-secondary" onclick="rezolvaSarcina('${t.id}')">Rezolvat</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="openCereAjutorModal('${t.id}')">Cere ajutor</button>`;
-    actions += `<button type="button" class="btn-secondary" onclick="openPaseazaModal('${t.id}')">Pasează mai departe</button>`;
+    actions += `<button type="button" class="btn-secondary" onclick="openPaseazaModal('${t.id}')">Împarte cu alt coleg</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="openSarcinaModal('${t.id}')">Editează</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="anuleazaSarcina('${t.id}')">✕ Anulează</button>`;
   } else if (t.stare === "Rezolvat") {
@@ -6118,15 +6235,15 @@ function openPaseazaModal(id) {
   if (!t) return;
   const colegi = allProfiles.filter(p => p.id !== currentProfile.id && p.activ !== false);
   if (!colegi.length) { alert("Nu există alți colegi activi cărora să le pasezi task-ul."); return; }
-  const html = `<h3>Pasează mai departe — ${escapeHtml(t.nume)}</h3>
+  const html = `<h3>Împarte cu alt coleg — ${escapeHtml(t.nume)}</h3>
     <div class="muted" style="font-size:12.5px">Task-ul devine responsabilitatea colegului ales — primește o notificare și task-ul apare la el ca „atribuit”. Tu rămâi vizibil ca cel care l-a creat inițial.</div>
     <div class="field" style="margin-top:12px">
-      <label>Pasează către</label>
+      <label>Împarte cu</label>
       <select id="pas-coleg">${colegi.map(p => `<option value="${p.id}" data-nume="${escapeHtml(p.nume)}">${escapeHtml(p.nume)}</option>`).join("")}</select>
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="rzCloseModal()">Anulează</button>
-      <button class="btn-primary" onclick="confirmaPaseazaSarcina('${id}')">Pasează</button>
+      <button class="btn-primary" onclick="confirmaPaseazaSarcina('${id}')">Împarte</button>
     </div>`;
   rzOpenModal(html);
 }
@@ -6142,16 +6259,16 @@ async function confirmaPaseazaSarcina(id) {
   if (error) { alert("Eroare: " + error.message); return; }
   await client.from("notificari").insert({
     destinatar_id: colegId, destinatar_nume: colegNume,
-    mesaj: `${currentProfile.nume} ți-a pasat mai departe task-ul: ${t.nume}`,
+    mesaj: `${currentProfile.nume} a împărțit cu tine task-ul: ${t.nume}`,
     sarcina_id: id, creat_de: currentProfile.id, creat_de_nume: currentProfile.nume,
   });
   await client.from("sarcini_observatii").insert({
     sarcina_id: id, autor_id: currentProfile.id, autor_nume: currentProfile.nume,
-    text: `Task pasat mai departe de la ${currentProfile.nume} către ${colegNume}.`,
+    text: `Task împărțit de la ${currentProfile.nume} către ${colegNume}.`,
   });
   rzCloseModal();
   await loadSarcini();
-  if (typeof rzToast === "function") rzToast("Task pasat către " + colegNume, "ok");
+  if (typeof rzToast === "function") rzToast("Task împărțit cu " + colegNume, "ok");
 }
 
 // ---------- DETALIU SARCINĂ (pop-up mărit: toate datele + observații) ----------
@@ -6200,7 +6317,7 @@ function renderSarcinaDetaliuModalContent(t) {
     <div class="modal-actions">
       <button class="btn-secondary" onclick="rzCloseModal()">Închide</button>
       <button class="btn-secondary" onclick="rzCloseModal(); openSarcinaModal('${t.id}')">Editează task-ul</button>
-      ${t.stare === "De făcut" ? `<button class="btn-secondary" onclick="rzCloseModal(); openPaseazaModal('${t.id}')">Pasează mai departe</button>` : ""}
+      ${t.stare === "De făcut" ? `<button class="btn-secondary" onclick="rzCloseModal(); openPaseazaModal('${t.id}')">Împarte cu alt coleg</button>` : ""}
       <button class="btn-primary" onclick="adaugaObservatieSarcina('${t.id}')">Adaugă observație</button>
     </div>`;
   rzOpenModal(html);
@@ -8476,6 +8593,13 @@ function rzSubscribeRealtime() {
       .on("postgres_changes", { event: "*", schema: "public", table: "test_ride_uri" }, () => { loadTestRide(); })
       .subscribe();
   } catch (e) { console.warn("realtime test ride indisponibil", e); }
+  // v57: flota de motociclete disponibile — sincronizare Realtime, ca activarea/dezactivarea unei
+  // motociclete de către un coleg să se reflecte imediat în select-ul de la Test Ride nou, la toți.
+  try {
+    client.channel("rz-test-ride-moto-sync")
+      .on("postgres_changes", { event: "*", schema: "public", table: "test_ride_motociclete" }, () => { loadTestRideMotociclete(); })
+      .subscribe();
+  } catch (e) { console.warn("realtime motociclete test ride indisponibil", e); }
 }
 
 // ---------- SCAN INPUT: ENTER trimite scanarea ----------
