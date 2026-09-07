@@ -1677,6 +1677,16 @@
           <input type="file" id="rz-inv-import-file" accept=".xlsx,.xls" style="display:none" onchange="rzHandleInvImportFile(event)" />
           <button class="btn-secondary" onclick="document.getElementById('rz-inv-import-file').click()" title="Importă coduri din același format ca șablonul — codurile deja existente se actualizează, restul se adaugă">Importă din Excel</button>
         </div>
+        <div class="toolbar-actions" id="rz-inv-liste-bar" style="display:none">
+          <select id="rz-inv-lista-select" onchange="rzSchimbaListaActiva(this.value)" style="min-width:170px" title="Lista activă — codurile scanate merg în lista aleasă aici">
+            <option value="">Toate codurile</option>
+            <option value="fara">Fără listă</option>
+          </select>
+          <button class="btn-secondary" onclick="rzCreeazaListaNoua()">+ Listă nouă</button>
+          <button class="btn-secondary" id="btn-inv-lista-redenumeste" style="display:none" onclick="rzRedenumesteListaActiva()">Redenumește lista</button>
+          <button class="btn-secondary" id="btn-inv-lista-sterge" style="display:none" onclick="rzStergeListaActiva()">Șterge lista</button>
+          <button class="btn-secondary" id="btn-inv-lista-exporta" style="display:none" onclick="rzExportaListaActiva()">Exportă lista</button>
+        </div>
       </div>
 
       <div class="rz-submodes" style="display:none">
@@ -7272,6 +7282,8 @@ let rzMode = "receptie"; // 'receptie' | 'inventar'
 let rzItems = [];        // receptie_articole
 let rzInvItems = [];     // inventar_articole
 let selectedInvIds = new Set(); // v60: selecția din Inventar liber, pentru "Exportă selecția"
+let rzInvListe = [];     // inventar_liste — v61: liste denumite (ex. "Filtre ulei", "Anvelope")
+let rzInvListaActiva = ""; // "" = Toate codurile, "fara" = Fără listă, altfel = id-ul listei active
 let rzPriceList = [];    // price_list (id, marca, cod_piesa, denumire, pret_eur, pret_ron)
 let rzAdaosuri = {};     // {marca: procent}
 let rzSetari = {};       // cheie -> valoare (din tabela "setari")
@@ -7287,7 +7299,7 @@ async function rzInitIfNeeded() {
 }
 
 async function rzLoadAll() {
-  await Promise.all([rzLoadItems(), rzLoadInvItems()]);
+  await Promise.all([rzLoadItems(), rzLoadInvItems(), rzLoadInvListe()]);
   rzPopulateDNFilter();
   rzUpdateStats();
   rzRender();
@@ -7302,6 +7314,11 @@ async function rzLoadInvItems() {
   const { data, error } = await client.from("inventar_articole").select("*").order("creat_la", { ascending: true });
   if (error) { console.error(error); return; }
   rzInvItems = data || [];
+}
+async function rzLoadInvListe() {
+  const { data, error } = await client.from("inventar_liste").select("*").order("creat_la", { ascending: false });
+  if (error) { console.error(error); return; }
+  rzInvListe = data || [];
 }
 async function rzLoadSetari() {
   const { data } = await client.from("setari").select("*");
@@ -7722,6 +7739,9 @@ function rzSetMode(m) {
   // v60: la cererea lui Andrei — export (al selecției)/șablon/import, strict la Inventar liber —
   // altă nevoie decât „Exportă” de la Recepție (care exportă tot, pe DN-uri), de-asta grup separat.
   const invOnlyActions = document.getElementById("rz-inv-only-actions"); if (invOnlyActions) invOnlyActions.style.display = m === "inventar" ? "flex" : "none";
+  // v61: la cererea lui Andrei — liste denumite (ex. "Filtre ulei", "Anvelope"), strict la Inventar liber.
+  const invListeBar = document.getElementById("rz-inv-liste-bar"); if (invListeBar) invListeBar.style.display = m === "inventar" ? "flex" : "none";
+  if (m === "inventar") rzPopulateInvListeSelect();
   document.getElementById("rz-filter-text").placeholder = m === "inventar" ? "Caută cod / denumire în inventar..." : "Caută cod / denumire / destinatar...";
   document.getElementById("rz-scan-input").placeholder = m === "receptie" ? "Scanează sau scrie codul de bară..." : "Scanează cod pentru inventar...";
   rzUpdateStats();
@@ -7829,7 +7849,12 @@ async function rzPersistItem(it) {
 // ---------- INVENTAR LIBER ----------
 async function rzScanInventar(raw) {
   const upper = raw.toUpperCase();
-  const existing = rzInvItems.find(it => it.cod.toUpperCase() === upper);
+  // v61: dacă e o listă activă (nu "Toate codurile"/"Fără listă"), scanarea intră STRICT în acea
+  // listă — un cod deja existent în altă listă (sau fără listă) nu se incrementează din greșeală,
+  // se creează un rând nou, separat, în lista curentă (asta a cerut explicit Andrei: "vreau sa pot
+  // sa scanez doar filtrele de ulei si sa le trec intr-o lista").
+  const listaId = (rzInvListaActiva && rzInvListaActiva !== "fara") ? rzInvListaActiva : null;
+  const existing = rzInvItems.find(it => it.cod.toUpperCase() === upper && (it.lista_id || null) === listaId);
   if (existing) {
     existing.cantitate = (Number(existing.cantitate) || 0) + 1;
     await client.from("inventar_articole").update({ cantitate: existing.cantitate, actualizat_la: new Date().toISOString() }).eq("id", existing.id);
@@ -7841,6 +7866,7 @@ async function rzScanInventar(raw) {
       destinatie: "STOC", observatii: "", pret_manual: null,
       creat_de: currentProfile.id, creat_de_nume: currentProfile.nume,
       punct_lucru_id: getMyCreateLocationId(),
+      lista_id: listaId,
     };
     const { data, error } = await client.from("inventar_articole").insert(payload).select().single();
     if (error) { rzToast("Eroare: " + error.message, "err"); return; }
@@ -7945,6 +7971,15 @@ function rzEditInvField(id, field) {
       if (!v) { rzRender(); return; }
       save({ cod: v });
     };
+    inp.addEventListener("blur", doSave);
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") doSave(); if (e.key === "Escape") rzRender(); });
+  } else if (field === "denumire") {
+    // v62: celula are id fix (rz-inv-den-cell-<id>), NU poziție fixă în tabel — exact fix-ul aplicat
+    // deja la Cod în v60, ca să nu se mai poată strica la o coloană nouă adăugată ulterior în tabel.
+    const cell = document.getElementById("rz-inv-den-cell-" + id); if (!cell) return;
+    cell.innerHTML = `<input class="rz-inline-input wide" id="rz-inv-den-input-${id}" value="${escapeHtml(it.denumire || "")}" placeholder="Denumire..." />`;
+    const inp = document.getElementById("rz-inv-den-input-" + id); inp.focus(); inp.select();
+    const doSave = () => save({ denumire: inp.value.trim() });
     inp.addEventListener("blur", doSave);
     inp.addEventListener("keydown", e => { if (e.key === "Enter") doSave(); if (e.key === "Escape") rzRender(); });
   }
@@ -8572,6 +8607,10 @@ function rzRenderInventar() {
   const container = document.getElementById("rz-list-container"); if (!container) return;
   const filterText = (document.getElementById("rz-filter-text").value || "").toLowerCase();
   let list = rzInvItems.filter(matchesLocationFilter);
+  // v61: liste denumite — "fara" arată strict codurile fără nicio listă, un id de listă arată
+  // strict codurile din acea listă, iar "" (Toate codurile) nu filtrează deloc.
+  if (rzInvListaActiva === "fara") list = list.filter(it => !it.lista_id);
+  else if (rzInvListaActiva) list = list.filter(it => it.lista_id === rzInvListaActiva);
   if (filterText) list = list.filter(it => (it.cod || "").toLowerCase().includes(filterText) || (it.denumire || "").toLowerCase().includes(filterText) || (it.destinatie || "").toLowerCase().includes(filterText));
 
   let catalogRows = [];
@@ -8585,19 +8624,20 @@ function rzRenderInventar() {
     }
   }
 
-  let h = `<div class="rz-dn-section"><div class="rz-dn-header"><span class="dntitle">Inventar liber — ${list.length} coduri proprii${filterText && catalogRows.length ? " + " + catalogRows.length + " din lista de prețuri" : ""}</span>`;
+  const listaActivaNume = rzInvListaActiva === "fara" ? "Fără listă" : (rzInvListe.find(l => l.id === rzInvListaActiva) || {}).nume;
+  let h = `<div class="rz-dn-section"><div class="rz-dn-header"><span class="dntitle">Inventar liber${listaActivaNume ? " — " + escapeHtml(listaActivaNume) : ""} — ${list.length} coduri${listaActivaNume ? "" : " proprii"}${filterText && catalogRows.length ? " + " + catalogRows.length + " din lista de prețuri" : ""}</span>`;
   h += `<button class="icon-btn danger" onclick="rzClearInventar()" title="Golește inventarul">${ICON_CLOSE}</button></div>`;
   if (!list.length && !catalogRows.length) {
-    h += `<div class="rz-no-items">${filterText ? "Niciun rezultat. Încearcă alt cod." : "Scanează primul cod sau caută o piesă din lista de prețuri după cod."}</div></div>`;
-    container.innerHTML = h; return;
+    h += `<div class="rz-no-items">${filterText ? "Niciun rezultat. Încearcă alt cod." : rzInvListaActiva ? "Lista e goală — scanează un cod ca să adaugi primul." : "Scanează primul cod sau caută o piesă din lista de prețuri după cod."}</div></div>`;
+    container.innerHTML = h; rzPopulateInvListeSelect(); return;
   }
   h += `<div class="table-wrap"><table><thead><tr><th><input type="checkbox" onchange="toggleSelectAllInv(this)" title="Selectează tot"></th><th>Cod</th><th>Denumire</th><th>Cant.</th><th>Destinatar</th><th>Preț</th><th>Fără TVA</th><th>Observații</th><th></th></tr></thead><tbody>`;
   list.forEach(it => {
     const cuTva = it.pret_manual ? rzApplyMarkupManual(it.pret_manual, it.marca) : rzGetPrice(it.cod);
     h += `<tr id="rz-inv-row-${it.id}">
       <td><input type="checkbox" class="rz-inv-select-cb" value="${it.id}" onchange="updateInvBulkButtons()" ${selectedInvIds.has(it.id) ? "checked" : ""} /></td>
-      <td id="rz-inv-cod-cell-${it.id}" style="font-family:monospace;font-size:11.5px;color:var(--accent)"><div style="display:flex;align-items:center;gap:4px"><span>${escapeHtml(it.cod)}</span><button class="rz-mini-edit" onclick="rzEditInvField('${it.id}','cod')">Edit</button></div></td>
-      <td>${escapeHtml(it.denumire || "—")}</td>
+      <td id="rz-inv-cod-cell-${it.id}" style="font-family:monospace;font-size:11.5px;color:var(--accent)"><div style="display:flex;align-items:center;gap:4px"><span>${escapeHtml(it.cod)}</span><button class="rz-mini-edit" onclick="rzEditInvField('${it.id}','cod')">Edit</button></div>${(!rzInvListaActiva && it.lista_id) ? `<div style="font-size:9.5px;color:var(--muted);font-family:inherit">${escapeHtml((rzInvListe.find(l => l.id === it.lista_id) || {}).nume || "")}</div>` : ""}</td>
+      <td id="rz-inv-den-cell-${it.id}"><div style="display:flex;align-items:center;gap:4px"><span style="color:${it.denumire ? "var(--text)" : "var(--muted)"}">${escapeHtml(it.denumire || "—")}</span><button class="rz-mini-edit" onclick="rzEditInvField('${it.id}','denumire')">Edit</button></div></td>
       <td><div class="rz-qty-wrap"><span style="font-weight:700" id="rz-inv-qty-${it.id}">${it.cantitate}</span><button class="rz-mini-edit" onclick="rzEditInvField('${it.id}','cantitate')">Edit</button></div></td>
       <td id="rz-inv-dest-cell-${it.id}"><div style="display:flex;align-items:center;gap:4px"><span class="badge" style="background:#dcfce7;color:#166534;font-size:10.5px;padding:2px 8px;border-radius:8px">${escapeHtml(it.destinatie || "")}</span><button class="rz-mini-edit" onclick="rzEditInvField('${it.id}','destinatie')">Edit</button></div></td>
       <td id="rz-inv-pret-${it.id}" style="font-size:11.5px">${rzFmtRON(cuTva)} <button class="rz-mini-edit" onclick="rzEditInvField('${it.id}','pret_manual')">Edit</button></td>
@@ -8622,6 +8662,92 @@ function rzRenderInventar() {
   });
   h += "</tbody></table></div></div>";
   container.innerHTML = h;
+  rzPopulateInvListeSelect();
+}
+
+// ---------- INVENTAR LIBER — liste denumite (v61) ----------
+// La cererea lui Andrei — poate scana strict o categorie (ex. "Filtre ulei", "Anvelope") separat de
+// restul inventarului, într-o listă cu nume, pe care o poate crea/redenumi/șterge/exporta.
+function rzPopulateInvListeSelect() {
+  const sel = document.getElementById("rz-inv-lista-select"); if (!sel) return;
+  const cur = rzInvListaActiva;
+  let h = `<option value="">Toate codurile</option><option value="fara">Fără listă (${rzInvItems.filter(it => !it.lista_id).length})</option>`;
+  rzInvListe.forEach(l => { h += `<option value="${l.id}">${escapeHtml(l.nume)} (${rzInvItems.filter(it => it.lista_id === l.id).length})</option>`; });
+  sel.innerHTML = h;
+  sel.value = (cur === "fara" || rzInvListe.some(l => l.id === cur)) ? cur : "";
+  rzInvListaActiva = sel.value;
+  rzUpdateInvListeButtons();
+}
+function rzUpdateInvListeButtons() {
+  const ok = !!(rzInvListaActiva && rzInvListaActiva !== "fara");
+  ["btn-inv-lista-redenumeste", "btn-inv-lista-sterge", "btn-inv-lista-exporta"].forEach(id => {
+    const b = document.getElementById(id); if (b) b.style.display = ok ? "inline-flex" : "none";
+  });
+}
+function rzSchimbaListaActiva(val) {
+  rzInvListaActiva = val;
+  rzUpdateInvListeButtons();
+  rzRenderInventar();
+}
+async function rzCreeazaListaNoua() {
+  const nume = prompt("Numele noii liste (ex. „Filtre ulei”, „Anvelope”):");
+  if (!nume || !nume.trim()) return;
+  const payload = { nume: nume.trim(), punct_lucru_id: getMyCreateLocationId(), creat_de: currentProfile.id, creat_de_nume: currentProfile.nume };
+  const { data, error } = await client.from("inventar_liste").insert(payload).select().single();
+  if (error) { alert("Eroare la crearea listei: " + error.message); return; }
+  rzInvListe.unshift(data);
+  rzInvListaActiva = data.id;
+  rzRenderInventar();
+  if (typeof rzToast === "function") rzToast("Listă creată: " + escapeHtml(data.nume) + " — scanează acum, codurile intră direct în ea.", "ok");
+}
+async function rzRedenumesteListaActiva() {
+  const l = rzInvListe.find(x => x.id === rzInvListaActiva); if (!l) return;
+  const nou = prompt("Redenumește lista „" + l.nume + "” în:", l.nume);
+  if (!nou || !nou.trim() || nou.trim() === l.nume) return;
+  const numeNou = nou.trim();
+  const { error } = await client.from("inventar_liste").update({ nume: numeNou }).eq("id", l.id);
+  if (error) { alert("Eroare: " + error.message); return; }
+  l.nume = numeNou;
+  rzRenderInventar();
+  if (typeof rzToast === "function") rzToast("Listă redenumită: " + escapeHtml(numeNou), "ok");
+}
+function rzStergeListaActiva() {
+  const l = rzInvListe.find(x => x.id === rzInvListaActiva); if (!l) return;
+  const cnt = rzInvItems.filter(it => it.lista_id === l.id).length;
+  rzOpenModal(`<h3>Șterge listă</h3><p style="font-size:13px;color:var(--muted);margin-top:6px">Ștergi lista „${escapeHtml(l.nume)}”? ${cnt ? "Cele " + cnt + " coduri NU se șterg — rămân în inventar, doar trec la „Fără listă”." : "Lista e goală."}</p>
+    <div class="modal-actions"><button class="btn-secondary" onclick="rzCloseModal()">Anulează</button>
+    <button class="btn-danger" onclick="rzDoStergeLista('${l.id}')">Da, șterge lista</button></div>`);
+}
+async function rzDoStergeLista(id) {
+  rzCloseModal();
+  const { error } = await client.from("inventar_liste").delete().eq("id", id);
+  if (error) { alert("Eroare: " + error.message); return; }
+  rzInvListe = rzInvListe.filter(x => x.id !== id);
+  rzInvItems.forEach(it => { if (it.lista_id === id) it.lista_id = null; });
+  rzInvListaActiva = "";
+  rzRenderInventar();
+  if (typeof rzToast === "function") rzToast("Listă ștearsă.", "ok");
+}
+function rzExportaListaActiva() {
+  const l = rzInvListe.find(x => x.id === rzInvListaActiva); if (!l) return;
+  const items = rzInvItems.filter(it => it.lista_id === l.id);
+  if (!items.length) { alert("Lista „" + l.nume + "” nu are niciun cod."); return; }
+  const rows = items.map(it => {
+    const cuTva = it.pret_manual ? rzApplyMarkupManual(it.pret_manual, it.marca) : rzGetPrice(it.cod);
+    return {
+      "Cod": it.cod,
+      "Denumire": it.denumire || "",
+      "Cantitate": it.cantitate || 0,
+      "Destinatar": it.destinatie || "",
+      "Preț (RON, cu TVA)": cuTva || "",
+      "Preț (RON, fără TVA)": cuTva ? rzPriceNoVat(cuTva) : "",
+      "Observații": it.observatii || "",
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, l.nume.slice(0, 31) || "Listă");
+  XLSX.writeFile(wb, "inventar_liber_" + l.nume.trim().replace(/[^a-z0-9]+/gi, "_") + "_" + new Date().toISOString().slice(0, 10) + ".xlsx");
 }
 
 // ---------- INVENTAR LIBER — selecție, export selecție, șablon, import ----------
@@ -8703,6 +8829,7 @@ async function rzHandleInvImportFile(event) {
         const payload = {
           brand: (currentProfile && currentProfile.brand) || null, cod, denumire, cantitate, destinatie, pret_manual, observatii,
           creat_de: currentProfile.id, creat_de_nume: currentProfile.nume, punct_lucru_id: getMyCreateLocationId(),
+          lista_id: (rzInvListaActiva && rzInvListaActiva !== "fara") ? rzInvListaActiva : null,
         };
         const { data, error } = await client.from("inventar_articole").insert(payload).select().single();
         if (error) { skipped++; continue; }
@@ -8728,6 +8855,8 @@ function rzSubscribeRealtime() {
       // oricare din cele două e activ tabul curent, nu doar tab-receptie ca înainte de separare.
       .on("postgres_changes", { event: "*", schema: "public", table: "receptie_articole" }, () => { if (document.getElementById("tab-receptie").classList.contains("active") || document.getElementById("tab-inventar").classList.contains("active")) { rzLoadItems().then(() => { rzPopulateDNFilter(); rzUpdateStats(); rzRender(); }); } })
       .on("postgres_changes", { event: "*", schema: "public", table: "inventar_articole" }, () => { if (document.getElementById("tab-receptie").classList.contains("active") || document.getElementById("tab-inventar").classList.contains("active")) { rzLoadInvItems().then(() => { rzUpdateStats(); rzRender(); }); } })
+      // v61: liste denumite — o listă creată/redenumită/ștearsă de un coleg apare aproape instant la ceilalți.
+      .on("postgres_changes", { event: "*", schema: "public", table: "inventar_liste" }, () => { if (document.getElementById("tab-inventar").classList.contains("active")) { rzLoadInvListe().then(() => rzRender()); } })
       .subscribe();
   } catch (e) { console.warn("realtime indisponibil", e); }
   // v50: la întrebarea lui Andrei — "colegii văd în timp real dacă alt cont a rezervat deja
