@@ -8346,14 +8346,14 @@ async function rzPsSaveEur() {
   const v = parseFloat(document.getElementById("rz-ps-eur").value) || 0;
   rzSetari.curs_eur_manual = v > 0 ? String(v) : "";
   await rzSetariUpsert("curs_eur_manual", rzSetari.curs_eur_manual);
-  rzUpdateCursStatus(); rzRender();
+  rzUpdateCursStatus(); rzRender(); renderCatalogTable();
   rzToast(v ? "Curs manual setat: " + v + " RON" : "Curs manual șters", "ok");
   rzOpenPriceSettings();
 }
 async function rzPsClearEur() {
   rzSetari.curs_eur_manual = "";
   await rzSetariUpsert("curs_eur_manual", "");
-  rzUpdateCursStatus(); rzRender();
+  rzUpdateCursStatus(); rzRender(); renderCatalogTable();
   rzToast("Folosesc ultimul curs cunoscut", "ok");
   rzOpenPriceSettings();
 }
@@ -8395,7 +8395,7 @@ async function rzRefreshCursBnr() {
       return;
     }
     await rzLoadSetari();
-    rzRender();
+    rzRender(); renderCatalogTable();
     if (typeof rzToast === "function") rzToast("Curs actualizat", "ok");
     rzOpenPriceSettings();
   } catch (e) {
@@ -8410,7 +8410,7 @@ async function rzPsSaveMarkup() {
   const { error } = await client.from("adaosuri_marca").upsert(rows, { onConflict: "marca" });
   if (error) { rzToast("Eroare: " + error.message, "err"); return; }
   await rzLoadAdaosuri();
-  rzRender();
+  rzRender(); renderCatalogTable();
   rzToast("Adaosuri actualizate", "ok");
 }
 async function rzPsSaveTva() {
@@ -8418,7 +8418,7 @@ async function rzPsSaveTva() {
   const tva = (!isNaN(v) && v >= 0) ? v : 21;
   rzSetari.tva_procent = String(tva);
   await rzSetariUpsert("tva_procent", tva);
-  rzRender();
+  rzRender(); renderCatalogTable();
   rzToast("TVA setat la " + tva + "%", "ok");
 }
 
