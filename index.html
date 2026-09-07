@@ -1639,10 +1639,11 @@
               <th>Preț cu TVA</th>
               <th>Preț fără TVA</th>
               <th title="Data la care a fost încărcat prețul brut (EUR/RON) al piesei, din Excel sau din Recepție — NU data ultimului calcul. Prețul RON de mai sus e mereu calculat cu cursul/adaosul curente, chiar dacă piesa nu a fost reîncărcată azi.">Preț încărcat</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="catalog-table-body">
-            <tr class="empty-row"><td colspan="8">Se încarcă...</td></tr>
+            <tr class="empty-row"><td colspan="9">Se încarcă...</td></tr>
           </tbody>
         </table>
       </div>
@@ -6607,6 +6608,7 @@ function renderDauneTable() {
         <div class="actions-cell" style="flex-wrap:wrap">
           ${(amAdmin() || canDo("perm_daune")) ? `<button class="icon-btn" title="Editează" onclick="openDauneModal('${d.id}')">${ICON_EDIT}</button>` : ""}
           <button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="openObservatiiDauna('${d.id}')">Obs.${(d.observatii || []).length ? " " + d.observatii.length : ""}</button>
+          ${(amAdmin() || canDo("perm_devize_service")) ? `<button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="trimiteDaunaLaDeviz('${d.id}')" title="Creează un deviz nou, precompletat cu datele acestui dosar (client, motocicletă, nr. dosar)">Trimite la Devize</button>` : ""}
           ${potPreda ? `<button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="openPredareDaunaModal('${d.id}')">Predă</button>` : ""}
           ${potFinaliza ? `<button class="btn-secondary" style="padding:3px 8px;font-size:11px" onclick="finalizeazaDauna('${d.id}')">Finalizează</button>` : ""}
           ${potAnula ? `<button class="icon-btn danger" title="Anulează" onclick="anuleazaDauna('${d.id}')">${ICON_CLOSE}</button>` : ""}
@@ -6646,7 +6648,56 @@ function renderDaunaStareBar(d) {
   actions.innerHTML =
     (potPreda ? `<button class="btn-secondary" onclick="openPredareDaunaModal('${d.id}')">Predă spre finalizare</button>` : "") +
     (potFinaliza ? `<button class="btn-secondary" onclick="finalizeazaDauna('${d.id}')">Finalizează dosarul</button>` : "") +
-    `<button class="btn-secondary" onclick="openObservatiiDauna('${d.id}')">Observații${(d.observatii || []).length ? " (" + d.observatii.length + ")" : ""}</button>`;
+    `<button class="btn-secondary" onclick="openObservatiiDauna('${d.id}')">Observații${(d.observatii || []).length ? " (" + d.observatii.length + ")" : ""}</button>` +
+    ((amAdmin() || canDo("perm_devize_service")) ? `<button class="btn-secondary" onclick="trimiteDaunaLaDeviz('${d.id}')" title="Creează un deviz nou, precompletat cu datele acestui dosar">Trimite la Devize</button>` : "");
+}
+
+// v59: la cererea lui Andrei — dintr-un dosar de daună, un deviz nou (Draft), precompletat cu
+// datele deja existente în dosar (client, motocicletă, nr. dosar), ca să nu le mai rescrie manual —
+// rămâne doar să interogheze codurile și să adauge piesele, direct în editorul de deviz care se
+// deschide automat după creare. Devizul are propriile câmpuri dedicate `dosar_dauna`/`data_dauna`
+// (existente din v35, gândite exact pentru acest scenariu, dar nefolosite din UI până acum).
+async function trimiteDaunaLaDeviz(id) {
+  const d = currentDaune.find(x => x.id === id);
+  if (!d) return;
+  if (!(amAdmin() || canDo("perm_devize_service"))) { alert("Nu ai permisiunea de a crea devize."); return; }
+
+  if (d.numar_dosar && (d.numar_dosar || "").trim()) {
+    const dejaExista = (currentDevize || []).some(dv => (dv.dosar_dauna || "").trim() && (dv.dosar_dauna || "").trim() === d.numar_dosar.trim());
+    if (dejaExista && !confirm(`Există deja un deviz legat de dosarul nr. ${d.numar_dosar}. Creezi oricum un deviz nou?`)) return;
+  }
+
+  const marca = (d.marca || "").trim();
+  const isTriumph = marca.toLowerCase() === "triumph";
+  const payload = {
+    stare: "Draft",
+    client_nume: dauneClientLabel(d) !== "—" ? dauneClientLabel(d) : "Client necunoscut",
+    client_contact: d.client_telefon || null,
+    moto_brand_categorie: marca ? (isTriumph ? "Triumph" : "Alta marca") : null,
+    moto_model: d.model || null,
+    moto_vin: d.vin || null,
+    moto_plate: d.numar_inmatriculare || null,
+    moto_km: d.numar_kilometri || null,
+    dosar_dauna: d.numar_dosar || null,
+    data_dauna: d.data_incident || d.data_dosar || null,
+    data_intrare: todayISODate(),
+    comanda_id: null,
+    total_piese: 0, total_manopera: 0, total_general: 0,
+    punct_lucru_id: d.punct_lucru_id || getMyCreateLocationId(),
+    creat_de: currentProfile.id,
+    creat_de_nume: currentProfile.nume,
+    data: todayISODate(),
+  };
+  const { data: nrData, error: nrErr } = await client.rpc("fn_next_deviz_numar_zi");
+  if (nrErr) { alert("Eroare la generarea numărului de deviz: " + nrErr.message); return; }
+  payload.nr_zi = nrData;
+  const { data: inserted, error } = await client.from("devize").insert(payload).select().single();
+  if (error) { alert("Eroare la crearea devizului: " + error.message); return; }
+
+  await loadDevize();
+  if (typeof rzToast === "function") rzToast("Deviz nr. " + nrData + " creat din dosarul de daună — completează piesele.", "ok");
+  switchTab("devize");
+  openDevizEditor(inserted.id);
 }
 
 function renderDaunaFisiereSections(d) {
@@ -8901,7 +8952,7 @@ function renderCatalogTable() {
   rows.sort((a, b) => (a.marca || "").localeCompare(b.marca || "") || (a.cod_piesa || "").localeCompare(b.cod_piesa || ""));
 
   if (!rows.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Niciun cod în listă. Încarcă prețuri din Recepție &amp; Inventar.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Niciun cod în listă. Încarcă prețuri din Recepție &amp; Inventar.</td></tr>';
     if (pagBox) pagBox.innerHTML = "";
     return;
   }
@@ -8932,6 +8983,7 @@ function renderCatalogTable() {
       <td>${rzFmtRON(cuTva)}</td>
       <td>${rzFmtRON(faraTva)}</td>
       <td class="muted" style="font-size:11px" title="Data la care a fost încărcat prețul brut (EUR/RON) al acestei piese — prețul RON de mai sus e calculat cu cursul/adaosul curente, nu cu cele de la această dată">${p.actualizat_la ? formatDate(p.actualizat_la) : "—"}</td>
+      <td>${(amAdmin() || canDo("perm_devize_service")) ? `<button class="btn-secondary" style="padding:3px 8px;font-size:11px;white-space:nowrap" onclick="openTrimitePiesaDevizModal(${jsStrAttr(p.marca)}, ${jsStrAttr(p.cod_piesa)})" title="Trimite această piesă la un deviz în lucru">Trimite la Deviz</button>` : ""}</td>
     </tr>`;
   }).join("");
 
@@ -8953,6 +9005,69 @@ function catalogGoToPage(p) {
   catalogPage = p;
   renderCatalogTable();
 }
+
+// v59: la cererea lui Andrei — de la „Piese (listă prețuri)”, trimite direct o piesă către un
+// deviz aflat în lucru (fără să treacă prin editorul de Deviz și căutarea manuală a codului acolo).
+// Nu există un concept de deviz „închis”/„finalizat” în aplicație — toate devizele sunt „Draft” — de
+// asta selecția e strict o listă de devize recente, cu căutare, nu un filtru pe stare.
+let rzTrimitePiesaSel = null;
+let rzTrimiteDevizList = [];
+async function openTrimitePiesaDevizModal(marca, cod) {
+  const p = rzPriceList.find(r => r.marca === marca && (r.cod_piesa || "").toUpperCase() === (cod || "").toUpperCase());
+  if (!p) { alert("Piesa nu a fost găsită în lista de prețuri."); return; }
+  rzTrimitePiesaSel = p;
+  // devizele nu au sincronizare Realtime (nu se comută niciodată automat pe ele) — reîncărcăm
+  // explicit, ca lista să fie la zi chiar dacă userul n-a mai fost deloc pe tab-ul „Devize”.
+  await loadDevize();
+  rzTrimiteDevizList = currentDevize.filter(matchesLocationFilter);
+  renderTrimitePiesaDevizModal("");
+}
+function renderTrimitePiesaDevizModal(filtru) {
+  const q = (filtru || "").trim().toLowerCase();
+  const filtered = q ? rzTrimiteDevizList.filter(d => [d.client_nume, d.moto_model, d.moto_plate, d.moto_vin, d.nr_zi != null ? String(d.nr_zi) : ""]
+    .map(v => (v || "").toString().toLowerCase()).join(" ").includes(q)) : rzTrimiteDevizList;
+  const rowsHtml = filtered.slice(0, 60).map(d => {
+    const moto = [d.moto_brand_categorie, d.moto_model].filter(Boolean).join(" ") + (d.moto_plate ? " · " + d.moto_plate : "");
+    return `<div class="rz-row-clickable" style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer" onclick="confirmaTrimitePiesaDeviz('${d.id}')">
+      <b>Deviz nr. ${d.nr_zi != null ? d.nr_zi : "—"}</b> — ${escapeHtml(d.client_nume || "Client necunoscut")}
+      ${moto.trim() ? `<span class="muted"> · ${escapeHtml(moto)}</span>` : ""}
+      <span class="muted" style="float:right">${d.data ? formatDate(d.data) : ""}</span>
+    </div>`;
+  }).join("") || '<div class="muted" style="padding:10px">Niciun deviz găsit.</div>';
+  rzOpenModal(`
+    <h3>Trimite „${escapeHtml(rzTrimitePiesaSel.cod_piesa || "")} — ${escapeHtml(rzTrimitePiesaSel.denumire || "")}" la deviz</h3>
+    <div class="muted" style="font-size:12.5px;margin-bottom:8px">Alege devizul în care se adaugă piesa, cu cantitate 1 și prețul curent — poți ajusta cantitatea/prețul direct în deviz, după.</div>
+    <input type="text" placeholder="Caută deviz după client, motocicletă, nr..." value="${escapeHtml(filtru || "")}" oninput="renderTrimitePiesaDevizModal(this.value)" style="width:100%;margin-bottom:10px" autofocus />
+    <div style="max-height:360px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">${rowsHtml}</div>
+  `);
+}
+async function confirmaTrimitePiesaDeviz(devizId) {
+  const p = rzTrimitePiesaSel;
+  if (!p) return;
+  const d = currentDevize.find(x => x.id === devizId);
+  if (!d) return;
+  const pret = rzGetPrice(p.cod_piesa) || 0;
+
+  const { data: existente, error: qErr } = await client.from("deviz_linii").select("nr").eq("deviz_id", devizId).eq("tip", "piesa").order("nr", { ascending: false }).limit(1);
+  if (qErr) { alert("Eroare: " + qErr.message); return; }
+  const nextNr = (existente && existente.length ? existente[0].nr : 0) + 1;
+
+  const { error } = await client.from("deviz_linii").insert({
+    deviz_id: devizId, tip: "piesa", nr: nextNr,
+    cod_piesa: p.cod_piesa, denumire: p.denumire || p.cod_piesa,
+    cantitate: 1, pret_unitar: pret, um: "buc",
+  });
+  if (error) { alert("Eroare la trimiterea piesei: " + error.message); return; }
+
+  const totalPieseNou = +((Number(d.total_piese) || 0) + pret).toFixed(2);
+  await client.from("devize").update({ total_piese: totalPieseNou, total_general: +(totalPieseNou + (Number(d.total_manopera) || 0)).toFixed(2) }).eq("id", devizId);
+
+  await loadDevize();
+  rzCloseModal();
+  rzTrimitePiesaSel = null;
+  if (typeof rzToast === "function") rzToast("Piesă trimisă la deviz nr. " + (d.nr_zi != null ? d.nr_zi : "—") + ".", "ok");
+}
+
 async function rzDeletePriceListForBrand() {
   if (!amAdmin()) { alert("Doar administratorul poate șterge o listă de prețuri întreagă."); return; }
   const marca = (document.getElementById("catalog-marca-filter") || {}).value || "";
