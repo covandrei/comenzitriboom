@@ -1626,7 +1626,7 @@
           <button class="btn-secondary" style="color:#b91c1c" onclick="rzDeletePriceListForBrand()">Șterge lista unei mărci</button>
         </div>
       </div>
-      <div class="muted" style="font-size:12.5px;margin-bottom:10px">Aici încarci sau actualizezi lista de prețuri pentru o marcă, dintr-un fișier Excel — vezi butonul „Încarcă listă prețuri” de mai sus. „Șterge lista unei mărci” șterge definitiv toate codurile mărcii alese în filtrul de mai sus.</div>
+      <div class="muted" style="font-size:12.5px;margin-bottom:10px">Aici încarci sau actualizezi lista de prețuri pentru o marcă, dintr-un fișier Excel — vezi butonul „Încarcă listă prețuri” de mai sus. „Șterge lista unei mărci” șterge definitiv toate codurile mărcii alese în filtrul de mai sus. Prețurile în RON de mai jos sunt mereu calculate cu cursul EUR și adaosul CURENTE, indiferent de coloana „Preț încărcat”.</div>
       <div class="table-wrap">
         <table>
           <thead>
@@ -1638,7 +1638,7 @@
               <th>Preț EUR fără TVA</th>
               <th>Preț cu TVA</th>
               <th>Preț fără TVA</th>
-              <th>Actualizat</th>
+              <th title="Data la care a fost încărcat prețul brut (EUR/RON) al piesei, din Excel sau din Recepție — NU data ultimului calcul. Prețul RON de mai sus e mereu calculat cu cursul/adaosul curente, chiar dacă piesa nu a fost reîncărcată azi.">Preț încărcat</th>
             </tr>
           </thead>
           <tbody id="catalog-table-body">
@@ -8931,7 +8931,7 @@ function renderCatalogTable() {
       <td>${rzFmtEUR(eurFaraTva)}</td>
       <td>${rzFmtRON(cuTva)}</td>
       <td>${rzFmtRON(faraTva)}</td>
-      <td class="muted" style="font-size:11px">${p.actualizat_la ? formatDate(p.actualizat_la) : "—"}</td>
+      <td class="muted" style="font-size:11px" title="Data la care a fost încărcat prețul brut (EUR/RON) al acestei piese — prețul RON de mai sus e calculat cu cursul/adaosul curente, nu cu cele de la această dată">${p.actualizat_la ? formatDate(p.actualizat_la) : "—"}</td>
     </tr>`;
   }).join("");
 
