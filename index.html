@@ -763,11 +763,26 @@
        conținutul pe o pagină nouă la print, aproape goală (raportat de Andrei: "o foaie albă
        goală la final"). "height" fix, împreună cu overflow:hidden de mai jos (deja prezent,
        moștenit din fișierul original, dar ineficient cât timp era doar min-height), plafonează
-       fiecare pagină exact la o foaie A4 — la fel ca fișierul original de referință. */
+       fiecare pagină exact la o foaie A4 — la fel ca fișierul original de referință.
+       Pagina 1 (Fișă Intrare Service) are conținut fix, care nu crește niciodată — rămâne pe
+       regula asta (height fix + overflow:hidden), exact ca înainte. */
     background: white; width: 210mm; height: 297mm; padding: 10mm 15mm; margin: 0 auto 20px auto;
     box-sizing: border-box; box-shadow: 0 0 15px rgba(0,0,0,0.5); position: relative;
     display: flex; flex-direction: column; gap: 2px; color: #000; font-family: Arial, sans-serif; font-size: 11px;
     overflow: hidden;
+  }
+  /* v64: pagina 2 (Deviz Reparație) e singura care crește — Andrei poate adăuga oricâte rânduri
+     de piese/manoperă (vezi dvzAddPartRow/dvzAddOpRow, v44). Cu height fixă + overflow:hidden
+     moștenite de la .dvz-page de mai sus, rândurile adăugate peste 297mm eran pur si simplu
+     invizibile — nu doar la export, ci și pe ecran — exact bug-ul raportat: "cand adaug mai multe
+     linii de produs nu-mi mai exporta tot devizul, ci doar pe portiuni". Fix: pe #dvz-page2 (mai
+     specific decât .dvz-page, deci câștigă fără !important) înlocuim height fixă cu min-height,
+     și overflow:hidden cu visible — pagina "se duce în jos" natural, la fel pe ecran cât și la
+     export (Print/Save și PDF, vezi mai jos). Nu afectează pagina 1, care rămâne plafonată la
+     exact o foaie A4 ca înainte — deci fix-ul din v39 (fără foaie goală la final) rămâne intact
+     pentru cazul normal, de o singură pagină. */
+  #dvz-page2 {
+    height: auto; min-height: 297mm; overflow: visible;
   }
   .dvz-page-header { position: relative; min-height: 40px; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 2px; }
   .dvz-page h1 { margin: 0; text-align: center; width: 100%; text-transform: uppercase; font-size: 18px; font-weight: bold; border-bottom: 2px solid black; padding-bottom: 2px; margin-bottom: 2px; }
@@ -808,6 +823,13 @@
     #print-area.dvz-print-area .dvz-page:last-child { page-break-after: auto; }
     #print-area.dvz-print-area .dvz-page-hidden { display: flex !important; }
     #print-area.dvz-print-area select { border: none; appearance: none; -webkit-appearance: none; background: transparent; text-align-last: center; }
+    /* v64: #dvz-page2 nu mai e plafonată la o foaie (vezi regula #dvz-page2 de mai sus) — dacă are
+       mult mai multe rânduri decât încap pe o foaie, "page-break-inside: avoid" moștenit de la
+       .dvz-page de mai sus ar fi imposibil de respectat oricum, iar browserele îl ignoră inconsecvent.
+       Dăm voie explicit paginii 2 să se rupă pe mai multe foi (browserul rupe natural între rânduri
+       de tabel), dar păstrăm fiecare rând întreg pe o singură foaie (nu tăiat la mijloc). */
+    #print-area.dvz-print-area #dvz-page2 { page-break-inside: auto; }
+    #print-area.dvz-print-area #dvz-page2 tr { page-break-inside: avoid; }
   }
 </style>
 </head>
@@ -1024,12 +1046,13 @@
               <th>Nr. factură</th>
               <th>Stare comandă</th>
               <th>Stare plată</th>
+              <th>Observații</th>
               <th>Creat de</th>
               <th>Acțiuni</th>
             </tr>
           </thead>
           <tbody id="table-body">
-            <tr class="empty-row"><td colspan="16">Se încarcă...</td></tr>
+            <tr class="empty-row"><td colspan="17">Se încarcă...</td></tr>
           </tbody>
         </table>
       </div>
@@ -1059,13 +1082,14 @@
               <th>Email</th>
               <th>Adresă</th>
               <th>Motociclete</th>
+              <th>Observații</th>
               <th>Adăugat de</th>
               <th>Data</th>
               <th>Acțiuni</th>
             </tr>
           </thead>
           <tbody id="clients-table-body">
-            <tr class="empty-row"><td colspan="11">Se încarcă...</td></tr>
+            <tr class="empty-row"><td colspan="12">Se încarcă...</td></tr>
           </tbody>
         </table>
       </div>
@@ -1922,6 +1946,7 @@
       <div class="field"><label>Email</label><input id="c-email" /></div>
       <div class="field span-2" id="wrap-cui" style="display:none"><label>CUI firmă</label><input id="c-cui" placeholder="ex: RO12345678" /></div>
       <div class="field span-2"><label>Adresă</label><input id="c-adresa" placeholder="ex: București, Sector 3" /></div>
+      <div class="field span-2"><label>Observații</label><textarea id="c-observatii" rows="2"></textarea></div>
 
       <div class="piese-section">
         <label>Motociclete deținute</label>
@@ -3258,6 +3283,22 @@ function renderFurnizorCell(o) {
   return `<span class="furnizor-cell">${escapeHtml(o.furnizor || "—")}</span>`;
 }
 
+// v63: la cererea lui Andrei — observații editabile la Comenzi. Comanda avea deja un câmp de notițe
+// (`comenzi.notite`, „Notițe (opțional)” în formular), dar vizibil/editabil DOAR deschizând tot
+// formularul de comandă — acum apare și direct în tabel, editabil rapid, ca la stare comandă/stare
+// plată — fără gate suplimentar pe permisiune (ca restul câmpurilor editabile din acest tabel: dacă
+// vezi tab-ul Comenzi, poți edita). Refolosim `notite`, nu adăugăm o coloană nouă — Comanda avea deja
+// exact acest câmp, doar ascuns din listă.
+function renderComandaObsCell(o) {
+  return `<div style="display:flex;align-items:flex-start;gap:4px"><span style="color:${o.notite ? "var(--text)" : "var(--muted)"};white-space:pre-wrap">${escapeHtml(o.notite || "—")}</span><button type="button" class="rz-mini-edit" onclick="rzQuickEditComandaObs('${o.id}')">Edit</button></div>`;
+}
+function rzQuickEditComandaObs(id) {
+  const o = currentOrders.find(x => x.id === id); if (!o) return;
+  rzQuickObsEdit("Observații — " + (o.client_nume || "comandă"), o.notite, async (val) => {
+    await updateField(id, "notite", val || null);
+  });
+}
+
 async function openPiesaPretModal(comandaId, piesaId) {
   const o = currentOrders.find(x => x.id === comandaId);
   if (!o) return;
@@ -3340,7 +3381,7 @@ function renderTable() {
 
   const tbody = document.getElementById("table-body");
   if (rows.length === 0) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="16">Nicio comandă găsită.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="17">Nicio comandă găsită.</td></tr>';
     updateTrimiteColegButton();
     return;
   }
@@ -3375,6 +3416,7 @@ function renderTable() {
     const furnizorCell = `<td>${renderFurnizorCell(o)}</td>`;
     const stareCell = `<td>${renderStareSelect(o)}</td>`;
     const plataCell = `<td>${renderPlataSelect(o)}</td>`;
+    const obsCell = `<td class="wrap-cell">${renderComandaObsCell(o)}</td>`;
     const creatDeCell = `<td>${escapeHtml(o.creat_de_nume || "")}</td>`;
     const actionsCell = `<td>${renderActions(o)}</td>`;
     const potFaceEditPret = canDo("perm_comenzi") || canDo("perm_piese_comandat");
@@ -3398,7 +3440,7 @@ function renderTable() {
       const pretCell = `<td class="wrap-cell"><div class="pret-cell">${pretInner}${editBtn}</div></td>`;
       const facturaCell = `<td>${p ? renderPiesaFacturaInput(p) : renderFacturaInput(o)}</td>`;
 
-      return `<tr ${rowStyle} class="${n > 1 ? (idx === 0 ? "comanda-grup-prima" : "comanda-grup-linie") : ""}">${checkboxCell}${brandCell}${codCell}${denCell}${cantCell}${pretCell}${termenCell}${clientCell}${telefonCell}${emailCell}${furnizorCell}${facturaCell}${stareCell}${plataCell}${creatDeCell}${actionsCell}</tr>`;
+      return `<tr ${rowStyle} class="${n > 1 ? (idx === 0 ? "comanda-grup-prima" : "comanda-grup-linie") : ""}">${checkboxCell}${brandCell}${codCell}${denCell}${cantCell}${pretCell}${termenCell}${clientCell}${telefonCell}${emailCell}${furnizorCell}${facturaCell}${stareCell}${plataCell}${obsCell}${creatDeCell}${actionsCell}</tr>`;
     }).join("");
   }).join("");
   updateTrimiteColegButton();
@@ -3458,6 +3500,35 @@ function suzCapitalizeInput(el) {
     el.value = out;
     try { el.setSelectionRange(start, end); } catch (e) { /* ignorat — unele input-uri (ex: type=number) nu suportă selecție */ }
   }
+}
+
+// ---------- OBSERVAȚII — editare rapidă, oriunde apare (v63, la cererea lui Andrei: "vreau sa pot
+// edita observatiile, si la programari, si la restul de categorii") ----------
+// Modal generic, reutilizat la Programări/Test Ride/Garanții/Comenzi/Clienți — un singur textarea,
+// Salvează/Anulează; fiecare apelant își dă titlul, valoarea curentă și ce se întâmplă la salvare
+// (tabelă/coloană diferite de la un modul la altul). Folosește rzOpenModal/rzCloseModal, deja
+// reutilizate în toată aplicația (Daune/Task-uri/Inventar), nu doar la Recepție.
+function rzQuickObsEdit(titlu, valoareCurenta, onSave) {
+  rzOpenModal(`<h3>${escapeHtml(titlu)}</h3>
+    <div class="field">
+      <label>Observații</label>
+      <textarea id="rz-qobs-input" rows="5"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" onclick="rzCloseModal()">Anulează</button>
+      <button type="button" class="btn-primary" onclick="rzQuickObsDoSave()">Salvează</button>
+    </div>`);
+  const inp = document.getElementById("rz-qobs-input");
+  inp.value = valoareCurenta || "";
+  window.__rzQuickObsSave = onSave;
+  setTimeout(() => inp.focus(), 30);
+}
+async function rzQuickObsDoSave() {
+  const inp = document.getElementById("rz-qobs-input"); if (!inp) return;
+  const val = inp.value.trim();
+  const fn = window.__rzQuickObsSave;
+  rzCloseModal();
+  if (fn) await fn(val);
 }
 
 // ---------- ACTUALIZARE RAPIDA (stare / factura) ----------
@@ -4225,7 +4296,7 @@ function renderClientsTable() {
   const tbody = document.getElementById("clients-table-body");
   const rows = currentClients.filter(matchesLocationFilter);
   if (rows.length === 0) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="11">Niciun client înregistrat încă.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="12">Niciun client înregistrat încă.</td></tr>';
     return;
   }
   tbody.innerHTML = rows.map(c => {
@@ -4240,6 +4311,7 @@ function renderClientsTable() {
       <td>${escapeHtml(c.email || "")}</td>
       <td class="wrap-cell">${escapeHtml(c.adresa || "")}</td>
       <td class="wrap-cell">${renderMotoCell(c.motociclete)}</td>
+      <td class="wrap-cell">${poateEdita ? renderClientObsCell(c) : escapeHtml(c.observatii || "—")}</td>
       <td>${escapeHtml(c.creat_de_nume || "")}</td>
       <td>${formatDate(c.creat_la)}</td>
       <td>${poateEdita ? `
@@ -4251,6 +4323,28 @@ function renderClientsTable() {
     </tr>
   `;
   }).join("");
+}
+
+// v63: la cererea lui Andrei — observații editabile la Clienți (coloană nouă, `clienti.observatii`,
+// nu exista deloc înainte, nici măcar în formular). Editare rapidă, direct din tabel, fără să
+// deschizi tot formularul de client — gated de aceeași permisiune ca restul acțiunilor din acest rând.
+function renderClientObsCell(c) {
+  return `<div style="display:flex;align-items:flex-start;gap:4px"><span style="color:${c.observatii ? "var(--text)" : "var(--muted)"}">${escapeHtml(c.observatii || "—")}</span><button type="button" class="rz-mini-edit" onclick="rzQuickEditClientObs('${c.id}')">Edit</button></div>`;
+}
+function rzQuickEditClientObs(id) {
+  const c = currentClients.find(x => x.id === id); if (!c) return;
+  rzQuickObsEdit("Observații — " + (c.nume || "client") + (c.prenume ? " " + c.prenume : ""), c.observatii, async (val) => {
+    await updateClientField(id, "observatii", val || null);
+  });
+}
+async function updateClientField(id, field, value) {
+  const payload = {}; payload[field] = value;
+  const { error } = await client.from("clienti").update(payload).eq("id", id);
+  if (error) { alert("Nu s-a putut salva: " + error.message); await loadClients(); return; }
+  const c = currentClients.find(x => x.id === id);
+  if (c) c[field] = value;
+  renderClientsTable();
+  if (typeof rzToast === "function") rzToast("Salvat", "ok");
 }
 
 // ---------- CLIENTI: motociclete (randuri dinamice) ----------
@@ -4309,11 +4403,12 @@ function openClientModal(id) {
     document.getElementById("c-email").value = c.email || "";
     document.getElementById("c-adresa").value = c.adresa || "";
     document.getElementById("c-cui").value = c.cui || "";
+    document.getElementById("c-observatii").value = c.observatii || "";
     selectClientTip(c.tip_client || "fizica");
     renderMotoInputs(c.motociclete || []);
   } else {
     document.getElementById("client-modal-title").textContent = "Client nou";
-    ["c-nume", "c-prenume", "c-telefon", "c-email", "c-adresa", "c-cui"].forEach(fid => document.getElementById(fid).value = "");
+    ["c-nume", "c-prenume", "c-telefon", "c-email", "c-adresa", "c-cui", "c-observatii"].forEach(fid => document.getElementById(fid).value = "");
     selectClientTip("fizica");
     renderMotoInputs([]);
   }
@@ -4342,6 +4437,7 @@ async function saveClient() {
     adresa: document.getElementById("c-adresa").value.trim(),
     tip_client: selectedClientTip,
     cui: selectedClientTip === "juridica" ? document.getElementById("c-cui").value.trim() : null,
+    observatii: document.getElementById("c-observatii").value.trim() || null,
   };
   const motos = collectMotoInputs();
 
@@ -4583,6 +4679,16 @@ function renderProgramatorModCurent() {
   else if (programatorMode === "luna") renderProgramatorLuna();
   else renderProgramatorPerioada();
 }
+function rzQuickEditProgramareObs(id) {
+  const p = currentProgramari.find(x => x.id === id); if (!p) return;
+  rzQuickObsEdit("Observații — " + (p.nume_client || "programare"), p.observatii, async (val) => {
+    const { error } = await client.from("programari").update({ observatii: val || null }).eq("id", id);
+    if (error) { alert("Eroare: " + error.message); return; }
+    p.observatii = val || null;
+    renderProgramatorModCurent();
+    if (typeof rzToast === "function") rzToast("Observații salvate.", "ok");
+  });
+}
 
 function initProgramatorViewIfNeeded() {
   if (!programatorInited) {
@@ -4650,10 +4756,13 @@ function renderApptCard(p) {
     actions += `<button type="button" class="btn-secondary" onclick="openProgramareModal('${p.id}')">Reprogramează</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="anuleazaProgramare('${p.id}')">✕ Anulează</button>`;
   }
+  if (p.stare !== "Anulat") actions += `<button type="button" class="btn-secondary" onclick="rzQuickEditProgramareObs('${p.id}')">Observații</button>`;
   if (amAdmin()) actions += `<button type="button" class="btn-secondary" style="color:#b91c1c" onclick="stergeProgramare('${p.id}')">Șterge definitiv</button>`;
   // v38: click/hover oriunde pe corpul cardului (in afara butoanelor de mai jos) deschide direct
   // editarea — acelasi tipar ca la Sarcini (v31/v34), doar ca zona clickabila se numeste distinct
   // (.prog-card-clickable) ca sa nu se amestece cu hover-ul de la Sarcini (.sarcina-card-clickable).
+  // v63: la cererea lui Andrei — buton "Observații" separat, în afara zonei clickabile (nu mai
+  // trebuie deschis tot formularul de reprogramare doar ca să scrii o observație).
   return `<div class="appt-card ${stCls}">
     <div class="prog-card-clickable" style="cursor:pointer" onclick="openProgramareModal('${p.id}')" title="Click pentru a edita programarea">
       <div class="appt-time">${fmtOra(p.ora_inceput)}–${programareEndLabel(p)} <span class="badge" style="background:#eef0f4;color:var(--muted);font-size:10px">Rampa ${p.rampa}</span> <span class="badge" style="background:#eef0f4;color:var(--muted);font-size:10px">${escapeHtml(p.stare)}</span></div>
@@ -5096,6 +5205,16 @@ function renderTestRideModCurent() {
   else if (testRideMode === "luna") renderTestRideLuna();
   else renderTestRidePerioada();
 }
+function rzQuickEditTestRideObs(id) {
+  const t = currentTestRide.find(x => x.id === id); if (!t) return;
+  rzQuickObsEdit("Observații — " + (t.nume_client || "test ride"), t.observatii, async (val) => {
+    const { error } = await client.from("test_ride_uri").update({ observatii: val || null }).eq("id", id);
+    if (error) { alert("Eroare: " + error.message); return; }
+    t.observatii = val || null;
+    renderTestRideModCurent();
+    if (typeof rzToast === "function") rzToast("Observații salvate.", "ok");
+  });
+}
 
 function setTestRideMode(mode) {
   testRideMode = mode;
@@ -5149,6 +5268,7 @@ function renderTestRideCard(t) {
     actions += `<button type="button" class="btn-secondary" onclick="openTestRideModal('${t.id}')">Reprogramează</button>`;
     actions += `<button type="button" class="btn-secondary" onclick="anuleazaTestRide('${t.id}')">✕ Anulează</button>`;
   }
+  if (t.stare !== "Anulat") actions += `<button type="button" class="btn-secondary" onclick="rzQuickEditTestRideObs('${t.id}')">Observații</button>`;
   if (amAdmin()) actions += `<button type="button" class="btn-secondary" style="color:#b91c1c" onclick="stergeTestRide('${t.id}')">Șterge definitiv</button>`;
   return `<div class="appt-card ${stCls}">
     <div class="prog-card-clickable" style="cursor:pointer" onclick="openTestRideModal('${t.id}')" title="Click pentru a edita test ride-ul">
@@ -6405,7 +6525,7 @@ function renderGarantiiTable() {
         ? `<input type="text" class="factura-input" value="${escapeHtml(g.numar_factura || "")}" placeholder="— notează aici —" onchange="updateGarantieField('${g.id}','numar_factura',this.value)" />`
         : escapeHtml(g.numar_factura || "—")}</td>
       <td>${renderGarantieStatusBadge(g)}</td>
-      <td class="wrap-cell">${escapeHtml(g.observatii || "")}</td>
+      <td class="wrap-cell">${poateEdita ? renderGarantieObsCell(g) : escapeHtml(g.observatii || "")}</td>
       <td>${escapeHtml(g.creat_de_nume || "—")}</td>
       <td>${(amAdmin() || canDo("perm_garantii")) ? `
         <div class="actions-cell">
@@ -6455,6 +6575,19 @@ async function updateGarantieField(id, field, value) {
   const g = currentGarantii.find(x => x.id === id);
   if (g) g[field] = payload[field];
   if (typeof rzToast === "function") rzToast("Salvat", "ok");
+}
+
+// v63: la cererea lui Andrei — observațiile de la Garanții erau deja editabile, dar doar deschizând
+// tot formularul dosarului; buton „Edit” direct în tabel, ca la Cod/Denumire din Inventar Liber.
+function renderGarantieObsCell(g) {
+  return `<div style="display:flex;align-items:flex-start;gap:4px"><span>${escapeHtml(g.observatii || "—")}</span><button type="button" class="rz-mini-edit" onclick="rzQuickEditGarantieObs('${g.id}')">Edit</button></div>`;
+}
+function rzQuickEditGarantieObs(id) {
+  const g = currentGarantii.find(x => x.id === id); if (!g) return;
+  rzQuickObsEdit("Observații — " + (g.cod || "garanție"), g.observatii, async (val) => {
+    await updateGarantieField(id, "observatii", val);
+    renderGarantiiTable();
+  });
 }
 
 // Codul complet din sistemul Triumph e de forma R000XXX-350002 (3 cifre) sau
@@ -10911,6 +11044,42 @@ function dvzPrintSave() {
     setTimeout(() => { area.innerHTML = ""; area.classList.remove("dvz-print-area"); }, 400);
   }, 300);
 }
+// v64: pagina 2 (Deviz Reparație) nu mai e plafonată la 297mm (vezi regula CSS #dvz-page2) — poate
+// fi acum oricât de înaltă, cu câte rânduri de piese/manoperă a adăugat Andrei. html2canvas
+// desenează întotdeauna înălțimea REALĂ a elementului capturat, deci canvas-ul rezultat poate fi
+// mai înalt decât o foaie A4. Fix pentru bug-ul raportat ("nu-mi mai exporta tot devizul, ci doar
+// pe portiuni"): în loc să presupunem mereu exact o imagine A4 per pagină (addImage fix la 297mm,
+// care înainte tăia tot ce depășea), tăiem canvas-ul pe felii de înălțimea unei foi A4 și adăugăm
+// câte o pagină PDF nouă pentru fiecare felie — devizul iese complet, pe câte foi sunt necesare.
+function dvzAddCanvasToPdf(pdf, canvas, forceNewPageForFirstSlice) {
+  const pxPerMm = canvas.width / 210;
+  const pageHeightPx = Math.max(1, Math.floor(pxPerMm * 297));
+  // Toleranță pentru rotunjiri sub-pixel: lățimea și înălțimea canvas-ului se rotunjesc independent
+  // la pixel întreg (html2canvas), deci chiar și o pagină care încape exact pe o foaie A4 poate ieși
+  // cu 1-2px în plus. Fără toleranță, acel rest minuscul ar deveni o pagină PDF nouă, aproape goală
+  // — exact bug-ul "foaie albă goală la final" din v39, reapărut aici la tăierea canvas-ului. Un
+  // rest sub ~3mm se alătură feliei curente, în loc să pornească o pagină nouă.
+  const tolerancePx = Math.ceil(pxPerMm * 3);
+  let y = 0;
+  let firstSlice = true;
+  while (y < canvas.height) {
+    let sliceH = Math.min(pageHeightPx, canvas.height - y);
+    if (canvas.height - y - sliceH > 0 && canvas.height - y - sliceH <= tolerancePx) sliceH = canvas.height - y;
+    const sliceCanvas = document.createElement("canvas");
+    sliceCanvas.width = canvas.width;
+    sliceCanvas.height = sliceH;
+    const ctx = sliceCanvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+    ctx.drawImage(canvas, 0, y, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+    const imgData = sliceCanvas.toDataURL("image/jpeg", 0.92);
+    const sliceHmm = sliceH / pxPerMm;
+    if (!firstSlice || forceNewPageForFirstSlice) pdf.addPage();
+    pdf.addImage(imgData, "JPEG", 0, 0, 210, sliceHmm);
+    y += sliceH;
+    firstSlice = false;
+  }
+}
 async function dvzExportPDF() {
   if (typeof html2canvas === "undefined" || !window.jspdf) { alert("Librăriile de export PDF nu s-au încărcat. Verifică conexiunea la internet și reîncearcă."); return; }
   const { p1, p2 } = dvzPagesForPdf();
@@ -10921,13 +11090,14 @@ async function dvzExportPDF() {
   try {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const pages = [p1, p2];
-    for (let i = 0; i < pages.length; i++) {
-      const canvas = await html2canvas(pages[i], { scale: 2, backgroundColor: "#ffffff" });
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      if (i > 0) pdf.addPage();
-      pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
-    }
+    // pagina 1 (Fișă Intrare Service) rămâne mereu exact o foaie — folosește prima pagină, creată
+    // automat de jsPDF.
+    const canvas1 = await html2canvas(p1, { scale: 2, backgroundColor: "#ffffff" });
+    dvzAddCanvasToPdf(pdf, canvas1, false);
+    // pagina 2 (Deviz Reparație) poate fi acum mai înaltă decât 297mm — pornește mereu pe o foaie
+    // nouă, și se taie pe câte foi sunt necesare pentru tot conținutul.
+    const canvas2 = await html2canvas(p2, { scale: 2, backgroundColor: "#ffffff" });
+    dvzAddCanvasToPdf(pdf, canvas2, true);
     pdf.save((dvzDocTitle() || "Deviz_Service") + ".pdf");
   } catch (e) {
     alert("Eroare la generarea PDF-ului: " + e.message);
