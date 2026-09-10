@@ -10389,7 +10389,7 @@ function dvzBuildPartRowHtml(nr) {
       <td><input type="text" class="dvz-denumire"></td>
       <td class="dvz-w-um"><input type="text" class="dvz-um" value="buc"></td>
       <td><input type="number" class="dvz-qty" oninput="dvzCalculateRow(this)"></td>
-      <td><input type="text" class="dvz-price-no-vat" readonly></td>
+      <td><input type="number" class="dvz-price-no-vat" oninput="dvzCalculateRow(this)"></td>
       <td><input type="number" class="dvz-price" oninput="dvzCalculateRow(this)"></td>
       <td><input type="number" class="dvz-val" oninput="dvzCalculateAllTotals()"></td>
       <td class="dvz-no-print dvz-w-actions"><button type="button" class="icon-btn danger" title="Șterge rândul" onclick="dvzRemoveRow(this)">${ICON_TRASH}</button></td>
@@ -10403,12 +10403,19 @@ function dvzBuildOpRowHtml(nr, isFirst) {
     ? `<input type="text" id="dvz-tarifInput" class="dvz-sel-tarif" placeholder="Tarif..." readonly onfocus="dvzShowTarifDropdown(this)">
        <input type="hidden" class="dvz-price" id="dvz-tarifValue">`
     : `<input type="number" class="dvz-price" oninput="dvzCalculateRow(this)">`;
+  // v67: rândul de mecanic (primul, isFirst) își ia prețul dintr-un tarif ales din listă (nu se
+  // scrie manual la nicio coloană de preț) — „Fără TVA” rămâne needitabil, needitabil STRICT pe
+  // acest rând, la fel ca „Cu TVA” (rândul hidden de mai sus); pentru restul rândurilor de
+  // manoperă, ambele coloane devin editabile, la fel ca la piese.
+  const noVatCell = isFirst
+    ? `<input type="text" class="dvz-price-no-vat" readonly>`
+    : `<input type="number" class="dvz-price-no-vat" oninput="dvzCalculateRow(this)">`;
   return `<tr>
       <td class="dvz-w-number">${nr}</td>
       <td>${descCell}</td>
       <td class="dvz-w-um"><input type="text" class="dvz-um" value="ora"></td>
       <td><input type="number" class="dvz-qty" oninput="${isFirst ? "dvzCalculateRowManopera(this)" : "dvzCalculateRow(this)"}"></td>
-      <td><input type="text" class="dvz-price-no-vat" readonly></td>
+      <td>${noVatCell}</td>
       <td>${tarifCell}</td>
       <td><input type="number" class="dvz-val" oninput="dvzCalculateAllTotals()"></td>
       <td class="dvz-no-print dvz-w-actions">${isFirst ? "" : `<button type="button" class="icon-btn danger" title="Șterge rândul" onclick="dvzRemoveRow(this)">${ICON_TRASH}</button>`}</td>
@@ -10812,13 +10819,27 @@ function dvzShowTarifDropdown(inputEl) {
 }
 
 // ---------- Calcule ----------
+// v67: la cererea lui Andrei — „Vreau sa pot completa la deviz, la pretul fara tva, la fel ca la
+// cel cu tva. La oricare completez, sa faca conversia.” — „Preț (Fără TVA)” era needitabil, calculat
+// STRICT din „Preț” (cu TVA); acum se poate completa oricare din cele două, iar celălalt se
+// calculează automat, în ambele sensuri (× 1,21 / ÷ 1,21 — același 21% folosit dinainte aici, ca să
+// nu schimbe niciun calcul deja existent la devizele salvate). Rândul de mecanic de la Manoperă
+// (primul rând, cu tarif ales din listă) rămâne neschimbat — vezi dvzBuildOpRowHtml.
 function dvzCalculateRow(inputElement) {
   const row = inputElement.closest("tr");
   if (!row) return;
-  const qty = parseFloat(row.querySelector(".dvz-qty").value) || 0;
-  const priceWithVat = parseFloat(row.querySelector(".dvz-price").value) || 0;
+  const qtyInput = row.querySelector(".dvz-qty");
+  const priceInput = row.querySelector(".dvz-price");
   const noVatInput = row.querySelector(".dvz-price-no-vat");
-  if (noVatInput) noVatInput.value = priceWithVat > 0 ? (priceWithVat / 1.21).toFixed(4).replace(".", ",") : "";
+  const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+  if (inputElement.classList.contains("dvz-price-no-vat")) {
+    const priceNoVat = parseFloat(noVatInput.value) || 0;
+    if (priceInput) priceInput.value = priceNoVat > 0 ? (priceNoVat * 1.21).toFixed(2) : "";
+  } else {
+    const priceWithVat = parseFloat(priceInput ? priceInput.value : 0) || 0;
+    if (noVatInput) noVatInput.value = priceWithVat > 0 ? (priceWithVat / 1.21).toFixed(4) : "";
+  }
+  const priceWithVat = parseFloat(priceInput ? priceInput.value : 0) || 0;
   const valInput = row.querySelector(".dvz-val");
   const value = qty * priceWithVat;
   if (valInput) valInput.value = value > 0 ? value.toFixed(2) : "";
