@@ -6441,11 +6441,7 @@ function renderSarcinaDetaliuModalContent(t) {
     </div>
     <div style="font-weight:700;font-size:13px;margin-bottom:8px">Observații</div>
     <div style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
-      ${obs.length ? obs.map(o => `
-        <div class="rz-hist-item" style="flex-direction:column;align-items:flex-start;gap:2px">
-          <div style="font-size:13px">${escapeHtml(o.text)}</div>
-          <div class="hist-meta">${escapeHtml(o.autor_nume || "—")} · ${formatDate(o.creat_la)}</div>
-        </div>`).join("") : '<div class="muted" style="font-size:12.5px;padding:2px 0">Nicio observație încă.</div>'}
+      ${obs.length ? obs.map(o => renderSarcinaObsItem(t.id, o)).join("") : '<div class="muted" style="font-size:12.5px;padding:2px 0">Nicio observație încă.</div>'}
     </div>
     <div class="field">
       <label>Adaugă observație</label>
@@ -6471,6 +6467,56 @@ async function adaugaObservatieSarcina(id) {
   const t = currentSarcini.find(x => x.id === id);
   if (t) renderSarcinaDetaliuModalContent(t);
   if (typeof rzToast === "function") rzToast("Observație adăugată.", "ok");
+}
+
+// v65: la cererea lui Andrei — „Inca nu pot edita observatiile la task-uri” — jurnalul de
+// observații (adăugat în v31) permitea doar ADĂUGAREA unor observații noi, niciodată editarea sau
+// ștergerea uneia deja scrise. Buton „Edit”/„Șterge” pe fiecare observație din jurnal, vizibil doar
+// autorului ei sau unui admin (ca oricine să nu poată rescrie/șterge notele altcuiva) — necesită
+// migrarea `migrare-v65.sql` (politici RLS de UPDATE/DELETE pe `sarcini_observatii`, care nu
+// existaseră până acum — doar SELECT/INSERT fuseseră scrise explicit, la v54/v55).
+function renderSarcinaObsItem(sarcinaId, o) {
+  const poateModifica = amAdmin() || o.autor_id === currentProfile.id;
+  return `<div class="rz-hist-item" style="flex-direction:column;align-items:flex-start;gap:2px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;width:100%">
+        <div style="font-size:13px;white-space:pre-wrap">${escapeHtml(o.text)}</div>
+        ${poateModifica ? `<div style="display:flex;gap:4px;flex-shrink:0">
+          <button type="button" class="rz-mini-edit" onclick="editeazaObservatieSarcina('${sarcinaId}','${o.id}')">Edit</button>
+          <button type="button" class="icon-btn danger" title="Șterge" onclick="stergeObservatieSarcina('${sarcinaId}','${o.id}')">${ICON_TRASH}</button>
+        </div>` : ""}
+      </div>
+      <div class="hist-meta">${escapeHtml(o.autor_nume || "—")} · ${formatDate(o.creat_la)}</div>
+    </div>`;
+}
+function editeazaObservatieSarcina(sarcinaId, obsId) {
+  const t = currentSarcini.find(x => x.id === sarcinaId);
+  if (!t) return;
+  const o = (t.observatii || []).find(x => x.id === obsId);
+  if (!o) return;
+  rzQuickObsEdit("Editează observație", o.text, async (val) => {
+    if (!val) { alert("Observația nu poate fi goală — dacă vrei s-o elimini, folosește „Șterge”."); const t2 = currentSarcini.find(x => x.id === sarcinaId); if (t2) renderSarcinaDetaliuModalContent(t2); return; }
+    const { error } = await client.from("sarcini_observatii").update({ text: val }).eq("id", obsId);
+    if (error) { alert("Eroare: " + error.message); }
+    await loadSarcini();
+    const t2 = currentSarcini.find(x => x.id === sarcinaId);
+    if (t2) renderSarcinaDetaliuModalContent(t2);
+  });
+}
+function stergeObservatieSarcina(sarcinaId, obsId) {
+  rzOpenModal(`<h3>Ștergi observația?</h3>
+    <p class="muted" style="margin-bottom:16px">Acțiune ireversibilă.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" onclick="openSarcinaDetaliuModal('${sarcinaId}')">Anulează</button>
+      <button type="button" class="btn-primary" style="background:#b91c1c;border-color:#b91c1c" onclick="rzDoStergeObservatieSarcina('${sarcinaId}','${obsId}')">Șterge</button>
+    </div>`);
+}
+async function rzDoStergeObservatieSarcina(sarcinaId, obsId) {
+  const { error } = await client.from("sarcini_observatii").delete().eq("id", obsId);
+  if (error) { alert("Eroare: " + error.message); }
+  await loadSarcini();
+  const t = currentSarcini.find(x => x.id === sarcinaId);
+  if (t) renderSarcinaDetaliuModalContent(t); else rzCloseModal();
+  if (!error && typeof rzToast === "function") rzToast("Observație ștearsă.", "ok");
 }
 
 // ======================================================
