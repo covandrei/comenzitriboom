@@ -1330,6 +1330,7 @@
             <input type="file" id="dvz-import-historic-file" accept=".html,text/html" multiple style="display:none" onchange="dvzImportHistoricFiles(this.files); this.value='';" />
             <button class="btn-secondary" style="color:#b91c1c" onclick="dvzDeleteAllDevize()" title="Șterge definitiv TOATE devizele din sistem (doar admin)">Șterge toate devizele</button>
             <button class="btn-secondary" onclick="dvzOpenPreturiUzuale()" title="Gestionează lista de produse și manopere uzuale, folosită pentru sugestiile din meniul rapid (autocomplete) la completarea unui deviz">Produse/Manopere uzuale</button>
+            <button class="btn-secondary" onclick="dvzOpenCursCalculator()" title="Conversie RON ↔ EUR, pe baza cursului curent (manual, dacă e setat, altfel cel interogat automat)">Calculator curs</button>
             <button class="btn-primary" onclick="openDevizEditor(null)">+ Deviz nou</button>
           </div>
         </div>
@@ -1358,6 +1359,7 @@
         <div class="dvz-editor-toolbar">
           <button class="btn-secondary" onclick="closeDevizEditor()">← Înapoi la listă</button>
           <div class="toolbar-actions">
+            <button class="btn-secondary" onclick="dvzOpenCursCalculator()" title="Conversie RON ↔ EUR, pe baza cursului curent (manual, dacă e setat, altfel cel interogat automat)">Calculator curs</button>
             <button class="btn-secondary" onclick="dvzPrintSave()">Print / Save</button>
             <button class="btn-secondary" onclick="dvzExportPDF()">Export PDF</button>
             <button class="btn-primary" onclick="saveDevize()">Salvează</button>
@@ -7784,6 +7786,49 @@ function rzApplyMarkupManual(pretManual, marca) {
 function rzFmtRON(v) { if (v === null || v === undefined || v === "") return "—"; return String(v).replace(".", ",") + " RON"; }
 function rzFmtEUR(v) { if (v === null || v === undefined || v === "") return "—"; return String(v).replace(".", ",") + " €"; }
 function rzPriceNoVat(v) { if (!v || isNaN(parseFloat(v))) return null; return +(parseFloat(v) / (1 + rzTvaRate() / 100)).toFixed(2); }
+
+// v66: calculator RON<->EUR la Devize, la cererea lui Andrei — „Putem sa integram undeva un
+// calculator de Curs Bancar unde pot sa bag o suma in ron sau in euro si sa imi arate rezultatul
+// conversiei bazat pe cursul interogat automat din ziua respectiva?”. Refolosește STRICT cursul
+// deja activ în aplicație (rzActiveEurRate() — manual, dacă e setat din „Curs & Adaos”, altfel
+// cel interogat automat BNR/BCE, exact cursul de care depinde deja calculul prețurilor la Piese) —
+// niciun calcul separat, nicio sursă nouă de curs. Conversie simplă, brută (fără adaos/TVA — pentru
+// asta există deja calculul de preț de la Piese/Comenzi/Devize), două câmpuri, actualizare live pe
+// măsură ce scrii în oricare din ele.
+function dvzOpenCursCalculator() {
+  const curs = rzActiveEurRate();
+  const manual = parseFloat(rzSetari.curs_eur_manual) > 0;
+  const sursa = manual
+    ? "curs manual"
+    : (rzSetari.curs_bnr_actualizat_la ? ("curs " + (rzSetari.curs_bnr_sursa || "BNR") + ", din " + formatDate(rzSetari.curs_bnr_actualizat_la)) : "curs " + (rzSetari.curs_bnr_sursa || "BNR"));
+  const html = `
+    <h3 style="margin-bottom:4px">Calculator curs valutar</h3>
+    <div class="muted" style="font-size:12.5px;margin-bottom:16px">${curs ? `1 EUR = ${String(curs).replace(".", ",")} RON (${sursa})` : "Cursul EUR nu e disponibil momentan — setează unul manual din „Curs & Adaos”."}</div>
+    <div class="field">
+      <label>Sumă în RON</label>
+      <input type="number" id="dvz-calc-ron" step="0.01" min="0" placeholder="0,00" ${curs ? "" : "disabled"} />
+    </div>
+    <div class="field">
+      <label>Sumă în EUR</label>
+      <input type="number" id="dvz-calc-eur" step="0.01" min="0" placeholder="0,00" ${curs ? "" : "disabled"} />
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" onclick="rzCloseModal()">Închide</button>
+    </div>`;
+  rzOpenModal(html, "modal");
+  if (!curs) return;
+  const ronInp = document.getElementById("dvz-calc-ron");
+  const eurInp = document.getElementById("dvz-calc-eur");
+  ronInp.addEventListener("input", () => {
+    const v = parseFloat(ronInp.value);
+    eurInp.value = isNaN(v) ? "" : (v / curs).toFixed(2);
+  });
+  eurInp.addEventListener("input", () => {
+    const v = parseFloat(eurInp.value);
+    ronInp.value = isNaN(v) ? "" : (v * curs).toFixed(2);
+  });
+  setTimeout(() => ronInp.focus(), 30);
+}
 function rzUpdateCursStatus() {
   const el = document.getElementById("rz-curs-status"); if (!el) return;
   const manual = parseFloat(rzSetari.curs_eur_manual);
