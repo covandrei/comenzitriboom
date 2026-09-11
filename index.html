@@ -7878,7 +7878,12 @@ function rzCloseModal() {
   rzFocusScan();
 }
 
-// ---------- INCHIDERE POP-UP-URI: Esc + click pe fundal ----------
+// ---------- INCHIDERE POP-UP-URI: Esc ----------
+// v69: la cererea lui Andrei — „Daca dau click in orice alta parte in afara pop up-ului, nu mai
+// vreau sa dea exit. Vreau sa anulam aceasta optiune. Sa ramana doar din butonul X sau Salveaza /
+// Inchide.” — închiderea la click pe fundal (în afara pop-up-ului) a fost eliminată; un click în
+// afara unui pop-up nu mai face nimic. Esc rămâne neschimbat (păstrat, la cererea explicită a lui
+// Andrei), la fel ca butonul „✕”/„Anulează”/„Salvează”/„Închide” de pe fiecare pop-up.
 const RZ_OVERLAY_CLOSERS = {
   "modal-overlay": () => closeModal(),
   "export-overlay": () => closeExportModal(),
@@ -7905,13 +7910,6 @@ document.addEventListener("keydown", function (e) {
     }
   }
 });
-document.addEventListener("click", function (e) {
-  if (!e.target || !e.target.classList) return;
-  if (!e.target.classList.contains("modal-overlay") || !e.target.classList.contains("open")) return;
-  const closer = RZ_OVERLAY_CLOSERS[e.target.id];
-  if (closer) closer();
-});
-
 // v51: meniu hamburger din antet (Toate punctele / Useri & Roluri / Curs & Adaos / Log Out)
 function toggleHamburgerMenu(e) {
   if (e) e.stopPropagation();
