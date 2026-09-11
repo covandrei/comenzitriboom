@@ -939,6 +939,7 @@
           <button class="btn-secondary" id="btn-punct-lucru" style="display:none" onclick="closeHamburgerMenu(); openPunctLucruModal()">Toate punctele</button>
           <button class="btn-secondary" id="btn-useri-roluri" style="display:none" onclick="closeHamburgerMenu(); openUseriRoluriModal()">Useri &amp; Roluri</button>
           <button class="btn-secondary" onclick="closeHamburgerMenu(); rzOpenPriceSettings()">Curs &amp; Adaos</button>
+          <button class="btn-secondary" onclick="closeHamburgerMenu(); rzOpenFormatSettings()">Formatare numere</button>
           <button class="btn-secondary" onclick="closeHamburgerMenu(); doLogout()">Log Out</button>
         </div>
       </div>
@@ -2545,7 +2546,23 @@ const PRIORITATE_BADGE = {
   "Scăzută": { bg: "#f1f5f9", color: "#64748b", dot: "#94a3b8" },
 };
 
-// ---------- NUMERE CU VIRGULA (format românesc) ----------
+// ---------- NUMERE CU VIRGULA (format configurabil, "Formatare numere") ----------
+// v68: la cererea lui Andrei — separatorul zecimal și numărul de zecimale afișate sunt acum
+// configurabile din meniu ("Formatare numere", lângă „Curs & Adaos"), nu mai fixe la virgulă+2
+// zecimale. roParseNum() acceptă ORICARE dintre cele două separatoare la citire (indiferent de
+// setare — utilizatorul poate avea obiceiul vechi), iar roFmtNum() afișează conform setării curente
+// (implicit: virgulă, 2 zecimale — exact comportamentul dinainte de v68, dacă nu s-a schimbat nimic).
+function roSeparatorZecimal() {
+  const s = (typeof rzSetari !== "undefined" && rzSetari) ? rzSetari.format_separator_zecimal : null;
+  return (s === "," || s === ".") ? s : ",";
+}
+function roZecimale() {
+  if (typeof rzSetari !== "undefined" && rzSetari && rzSetari.format_zecimale !== undefined && rzSetari.format_zecimale !== null && rzSetari.format_zecimale !== "") {
+    const n = parseInt(rzSetari.format_zecimale, 10);
+    if (!isNaN(n) && n >= 0 && n <= 6) return n;
+  }
+  return 2;
+}
 function roParseNum(v) {
   if (v === null || v === undefined || v === "") return null;
   const n = parseFloat(String(v).trim().replace(",", "."));
@@ -2553,7 +2570,7 @@ function roParseNum(v) {
 }
 function roFmtNum(v) {
   if (v === null || v === undefined || v === "") return "";
-  return Number(v).toFixed(2).replace(".", ",");
+  return Number(v).toFixed(roZecimale()).replace(".", roSeparatorZecimal());
 }
 function roTvaRate() {
   if (typeof rzSetari !== "undefined" && rzSetari.tva_procent) {
@@ -7783,8 +7800,8 @@ function rzApplyMarkupManual(pretManual, marca) {
   const adaos = (rzAdaosuri[marca] || rzAdaosuri["_manual"] || 0) / 100;
   return +(parseFloat(pretManual) * (1 + adaos)).toFixed(2);
 }
-function rzFmtRON(v) { if (v === null || v === undefined || v === "") return "—"; return String(v).replace(".", ",") + " RON"; }
-function rzFmtEUR(v) { if (v === null || v === undefined || v === "") return "—"; return String(v).replace(".", ",") + " €"; }
+function rzFmtRON(v) { if (v === null || v === undefined || v === "") return "—"; return roFmtNum(v) + " RON"; }
+function rzFmtEUR(v) { if (v === null || v === undefined || v === "") return "—"; return roFmtNum(v) + " €"; }
 function rzPriceNoVat(v) { if (!v || isNaN(parseFloat(v))) return null; return +(parseFloat(v) / (1 + rzTvaRate() / 100)).toFixed(2); }
 
 // v66: calculator RON<->EUR la Devize, la cererea lui Andrei — „Putem sa integram undeva un
@@ -7806,11 +7823,11 @@ function dvzOpenCursCalculator() {
     <div class="muted" style="font-size:12.5px;margin-bottom:16px">${curs ? `1 EUR = ${String(curs).replace(".", ",")} RON (${sursa})` : "Cursul EUR nu e disponibil momentan — setează unul manual din „Curs & Adaos”."}</div>
     <div class="field">
       <label>Sumă în RON</label>
-      <input type="number" id="dvz-calc-ron" step="0.01" min="0" placeholder="0,00" ${curs ? "" : "disabled"} />
+      <input type="text" inputmode="decimal" id="dvz-calc-ron" placeholder="0,00" ${curs ? "" : "disabled"} />
     </div>
     <div class="field">
       <label>Sumă în EUR</label>
-      <input type="number" id="dvz-calc-eur" step="0.01" min="0" placeholder="0,00" ${curs ? "" : "disabled"} />
+      <input type="text" inputmode="decimal" id="dvz-calc-eur" placeholder="0,00" ${curs ? "" : "disabled"} />
     </div>
     <div class="modal-actions">
       <button type="button" class="btn-secondary" onclick="rzCloseModal()">Închide</button>
@@ -7820,12 +7837,12 @@ function dvzOpenCursCalculator() {
   const ronInp = document.getElementById("dvz-calc-ron");
   const eurInp = document.getElementById("dvz-calc-eur");
   ronInp.addEventListener("input", () => {
-    const v = parseFloat(ronInp.value);
-    eurInp.value = isNaN(v) ? "" : (v / curs).toFixed(2);
+    const v = roParseNum(ronInp.value);
+    eurInp.value = v === null ? "" : roFmtNum(v / curs);
   });
   eurInp.addEventListener("input", () => {
-    const v = parseFloat(eurInp.value);
-    ronInp.value = isNaN(v) ? "" : (v * curs).toFixed(2);
+    const v = roParseNum(eurInp.value);
+    ronInp.value = v === null ? "" : roFmtNum(v * curs);
   });
   setTimeout(() => ronInp.focus(), 30);
 }
@@ -8174,9 +8191,9 @@ function rzEditInvField(id, field) {
     inp.addEventListener("keydown", e => { if (e.key === "Enter") doSave(); if (e.key === "Escape") rzRender(); });
   } else if (field === "pret_manual") {
     const cell = document.getElementById("rz-inv-pret-" + id); if (!cell) return;
-    cell.innerHTML = `<input id="rz-inv-pret-input-${id}" type="number" step="0.01" min="0" value="${it.pret_manual || ""}" placeholder="RON" class="rz-inline-input" style="width:64px" />`;
+    cell.innerHTML = `<input id="rz-inv-pret-input-${id}" type="text" inputmode="decimal" value="${it.pret_manual ? roFmtNum(it.pret_manual) : ""}" placeholder="RON" class="rz-inline-input" style="width:64px" />`;
     const inp = document.getElementById("rz-inv-pret-input-" + id); inp.focus(); inp.select();
-    const doSave = () => { const v = parseFloat(inp.value) || 0; save({ pret_manual: v > 0 ? v : null }); };
+    const doSave = () => { const v = roParseNum(inp.value) || 0; save({ pret_manual: v > 0 ? v : null }); };
     inp.addEventListener("blur", doSave);
     inp.addEventListener("keydown", e => { if (e.key === "Enter") doSave(); if (e.key === "Escape") rzRender(); });
   } else if (field === "observatii") {
@@ -8744,6 +8761,69 @@ async function rzPsSaveTva() {
   await rzSetariUpsert("tva_procent", tva);
   rzRender(); renderCatalogTable();
   rzToast("TVA setat la " + tva + "%", "ok");
+}
+
+// ---------- SETARI FORMATARE NUMERE ----------
+// v68: la cererea lui Andrei — „La devize, la piese si preturile lor, s-a schimbat separatorul din
+// , in . / Hai sa facem o sectiune de unde sa pot alege separatoarele, numarul de zecimale, decimale
+// etc., in meniu, cum e si Curs si Adaos”. Secțiune nouă, în același loc din meniu ca „Curs & Adaos”,
+// unde se poate alege separatorul zecimal (virgulă/punct) și numărul de zecimale afișate la prețuri,
+// în toată aplicația (Comenzi, Piese, Devize, Inventar etc.) — nu doar la Devize. Se aplică STRICT la
+// prețuri/valori bănești; cantitățile, anii, km și procentele (TVA/adaos/curs manual) rămân
+// needimpactate, ca înainte.
+function rzOpenFormatSettings() {
+  rzOpenModal(`<h3>Formatare numere (prețuri)</h3>
+    <div style="margin-top:10px;font-size:13px;line-height:1.7">
+      <div class="rz-price-settings-box">
+        <div class="title">Separator zecimal</div>
+        <div class="rz-inline-row">
+          <select id="rz-pf-separator" style="width:auto">
+            <option value="," ${roSeparatorZecimal() === "," ? "selected" : ""}>Virgulă (1234,50)</option>
+            <option value="." ${roSeparatorZecimal() === "." ? "selected" : ""}>Punct (1234.50)</option>
+          </select>
+        </div>
+        <div class="hint">Se folosește la afișarea și completarea prețurilor, în toată aplicația.</div>
+      </div>
+      <div class="rz-price-settings-box">
+        <div class="title">Număr de zecimale afișate</div>
+        <div class="rz-inline-row">
+          <input id="rz-pf-zecimale" type="number" step="1" min="0" max="6" value="${roZecimale()}" style="width:70px" />
+        </div>
+        <div class="hint">Exemplu: ${roFmtNum(1234.5)} — se aplică la Devize, Comenzi, Piese, Inventar și restul prețurilor din aplicație.</div>
+      </div>
+      <div class="rz-inline-row"><button class="btn-primary" onclick="rzPsSaveFormat()">Salvează</button></div>
+    </div>
+    <div class="modal-actions"><button class="btn-secondary" onclick="rzCloseModal()">Închide</button></div>`);
+}
+async function rzPsSaveFormat() {
+  const sepEl = document.getElementById("rz-pf-separator");
+  const zecEl = document.getElementById("rz-pf-zecimale");
+  const sep = sepEl && sepEl.value === "." ? "." : ",";
+  let zec = parseInt(zecEl ? zecEl.value : 2, 10);
+  if (isNaN(zec) || zec < 0) zec = 0;
+  if (zec > 6) zec = 6;
+  rzSetari.format_separator_zecimal = sep;
+  rzSetari.format_zecimale = String(zec);
+  await rzSetariUpsert("format_separator_zecimal", sep);
+  await rzSetariUpsert("format_zecimale", zec);
+  rzRender(); renderCatalogTable();
+  // Reformatează direct (fără să recalculeze nimic) valorile deja afișate în editorul de Deviz
+  // deschis, ca prețurile completate înainte de schimbarea setării să respecte imediat noul format
+  // — fiecare câmp e citit cu roParseNum (acceptă ambele separatoare) și rescris cu roFmtNum (setarea
+  // nouă), fără să atingă valoarea reală.
+  if (document.getElementById("dvz-partsTableBody")) {
+    document.querySelectorAll("#dvz-partsTableBody .dvz-price, #dvz-partsTableBody .dvz-price-no-vat, #dvz-partsTableBody .dvz-val, " +
+      "#dvz-opsTableBody .dvz-price:not([type=hidden]), #dvz-opsTableBody .dvz-price-no-vat, #dvz-opsTableBody .dvz-val, #dvz-tarifInput")
+      .forEach(el => { if (el.value) { const n = roParseNum(el.value); if (n !== null) el.value = roFmtNum(n); } });
+    ["dvz-totalParts", "dvz-totalOps"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.value) { const n = roParseNum(el.value); if (n !== null) el.value = roFmtNum(n); }
+    });
+    const grandEl = document.getElementById("dvz-grandTotal");
+    if (grandEl && grandEl.innerText) { const n = roParseNum(grandEl.innerText); if (n !== null) grandEl.innerText = roFmtNum(n); }
+  }
+  rzToast("Formatare numere actualizată", "ok");
+  rzOpenFormatSettings();
 }
 
 // ---------- ADAUGA IN INVENTAR (din lista de preturi) ----------
@@ -10068,7 +10148,7 @@ function dvzRenderPreturiUzuale() {
       <td>${p.tip === "manopera" ? "Manoperă" : "Piesă"}</td>
       <td><input class="dvz-pu-cod" value="${escapeHtml(p.cod || "")}" style="width:100px" /></td>
       <td><input class="dvz-pu-nume" value="${escapeHtml(p.nume || "")}" style="min-width:180px" /></td>
-      <td><input class="dvz-pu-pret" type="number" step="0.01" min="0" value="${p.pret_cu_tva ?? ""}" style="width:90px" /></td>
+      <td><input class="dvz-pu-pret" type="text" inputmode="decimal" value="${p.pret_cu_tva != null ? roFmtNum(p.pret_cu_tva) : ""}" style="width:90px" /></td>
       <td style="white-space:nowrap">
         <button class="btn-secondary dvz-pu-save-btn" style="padding:2px 8px;font-size:12px" onclick="dvzSavePreturiUzualeRow('${p.id}')">Salvează</button>
         <button class="btn-secondary dvz-pu-delete-btn" style="padding:2px 8px;font-size:12px;color:#b91c1c" onclick="dvzDeletePreturiUzualeRow('${p.id}', ${jsStrAttr(p.nume || "")})">Șterge</button>
@@ -10097,7 +10177,7 @@ function dvzRenderPreturiUzuale() {
           <select id="dvz-pu-new-tip" style="width:auto"><option value="piesa">Piesă</option><option value="manopera">Manoperă</option></select>
           <input id="dvz-pu-new-cod" placeholder="Cod" style="width:100px" />
           <input id="dvz-pu-new-nume" placeholder="Denumire" style="min-width:180px" />
-          <input id="dvz-pu-new-pret" type="number" step="0.01" min="0" placeholder="Preț cu TVA" style="width:110px" />
+          <input id="dvz-pu-new-pret" type="text" inputmode="decimal" placeholder="Preț cu TVA" style="width:110px" />
           <button class="btn-primary" onclick="dvzAddPreturiUzualeRow()">+ Adaugă</button>
         </div>
       </div>
@@ -10184,7 +10264,7 @@ async function dvzAddPreturiUzualeRow() {
   const tip = document.getElementById("dvz-pu-new-tip").value;
   const cod = document.getElementById("dvz-pu-new-cod").value.trim();
   const nume = document.getElementById("dvz-pu-new-nume").value.trim();
-  const pret = parseFloat(document.getElementById("dvz-pu-new-pret").value) || 0;
+  const pret = roParseNum(document.getElementById("dvz-pu-new-pret").value) || 0;
   if (!nume) { alert("Completează denumirea."); return; }
   // v47: intrarea nouă merge la coada listei (ordinea maximă existentă + 10), ca să apară ultima,
   // predictibil, în loc să depindă de cum tratează sortarea SQL o valoare "ordine" nescrisă (NULL).
@@ -10209,7 +10289,7 @@ async function dvzSavePreturiUzualeRow(id) {
   if (!tr) return;
   const cod = tr.querySelector(".dvz-pu-cod").value.trim();
   const nume = tr.querySelector(".dvz-pu-nume").value.trim();
-  const pret = parseFloat(tr.querySelector(".dvz-pu-pret").value) || 0;
+  const pret = roParseNum(tr.querySelector(".dvz-pu-pret").value) || 0;
   if (!nume) { alert("Denumirea nu poate fi goală."); return; }
   tr.classList.add("dvz-pu-row-saving");
   const { error } = await client.from("preturi_uzuale").update({ cod: cod || null, nume, pret_cu_tva: pret }).eq("id", id);
@@ -10389,9 +10469,9 @@ function dvzBuildPartRowHtml(nr) {
       <td><input type="text" class="dvz-denumire"></td>
       <td class="dvz-w-um"><input type="text" class="dvz-um" value="buc"></td>
       <td><input type="number" class="dvz-qty" oninput="dvzCalculateRow(this)"></td>
-      <td><input type="number" class="dvz-price-no-vat" oninput="dvzCalculateRow(this)"></td>
-      <td><input type="number" class="dvz-price" oninput="dvzCalculateRow(this)"></td>
-      <td><input type="number" class="dvz-val" oninput="dvzCalculateAllTotals()"></td>
+      <td><input type="text" inputmode="decimal" class="dvz-price-no-vat" oninput="dvzCalculateRow(this)"></td>
+      <td><input type="text" inputmode="decimal" class="dvz-price" oninput="dvzCalculateRow(this)"></td>
+      <td><input type="text" inputmode="decimal" class="dvz-val" oninput="dvzCalculateAllTotals()"></td>
       <td class="dvz-no-print dvz-w-actions"><button type="button" class="icon-btn danger" title="Șterge rândul" onclick="dvzRemoveRow(this)">${ICON_TRASH}</button></td>
     </tr>`;
 }
@@ -10402,14 +10482,14 @@ function dvzBuildOpRowHtml(nr, isFirst) {
   const tarifCell = isFirst
     ? `<input type="text" id="dvz-tarifInput" class="dvz-sel-tarif" placeholder="Tarif..." readonly onfocus="dvzShowTarifDropdown(this)">
        <input type="hidden" class="dvz-price" id="dvz-tarifValue">`
-    : `<input type="number" class="dvz-price" oninput="dvzCalculateRow(this)">`;
+    : `<input type="text" inputmode="decimal" class="dvz-price" oninput="dvzCalculateRow(this)">`;
   // v67: rândul de mecanic (primul, isFirst) își ia prețul dintr-un tarif ales din listă (nu se
   // scrie manual la nicio coloană de preț) — „Fără TVA” rămâne needitabil, needitabil STRICT pe
   // acest rând, la fel ca „Cu TVA” (rândul hidden de mai sus); pentru restul rândurilor de
   // manoperă, ambele coloane devin editabile, la fel ca la piese.
   const noVatCell = isFirst
     ? `<input type="text" class="dvz-price-no-vat" readonly>`
-    : `<input type="number" class="dvz-price-no-vat" oninput="dvzCalculateRow(this)">`;
+    : `<input type="text" inputmode="decimal" class="dvz-price-no-vat" oninput="dvzCalculateRow(this)">`;
   return `<tr>
       <td class="dvz-w-number">${nr}</td>
       <td>${descCell}</td>
@@ -10417,7 +10497,7 @@ function dvzBuildOpRowHtml(nr, isFirst) {
       <td><input type="number" class="dvz-qty" oninput="${isFirst ? "dvzCalculateRowManopera(this)" : "dvzCalculateRow(this)"}"></td>
       <td>${noVatCell}</td>
       <td>${tarifCell}</td>
-      <td><input type="number" class="dvz-val" oninput="dvzCalculateAllTotals()"></td>
+      <td><input type="text" inputmode="decimal" class="dvz-val" oninput="dvzCalculateAllTotals()"></td>
       <td class="dvz-no-print dvz-w-actions">${isFirst ? "" : `<button type="button" class="icon-btn danger" title="Șterge rândul" onclick="dvzRemoveRow(this)">${ICON_TRASH}</button>`}</td>
     </tr>`;
 }
@@ -10752,7 +10832,7 @@ function dvzHandleCodChange(inputEl) {
   if (denumireInput && !denumireInput.value.trim()) denumireInput.value = rezultat.denumire;
   const priceInput = tr.querySelector(".dvz-price");
   if (priceInput && !priceInput.value && rezultat.pret != null) {
-    priceInput.value = Number(rezultat.pret).toFixed(2);
+    priceInput.value = roFmtNum(rezultat.pret);
     dvzCalculateRow(priceInput);
   }
 }
@@ -10765,7 +10845,7 @@ function dvzDoSelect(item, inputEl) {
       if (codInput && !codInput.value) codInput.value = item.cod;
     }
     const priceInput = tr.querySelector(".dvz-price");
-    if (priceInput) { priceInput.value = Number(item.pret).toFixed(2); dvzCalculateRow(priceInput); }
+    if (priceInput) { priceInput.value = roFmtNum(item.pret); dvzCalculateRow(priceInput); }
   }
   dvzCloseDropdown();
   inputEl.focus();
@@ -10801,16 +10881,16 @@ function dvzCheckMechanicDropdown(inputEl) {
 function dvzShowTarifDropdown(inputEl) {
   dvzBuildDropdown(dvzTarife.map(t => ({ cod: "", nume: t.denumire, pret: t.tarif_ora, _tarif: t })), inputEl, (item) => {
     const t = item._tarif;
-    inputEl.value = t.tarif_ora;
+    inputEl.value = roFmtNum(t.tarif_ora);
     const hidden = document.getElementById("dvz-tarifValue");
     if (hidden) hidden.value = t.tarif_ora;
     const row = inputEl.closest("tr");
     if (row) {
       const noVat = row.querySelector(".dvz-price-no-vat");
-      if (noVat) noVat.value = (t.tarif_ora / 1.21).toFixed(4).replace(".", ",");
+      if (noVat) noVat.value = roFmtNum(roPretFaraTva(t.tarif_ora));
       const qty = parseFloat(row.querySelector(".dvz-qty")?.value) || 0;
       const valInput = row.querySelector(".dvz-val");
-      if (valInput) valInput.value = qty * t.tarif_ora > 0 ? (qty * t.tarif_ora).toFixed(2) : "";
+      if (valInput) valInput.value = qty * t.tarif_ora > 0 ? roFmtNum(qty * t.tarif_ora) : "";
     }
     dvzCalculateAllTotals();
     dvzCloseDropdown();
@@ -10833,16 +10913,16 @@ function dvzCalculateRow(inputElement) {
   const noVatInput = row.querySelector(".dvz-price-no-vat");
   const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
   if (inputElement.classList.contains("dvz-price-no-vat")) {
-    const priceNoVat = parseFloat(noVatInput.value) || 0;
-    if (priceInput) priceInput.value = priceNoVat > 0 ? (priceNoVat * 1.21).toFixed(2) : "";
+    const priceNoVat = roParseNum(noVatInput.value);
+    if (priceInput) priceInput.value = priceNoVat > 0 ? roFmtNum(roPretCuTva(priceNoVat)) : "";
   } else {
-    const priceWithVat = parseFloat(priceInput ? priceInput.value : 0) || 0;
-    if (noVatInput) noVatInput.value = priceWithVat > 0 ? (priceWithVat / 1.21).toFixed(4) : "";
+    const priceWithVat = roParseNum(priceInput ? priceInput.value : "");
+    if (noVatInput) noVatInput.value = priceWithVat > 0 ? roFmtNum(roPretFaraTva(priceWithVat)) : "";
   }
-  const priceWithVat = parseFloat(priceInput ? priceInput.value : 0) || 0;
+  const priceWithVat = roParseNum(priceInput ? priceInput.value : "") || 0;
   const valInput = row.querySelector(".dvz-val");
   const value = qty * priceWithVat;
-  if (valInput) valInput.value = value > 0 ? value.toFixed(2) : "";
+  if (valInput) valInput.value = value > 0 ? roFmtNum(value) : "";
   dvzCalculateAllTotals();
 }
 function dvzCalculateRowManopera(qtyInput) {
@@ -10852,18 +10932,18 @@ function dvzCalculateRowManopera(qtyInput) {
   const hiddenPrice = document.getElementById("dvz-tarifValue");
   const pret = parseFloat(hiddenPrice ? hiddenPrice.value : 0) || 0;
   const noVat = row.querySelector(".dvz-price-no-vat");
-  if (noVat) noVat.value = pret > 0 ? (pret / 1.21).toFixed(4).replace(".", ",") : "";
+  if (noVat) noVat.value = pret > 0 ? roFmtNum(roPretFaraTva(pret)) : "";
   const valInput = row.querySelector(".dvz-val");
-  if (valInput) valInput.value = qty * pret > 0 ? (qty * pret).toFixed(2) : "";
+  if (valInput) valInput.value = qty * pret > 0 ? roFmtNum(qty * pret) : "";
   dvzCalculateAllTotals();
 }
 function dvzCalculateAllTotals() {
   let partsSum = 0, opsSum = 0;
-  document.querySelectorAll("#dvz-partsTable .dvz-val").forEach(i => partsSum += parseFloat(i.value) || 0);
-  const totalPartsEl = document.getElementById("dvz-totalParts"); if (totalPartsEl) totalPartsEl.value = partsSum.toFixed(2);
-  document.querySelectorAll("#dvz-opsTable .dvz-val").forEach(i => opsSum += parseFloat(i.value) || 0);
-  const totalOpsEl = document.getElementById("dvz-totalOps"); if (totalOpsEl) totalOpsEl.value = opsSum.toFixed(2);
-  const grandEl = document.getElementById("dvz-grandTotal"); if (grandEl) grandEl.innerText = (partsSum + opsSum).toFixed(2);
+  document.querySelectorAll("#dvz-partsTable .dvz-val").forEach(i => partsSum += roParseNum(i.value) || 0);
+  const totalPartsEl = document.getElementById("dvz-totalParts"); if (totalPartsEl) totalPartsEl.value = roFmtNum(partsSum);
+  document.querySelectorAll("#dvz-opsTable .dvz-val").forEach(i => opsSum += roParseNum(i.value) || 0);
+  const totalOpsEl = document.getElementById("dvz-totalOps"); if (totalOpsEl) totalOpsEl.value = roFmtNum(opsSum);
+  const grandEl = document.getElementById("dvz-grandTotal"); if (grandEl) grandEl.innerText = roFmtNum(partsSum + opsSum);
 }
 
 // ---------- Liniile (piese + manoperă) — încărcare / colectare ----------
@@ -10884,14 +10964,14 @@ async function dvzLoadLinii(devizId) {
       tr.querySelector(".dvz-denumire").value = l.denumire || "";
       tr.querySelector(".dvz-um").value = l.um || "buc";
       tr.querySelector(".dvz-qty").value = l.cantitate || "";
-      tr.querySelector(".dvz-price").value = l.pret_unitar || "";
+      tr.querySelector(".dvz-price").value = l.pret_unitar ? roFmtNum(l.pret_unitar) : "";
       dvzCalculateRow(tr.querySelector(".dvz-price"));
     } else {
       const tr = document.querySelectorAll("#dvz-opsTableBody tr")[l.nr - 1];
       if (!tr) return;
       if (l.nr === 1) {
         document.getElementById("dvz-mechInput").value = l.denumire || "";
-        document.getElementById("dvz-tarifInput").value = l.pret_unitar || "";
+        document.getElementById("dvz-tarifInput").value = l.pret_unitar ? roFmtNum(l.pret_unitar) : "";
         document.getElementById("dvz-tarifValue").value = l.pret_unitar || "";
         tr.querySelector(".dvz-qty").value = l.cantitate || "";
         dvzCalculateRowManopera(tr.querySelector(".dvz-qty"));
@@ -10899,7 +10979,7 @@ async function dvzLoadLinii(devizId) {
         tr.querySelector(".dvz-denumire").value = l.denumire || "";
         tr.querySelector(".dvz-um").value = l.um || "ora";
         tr.querySelector(".dvz-qty").value = l.cantitate || "";
-        tr.querySelector(".dvz-price").value = l.pret_unitar || "";
+        tr.querySelector(".dvz-price").value = l.pret_unitar ? roFmtNum(l.pret_unitar) : "";
         dvzCalculateRow(tr.querySelector(".dvz-price"));
       }
     }
@@ -10924,7 +11004,7 @@ function dvzCollectLinii() {
     const den = (tr.querySelector(".dvz-denumire")?.value || "").trim();
     const um = (tr.querySelector(".dvz-um")?.value || "").trim() || "buc";
     const qty = parseFloat(tr.querySelector(".dvz-qty")?.value) || 0;
-    const pret = parseFloat(tr.querySelector(".dvz-price")?.value) || 0;
+    const pret = roParseNum(tr.querySelector(".dvz-price")?.value) || 0;
     if (!den && !qty && !pret) return;
     linii.push({ tip: "piesa", nr: i + 1, cod_piesa: cod, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
   });
@@ -10934,7 +11014,7 @@ function dvzCollectLinii() {
     const um = (tr.querySelector(".dvz-um")?.value || "").trim() || "ora";
     const qty = parseFloat(tr.querySelector(".dvz-qty")?.value) || 0;
     const pretEl = isFirst ? document.getElementById("dvz-tarifValue") : tr.querySelector(".dvz-price");
-    const pret = parseFloat(pretEl?.value) || 0;
+    const pret = (isFirst ? parseFloat(pretEl?.value) : roParseNum(pretEl?.value)) || 0;
     if (!den && !qty && !pret) return;
     linii.push({ tip: "manopera", nr: i + 1, cod_piesa: null, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
   });
@@ -10947,8 +11027,8 @@ async function saveDevize() {
   if (!clientNume) { alert("Numele clientului (sau firma) este obligatoriu."); return; }
 
   dvzCalculateAllTotals();
-  const totalPiese = parseFloat(document.getElementById("dvz-totalParts").value) || 0;
-  const totalManopera = parseFloat(document.getElementById("dvz-totalOps").value) || 0;
+  const totalPiese = roParseNum(document.getElementById("dvz-totalParts").value) || 0;
+  const totalManopera = roParseNum(document.getElementById("dvz-totalOps").value) || 0;
   const tarifVal = parseFloat(document.getElementById("dvz-tarifValue").value);
 
   const payload = {
@@ -11257,8 +11337,10 @@ function dvzNormalizeDateForDB(txt) {
 function dvzPretUnitarDinVal(tr, valSelector, qty, pretFallback) {
   const valRaw = tr.querySelector(valSelector)?.value;
   if (valRaw !== undefined && valRaw !== null && valRaw !== "") {
-    const val = parseFloat(valRaw);
-    if (!isNaN(val)) return qty ? (val / qty) : val;
+    // v68: roParseNum (nu parseFloat) — acceptă atât fișiere vechi (punct, dinainte de v68) cât
+    // și fișiere noi exportate cu virgulă zecimală, fără să trunchieze zecimalele la reimportare.
+    const val = roParseNum(valRaw);
+    if (val !== null && !isNaN(val)) return qty ? (val / qty) : val;
   }
   return pretFallback;
 }
@@ -11300,7 +11382,7 @@ function dvzExtractNouFormat(doc) {
     const den = (tr.querySelector(".dvz-denumire")?.value || "").trim();
     const um = (tr.querySelector(".dvz-um")?.value || "").trim() || "buc";
     const qty = parseFloat(tr.querySelector(".dvz-qty")?.value) || 0;
-    const pretRecalculat = parseFloat(tr.querySelector(".dvz-price")?.value) || 0;
+    const pretRecalculat = roParseNum(tr.querySelector(".dvz-price")?.value) || 0;
     const pret = dvzPretUnitarDinVal(tr, ".dvz-val", qty, pretRecalculat);
     if (!den && !qty && !pret) return;
     linii.push({ tip: "piesa", nr: i + 1, cod_piesa: cod, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
@@ -11311,7 +11393,7 @@ function dvzExtractNouFormat(doc) {
     const um = (tr.querySelector(".dvz-um")?.value || "").trim() || "ora";
     const qty = parseFloat(tr.querySelector(".dvz-qty")?.value) || 0;
     const pretRaw = isFirst ? val("dvz-tarifValue") : (tr.querySelector(".dvz-price")?.value || "");
-    const pretRecalculat = parseFloat(pretRaw) || 0;
+    const pretRecalculat = (isFirst ? parseFloat(pretRaw) : roParseNum(pretRaw)) || 0;
     const pret = dvzPretUnitarDinVal(tr, ".dvz-val", qty, pretRecalculat);
     if (!den && !qty && !pret) return;
     linii.push({ tip: "manopera", nr: i + 1, cod_piesa: null, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
