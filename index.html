@@ -1384,7 +1384,7 @@
 
             <div class="dvz-header-row">
               <div><strong>Nr:</strong> <input type="text" class="dvz-box-input" style="width:100px;" id="dvz-nrFisaInput" readonly></div>
-              <div><strong>Data:</strong> <input type="text" class="dvz-box-input" style="width:120px;" id="dvz-currentDate1" readonly></div>
+              <div><strong>Data:</strong> <input type="text" class="dvz-box-input" style="width:120px;" id="dvz-currentDate1" oninput="dvzSyncDateFields(this)"></div>
             </div>
 
             <div class="dvz-section-title">DATE CLIENT</div>
@@ -1524,7 +1524,7 @@
                 </div>
                 <div style="flex:1;display:flex;align-items:center;">
                   <strong style="white-space:nowrap;margin-right:5px;">Data:</strong>
-                  <input type="text" class="dvz-box-input" style="flex:1;" id="dvz-currentDate2" readonly>
+                  <input type="text" class="dvz-box-input" style="flex:1;" id="dvz-currentDate2" oninput="dvzSyncDateFields(this)">
                 </div>
               </div>
               <div style="width:48%;display:flex;gap:5px;align-items:center;">
@@ -11024,6 +11024,15 @@ async function saveDevize() {
   const clientNume = document.getElementById("dvz-clientNameInput").value.trim();
   if (!clientNume) { alert("Numele clientului (sau firma) este obligatoriu."); return; }
 
+  // v71: la cererea lui Andrei — „Data” de pe Deviz (dvz-currentDate1/2, needitabilă până acum)
+  // devine editabilă, și trebuie scrisă efectiv în coloana `data` la Salvează, nu doar la creare
+  // (înainte, `data` se scria STRICT la insert — un deviz deja existent nu-și putea schimba
+  // niciodată data, indiferent câte ori era resalvat). Validăm explicit, ca o dată scrisă greșit de
+  // mână să nu fie înlocuită silențios cu data de azi (dvzNormalizeDateForDB întoarce null, nu o
+  // presupunere, la text neinterpretabil) — mai bine blocăm salvarea și cerem corectare.
+  const dataDevizISO = dvzNormalizeDateForDB(document.getElementById("dvz-currentDate1").value);
+  if (!dataDevizISO) { alert("Data devizului nu este validă. Folosește formatul ZZ.LL.AAAA (ex: 12.10.2026)."); return; }
+
   dvzCalculateAllTotals();
   const totalPiese = roParseNum(document.getElementById("dvz-totalParts").value) || 0;
   const totalManopera = roParseNum(document.getElementById("dvz-totalOps").value) || 0;
@@ -11034,6 +11043,7 @@ async function saveDevize() {
     motocicleta_id: dvzSelectedMotoId || null,
     mecanic_id: dvzSelectedMecanicId || null,
     tarif_manopera: isNaN(tarifVal) ? null : tarifVal,
+    data: dataDevizISO,
     stare: "Draft",
     data_intrare: document.getElementById("dvz-dataIntrare").value || null,
     ora_intrare: document.getElementById("dvz-oraIntrare").value.trim() || null,
@@ -11067,7 +11077,8 @@ async function saveDevize() {
     if (nrErr) { alert("Eroare la generarea numărului de deviz: " + nrErr.message); return; }
     nrGenerat = nrData;
     payload.nr_zi = nrData;
-    payload.data = todayISODate();
+    // v71: `payload.data` e setat mai sus, din câmpul editabil "Data" (implicit azi, pentru un
+    // deviz nou — vezi openDevizEditor(null) — exact ca înainte, dacă Andrei nu-l modifică).
     payload.punct_lucru_id = getMyCreateLocationId();
     payload.creat_de = currentProfile.id;
     payload.creat_de_nume = currentProfile.nume;
@@ -11219,6 +11230,14 @@ function dvzExportCalcScript() {
     "    document.querySelectorAll(\"#dvz-opsTable .dvz-val\").forEach(function(i){ opsSum += roParseNum(i.value) || 0; });\n" +
     "    var totalOpsEl = document.getElementById(\"dvz-totalOps\"); if (totalOpsEl) totalOpsEl.value = roFmtNum(opsSum);\n" +
     "    var grandEl = document.getElementById(\"dvz-grandTotal\"); if (grandEl) grandEl.innerText = roFmtNum(partsSum + opsSum);\n" +
+    "  };\n" +
+    // v71: „Data” (dvz-currentDate1/2) e editabilă și în fișierul exportat — fără nicio scriere în
+    // bază (fișierul nu are Supabase), strict ținerea celor două casete sincronizate la fel ca în
+    // aplicația live (vezi dvzSyncDateFields()).
+    "  window.dvzSyncDateFields = function(sourceInput){\n" +
+    "    var otherId = sourceInput.id === \"dvz-currentDate1\" ? \"dvz-currentDate2\" : \"dvz-currentDate1\";\n" +
+    "    var other = document.getElementById(otherId);\n" +
+    "    if (other) other.value = sourceInput.value;\n" +
     "  };\n" +
     "})();\n" +
     "<\/script>\n";
@@ -11412,6 +11431,20 @@ function dvzNormalizeDateForDB(txt) {
   if (!t) return null;
   if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
   return dvzParseDisplayDate(t);
+}
+// v71: la cererea lui Andrei — „Vreau ca la deviz sa pot schimba data si din soft, si separat din
+// HTML dupa salvare” — „Data” apărea de două ori pe Deviz (pagina 1 „Fișă Intrare Service” —
+// dvz-currentDate1 — și antetul paginii 2 „Deviz Reparație” — dvz-currentDate2), needitabilă în
+// ambele locuri, mereu data la care a fost creat devizul. Ambele au devenit editabile (vezi
+// markup-ul, readonly scos), cu scriere în bază la Salvează (saveDevize, mai jos) — rămân, ca
+// înainte, o oglindă a aceleiași date, deci editarea uneia trebuie să actualizeze cealaltă pe loc.
+// Funcția e refolosită IDENTIC și în fișierul .html exportat (vezi dvzExportCalcScript) — editarea
+// datei acolo nu scrie nicăieri în bază (fișierul exportat n-are Supabase), e strict vizuală, dar
+// trebuie să țină cele două casete sincronizate la fel ca în aplicația live.
+function dvzSyncDateFields(sourceInput) {
+  const otherId = sourceInput.id === "dvz-currentDate1" ? "dvz-currentDate2" : "dvz-currentDate1";
+  const other = document.getElementById(otherId);
+  if (other) other.value = sourceInput.value;
 }
 // v43: prețul unitar al unei linii de piesă/manoperă e derivat, când se poate, din coloana
 // "Valoare" (val/dvz-val) în loc de recalculat din Cantitate×Preț — un fișier real al lui Andrei
