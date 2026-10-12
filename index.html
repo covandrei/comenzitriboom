@@ -1379,7 +1379,7 @@
               <strong>MOTOBOOM S.R.L.</strong> CIF: RO18684947 Reg. Com.: J01/509/2006<br>
               Adresa: Str. Crinului nr. 3, Sebes, ALBA<br>
               Punct lucru: Sos. Pipera nr. 48, Sector 2, BUCURESTI<br>
-              Contact: 0744 313 982 - info@motocicletetriumph.ro - www.motocicletetriumph.ro
+              Contact: 0744 313 982 - info@triumphbucuresti.ro - www.triumphbucuresti.ro
             </div>
 
             <div class="dvz-header-row">
@@ -1494,7 +1494,7 @@
               </div>
               <div class="dvz-signature-box">
                 Semnatura Sef Unitate<br>
-                <strong style="text-transform:uppercase;">Radu Constantinescu</strong>
+                <strong style="text-transform:uppercase;">RADU CONSTANTINESCU</strong>
               </div>
             </div>
 
@@ -1513,7 +1513,7 @@
               <strong>MOTOBOOM S.R.L.</strong> CIF: RO18684947 Reg. Com.: J01/509/2006<br>
               Adresa: Str. Crinului nr. 3, Sebes, ALBA<br>
               Punct lucru: Sos. Pipera nr. 48, Sector 2, BUCURESTI<br>
-              Contact: 0744 313 982 - info@motocicletetriumph.ro - www.motocicletetriumph.ro
+              Contact: 0744 313 982 - info@triumphbucuresti.ro - www.triumphbucuresti.ro
             </div>
 
             <div style="display:flex;justify-content:space-between;margin-bottom:5px;border:1px solid #ccc;padding:5px;">
@@ -1623,7 +1623,7 @@
               </div>
               <div class="dvz-signature-box">
                 Semnatura Sef Unitate<br>
-                <strong style="text-transform:uppercase;">Radu Constantinescu</strong>
+                <strong style="text-transform:uppercase;">RADU CONSTANTINESCU</strong>
               </div>
             </div>
 
@@ -11124,9 +11124,38 @@ function dvzSnapshotNode(sourceEl) {
   });
   return clone;
 }
+// v70: la cererea lui Andrei — „Am nevoie ca devizul sa poate sa fie editabil si la manopera,
+// chiar si dupa export [...] pentru managerul meu in caz ca are nevoie de completari dupa ce eu il
+// trimit mai departe” — rândul 1 de manoperă (mecanic/tarif) e needitabil STRICT în editorul LIVE,
+// pentru că prețul vine dintr-un tarif ales dintr-o listă (dvzShowTarifDropdown, vezi
+// dvzBuildOpRowHtml: "Tarif/Oră (Fără TVA)" readonly, "Tarif/Oră" e un <input type="hidden">).
+// Într-un fișier .html exportat (fără Supabase, fără listă de tarife) acel motiv nu mai are sens,
+// așa că STRICT în clona folosită pentru export scoatem câmpul needitabil care doar AFIȘA tariful
+// ales ("dvz-tarifInput"), dezvăluim inputul real ("dvz-tarifValue", needitabil/ascuns în live) ca
+// un câmp text obișnuit, și eliminăm readonly de pe "Tarif/Oră (Fără TVA)" pe acest rând — exact ca
+// la restul rândurilor de manoperă/piese. Editorul live (dvzBuildOpRowHtml) rămâne neschimbat.
+function dvzMakeEditableForExport(p2) {
+  const tarifDisplay = p2.querySelector("#dvz-tarifInput");
+  if (tarifDisplay) tarifDisplay.remove();
+  const tarifValue = p2.querySelector("#dvz-tarifValue");
+  if (tarifValue) {
+    tarifValue.setAttribute("type", "text");
+    tarifValue.setAttribute("inputmode", "decimal");
+    tarifValue.setAttribute("oninput", "dvzCalculateRow(this)");
+    const n = roParseNum(tarifValue.getAttribute("value"));
+    if (n !== null) tarifValue.setAttribute("value", roFmtNum(n));
+  }
+  const noVatRow1 = p2.querySelector("#dvz-opsTableBody tr:first-child .dvz-price-no-vat");
+  if (noVatRow1) {
+    noVatRow1.removeAttribute("readonly");
+    noVatRow1.setAttribute("oninput", "dvzCalculateRow(this)");
+  }
+  return p2;
+}
 function dvzPagesForPrint() {
   const p1 = dvzSnapshotNode(document.getElementById("dvz-page1"));
   const p2 = dvzSnapshotNode(document.getElementById("dvz-page2"));
+  dvzMakeEditableForExport(p2);
   p1.classList.remove("dvz-page-hidden");
   p2.classList.remove("dvz-page-hidden");
   // v44: scoatem butoanele "doar-ecran" (adaugă/șterge rând) și din fișierul .html descărcat de
@@ -11135,6 +11164,64 @@ function dvzPagesForPrint() {
   p1.querySelectorAll(".dvz-no-print").forEach(el => el.remove());
   p2.querySelectorAll(".dvz-no-print").forEach(el => el.remove());
   return { p1, p2 };
+}
+// v70: script independent (fără Supabase), inserat în fișierul .html exportat de "Print/Save", ca
+// managerul lui Andrei să poată modifica prețuri (inclusiv la manopera, rândul 1) direct în fișier,
+// cu recalcularea automată a rândului și a celor trei totaluri — logica e o copie funcțională a
+// dvzCalculateRow/dvzCalculateRowManopera/dvzCalculateAllTotals de mai jos, dar separator zecimal /
+// nr. zecimale / cota de TVA sunt "înghețate" la valorile curente din aplicație, la momentul
+// exportului, pentru că fișierul exportat nu are acces la rzSetari (nu există sesiune/Supabase).
+function dvzExportCalcScript() {
+  const sep = roSeparatorZecimal();
+  const dec = roZecimale();
+  const tva = roTvaRate();
+  return "\n<script>\n" +
+    "(function(){\n" +
+    "  var SEP = " + JSON.stringify(sep) + ", DEC = " + JSON.stringify(dec) + ", TVA = " + JSON.stringify(tva) + ";\n" +
+    "  function roParseNum(v){ if(v===null||v===undefined||v===\"\") return null; var n=parseFloat(String(v).trim().replace(\",\",\".\")); return isNaN(n)?null:n; }\n" +
+    "  function roFmtNum(v){ if(v===null||v===undefined||v===\"\") return \"\"; return Number(v).toFixed(DEC).replace(\".\", SEP); }\n" +
+    "  function roPretFaraTva(p){ if(p===null||p===undefined||p===\"\") return null; return +(parseFloat(p)/(1+TVA/100)).toFixed(2); }\n" +
+    "  function roPretCuTva(p){ if(p===null||p===undefined||p===\"\") return null; return +(parseFloat(p)*(1+TVA/100)).toFixed(2); }\n" +
+    "  window.dvzCalculateRow = function(inputElement){\n" +
+    "    var row = inputElement.closest(\"tr\"); if(!row) return;\n" +
+    "    var qtyInput = row.querySelector(\".dvz-qty\");\n" +
+    "    var priceInput = row.querySelector(\".dvz-price\");\n" +
+    "    var noVatInput = row.querySelector(\".dvz-price-no-vat\");\n" +
+    "    var qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;\n" +
+    "    if (inputElement.classList.contains(\"dvz-price-no-vat\")) {\n" +
+    "      var priceNoVat = roParseNum(noVatInput.value);\n" +
+    "      if (priceInput) priceInput.value = priceNoVat > 0 ? roFmtNum(roPretCuTva(priceNoVat)) : \"\";\n" +
+    "    } else {\n" +
+    "      var priceWithVat = roParseNum(priceInput ? priceInput.value : \"\");\n" +
+    "      if (noVatInput) noVatInput.value = priceWithVat > 0 ? roFmtNum(roPretFaraTva(priceWithVat)) : \"\";\n" +
+    "    }\n" +
+    "    var priceWithVat2 = roParseNum(priceInput ? priceInput.value : \"\") || 0;\n" +
+    "    var valInput = row.querySelector(\".dvz-val\");\n" +
+    "    var value = qty * priceWithVat2;\n" +
+    "    if (valInput) valInput.value = value > 0 ? roFmtNum(value) : \"\";\n" +
+    "    window.dvzCalculateAllTotals();\n" +
+    "  };\n" +
+    "  window.dvzCalculateRowManopera = function(qtyInput){\n" +
+    "    var row = qtyInput.closest(\"tr\"); if(!row) return;\n" +
+    "    var qty = parseFloat(qtyInput.value) || 0;\n" +
+    "    var hiddenPrice = document.getElementById(\"dvz-tarifValue\");\n" +
+    "    var pret = roParseNum(hiddenPrice ? hiddenPrice.value : 0) || 0;\n" +
+    "    var noVat = row.querySelector(\".dvz-price-no-vat\");\n" +
+    "    if (noVat) noVat.value = pret > 0 ? roFmtNum(roPretFaraTva(pret)) : \"\";\n" +
+    "    var valInput = row.querySelector(\".dvz-val\");\n" +
+    "    if (valInput) valInput.value = qty * pret > 0 ? roFmtNum(qty * pret) : \"\";\n" +
+    "    window.dvzCalculateAllTotals();\n" +
+    "  };\n" +
+    "  window.dvzCalculateAllTotals = function(){\n" +
+    "    var partsSum = 0, opsSum = 0;\n" +
+    "    document.querySelectorAll(\"#dvz-partsTable .dvz-val\").forEach(function(i){ partsSum += roParseNum(i.value) || 0; });\n" +
+    "    var totalPartsEl = document.getElementById(\"dvz-totalParts\"); if (totalPartsEl) totalPartsEl.value = roFmtNum(partsSum);\n" +
+    "    document.querySelectorAll(\"#dvz-opsTable .dvz-val\").forEach(function(i){ opsSum += roParseNum(i.value) || 0; });\n" +
+    "    var totalOpsEl = document.getElementById(\"dvz-totalOps\"); if (totalOpsEl) totalOpsEl.value = roFmtNum(opsSum);\n" +
+    "    var grandEl = document.getElementById(\"dvz-grandTotal\"); if (grandEl) grandEl.innerText = roFmtNum(partsSum + opsSum);\n" +
+    "  };\n" +
+    "})();\n" +
+    "<\/script>\n";
 }
 // v39: clonă separată, folosită STRICT pentru captura html2canvas de la "Export PDF" — nu și
 // pentru Print/HTML (care rămân pe dvzSnapshotNode/dvzPagesForPrint de mai sus, unde inputurile
@@ -11217,7 +11304,7 @@ function dvzPrintSave() {
 
   const styleEl = document.getElementById("dvz-style");
   const css = styleEl ? styleEl.textContent : "";
-  const standaloneHtml = "<!DOCTYPE html>\n<html lang=\"ro\"><head><meta charset=\"UTF-8\"><title>" + escapeHtml(dvzDocTitle()) + "</title><style>" + css + "</style></head><body>" + pagesHtml + "</body></html>";
+  const standaloneHtml = "<!DOCTYPE html>\n<html lang=\"ro\"><head><meta charset=\"UTF-8\"><title>" + escapeHtml(dvzDocTitle()) + "</title><style>" + css + "</style></head><body>" + pagesHtml + dvzExportCalcScript() + "</body></html>";
   const blob = new Blob([standaloneHtml], { type: "text/html" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -11390,8 +11477,12 @@ function dvzExtractNouFormat(doc) {
     const den = isFirst ? val("dvz-mechInput").trim() : (tr.querySelector(".dvz-denumire")?.value || "").trim();
     const um = (tr.querySelector(".dvz-um")?.value || "").trim() || "ora";
     const qty = parseFloat(tr.querySelector(".dvz-qty")?.value) || 0;
+    // v70: roParseNum (nu parseFloat) și pentru rândul 1 (mecanic/tarif) — de la v70, "Tarif/Oră"
+    // acel rând e un câmp text editabil în fișierele NOU exportate (nu mai e <input type="hidden">
+    // needitabil), iar valoarea e scrisă formatată, cu separatorul zecimal curent (ex. "120,00"),
+    // la fel ca restul câmpurilor de preț — parseFloat trunchia zecimalele de după virgulă.
     const pretRaw = isFirst ? val("dvz-tarifValue") : (tr.querySelector(".dvz-price")?.value || "");
-    const pretRecalculat = (isFirst ? parseFloat(pretRaw) : roParseNum(pretRaw)) || 0;
+    const pretRecalculat = roParseNum(pretRaw) || 0;
     const pret = dvzPretUnitarDinVal(tr, ".dvz-val", qty, pretRecalculat);
     if (!den && !qty && !pret) return;
     linii.push({ tip: "manopera", nr: i + 1, cod_piesa: null, denumire: den || "—", cantitate: qty, pret_unitar: pret, um });
